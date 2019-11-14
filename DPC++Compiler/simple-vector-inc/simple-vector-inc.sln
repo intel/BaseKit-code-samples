@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.136
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simple-vector-add", "simple-vector-add.vcxproj", "{394223B6-9E91-4702-A262-04F330C28996}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simple-vector-inc", "simple-vector-inc.vcxproj", "{6F72B46B-185C-4450-B571-44EDC5FFAD79}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{394223B6-9E91-4702-A262-04F330C28996}.Debug|x64.ActiveCfg = Debug|x64
+		{394223B6-9E91-4702-A262-04F330C28996}.Debug|x64.Build.0 = Debug|x64
+		{394223B6-9E91-4702-A262-04F330C28996}.Release|x64.ActiveCfg = Release|x64
+		{394223B6-9E91-4702-A262-04F330C28996}.Release|x64.Build.0 = Release|x64
+		{6F72B46B-185C-4450-B571-44EDC5FFAD79}.Debug|x64.ActiveCfg = Debug|x64
+		{6F72B46B-185C-4450-B571-44EDC5FFAD79}.Debug|x64.Build.0 = Debug|x64
+		{6F72B46B-185C-4450-B571-44EDC5FFAD79}.Release|x64.ActiveCfg = Release|x64
+		{6F72B46B-185C-4450-B571-44EDC5FFAD79}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8EB62156-98C0-4A71-85FB-18E0A8D1CD19}
+	EndGlobalSection
+EndGlobal

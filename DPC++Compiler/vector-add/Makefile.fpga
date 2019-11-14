@@ -1,0 +1,31 @@
+CXX := dpcpp
+SRC := src/vector-add.cpp
+
+.PHONY: fpga_emu run_emu clean 
+fpga_emu: vector-add.fpga_emu
+hw: vector-add.fpga
+report: vector-add_report.a
+
+vector-add.fpga_emu: $(SRC)
+	$(CXX) $(USERCXXFLAGS) -fintelfpga $^ -o $@ -DFPGA_EMULATOR
+
+a.o: $(SRC)
+	$(CXX) $(USERCXXFLAGS) -fintelfpga -c $^ -o $@ -DFPGA
+
+vector-add.fpga: a.o
+	$(CXX) $(USERCXXFLAGS) -fintelfpga $^ -o $@ -Xshardware
+
+run_emu: vector-add.fpga_emu
+	./vector-add.fpga_emu
+	
+run_hw: vector-add.fpga
+	./vector-add.fpga
+
+dev.o: $(SRC)
+	$(CXX) $(USERCXXFLAGS) -fintelfpga -c $^ -o $@ -DFPGA
+
+vector-add_report.a: dev.o
+	$(CXX) $(USERCXXFLAGS) -fintelfpga -fsycl-link $^ -o $@ -Xshardware
+
+clean:
+	rm -rf *.o *.d *.out *.mon *.emu *.aocr *.aoco *.prj *.fpga_emu vector-add.fpga *.a

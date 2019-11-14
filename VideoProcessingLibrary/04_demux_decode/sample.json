@@ -1,0 +1,10 @@
+{
+  "name": "Demux and decode",
+  "categories": ["Toolkit/Intel® oneAPI Base Toolkit/oneVPL"],
+  "description": "Sample that shows how to use VPL to decode a video stream from a media container",
+  "dependencies": ["vpl"],
+  "os": ["linux", "windows"],
+  "languages": [{"cpp":{}}],
+  "builder": [ "ide", "cmake"],
+  "targetDevice": ["CPU", "GPU"]
+}

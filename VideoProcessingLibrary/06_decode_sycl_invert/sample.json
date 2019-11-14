@@ -1,0 +1,10 @@
+{
+  "name": "Decode and invert with DPC++ kernel",
+  "categories": ["Toolkit/Intel® oneAPI Base Toolkit/oneVPL"],
+  "description": "Sample that shows how to perform custom video processing using VPL and a DPC++ kernel",
+  "dependencies": ["vpl"],
+  "os": ["linux"],
+  "toolchain": ["dpcpp"],  
+  "languages": [{"cpp":{}}],
+  "targetDevice": ["CPU", "GPU"]
+}

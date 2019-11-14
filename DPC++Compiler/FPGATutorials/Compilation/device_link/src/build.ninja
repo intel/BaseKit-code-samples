@@ -1,0 +1,44 @@
+device_source_file = kernel.cpp
+kernel_header_file = kernel.h
+houst_source_file = main.cpp
+target_name = device_link
+
+emulator_target = ${target_name}.fpga_emu.exe
+cpu_host_target = ${target_name}.cpu_host.exe
+report_target = ${target_name}.a
+
+hardware_flags = -fintelfpga -Xshardware
+emulator_flags = -fintelfpga -DFPGA_EMULATOR
+cpu_host_flags = -DCPU_HOST
+
+rule parse_emu
+  command = dpcpp  -c ${emulator_flags} ${in} -o ${out}	
+
+rule gen_image_obj
+  command = dpcpp -fintelfpga -fsycl-link=image ${in} -o ${out}
+
+rule link
+  command = dpcpp -fintelfpga  ${in} -o ${out} 
+
+rule build_cpu_host
+  command = dpcpp ${cpu_host_flags} $in -o $out
+
+
+# FPGA emulator
+build fpga_emu: phony ${emulator_target}
+
+host_emu_obj = host_emu.obj
+dev_emu_obj = dev_emu.obj
+dev_image_emu_obj = dev_image_emu.a
+
+build ${host_emu_obj}: parse_emu ${houst_source_file}
+
+build ${dev_emu_obj}: parse_emu ${device_source_file}
+
+build ${dev_image_emu_obj}: gen_image_obj ${dev_emu_obj}
+
+build ${emulator_target}: link ${host_emu_obj} ${dev_image_emu_obj}
+
+# cpu host
+build cpu_host: phony ${cpu_host_target}
+build ${cpu_host_target}: build_cpu_host ${houst_source_file} ${device_source_file}

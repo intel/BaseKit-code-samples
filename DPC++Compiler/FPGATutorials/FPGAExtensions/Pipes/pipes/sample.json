@@ -1,0 +1,10 @@
+{
+  "name": "FPGA tutorial: pipes",
+  "categories": ["Toolkit/Intel® oneAPI Base Toolkit/oneAPI DPC++ Compiler/FPGA/Tutorials"],
+  "description": "Tutorial design to demonstrate usage of pipes",
+  "toolchain": ["dpcpp"],
+  "os": ["linux", "windows"],
+  "targetDevice": ["FPGA"],
+  "builder": ["ide", "cmake"],
+  "languages": [{"cpp":{}}]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "FPGA example design: CRR",
+  "categories": ["Toolkit/Intel® oneAPI Base Toolkit/oneAPI DPC++ Compiler/FPGA/Example Designs"],
+  "description": "Cox-Ross-Rubinstein(CRR) binomial tree model with greeks for American exercise options",
+  "toolchain": ["dpcpp"],
+  "os": ["linux", "windows"],
+  "builder": ["ide", "cmake"],
+  "targetDevice": ["FPGA"],
+  "languages": [{"cpp":{}}]
+}

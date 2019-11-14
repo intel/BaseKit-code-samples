@@ -1,0 +1,33 @@
+device_source_file = qrd.cpp
+device_header_file = qrd.h
+host_source_file = qrd_demo.cpp
+target_name = qrd
+
+emulator_target = ${target_name}.fpga_emu.exe
+cpu_host_target = ${target_name}.cpu_host.exe
+report_target = ${target_name}.a
+
+hardware_flags = -fintelfpga -Xshardware -Xsno-accessor-aliasing -Xsfmax=300 -Xsfp-relaxed -Xsparallel=2 -Xsseed=4
+emulator_flags = -fintelfpga -DFPGA_EMULATOR
+cpu_host_flags = -DCPU_HOST
+
+rule build_fpga_emu
+  command = dpcpp-cl /GX ${emulator_flags} ${device_source_file} ${host_source_file} -o $out
+
+rule build_cpu_host
+  command = dpcpp-cl /GX ${cpu_host_flags} ${device_source_file} ${host_source_file} -o $out
+
+rule gen_report
+  command = dpcpp-cl /GX ${hardware_flags} ${device_source_file} ${host_source_file} -fsycl-link -o $out
+
+# FPGA emulator
+build fpga_emu: phony ${emulator_target}
+build ${emulator_target}: build_fpga_emu 
+
+# cpu host
+build cpu_host: phony ${cpu_host_target}
+build ${cpu_host_target}: build_cpu_host 
+
+# report
+build report: phony ${report_target}
+build ${report_target}: gen_report

@@ -1,0 +1,10 @@
+{
+  "name": "FPGA tutorial: Using the OpenCL Intercept Layer to Profile Designs running on the FPGA",
+  "categories": ["Toolkit/Intel® oneAPI Base Toolkit/oneAPI DPC++ Compiler/FPGA/Tutorials"],
+  "description": "Tutorial design to demonstrate how to use the OpenCL Intercept Layer to improve a design with the double buffering optimization",
+  "toolchain": ["dpcpp"],
+  "os": ["linux", "windows"],
+  "targetDevice": ["FPGA"],
+  "builder": ["ide", "cmake"],
+  "languages": [{"cpp":{}}]
+}

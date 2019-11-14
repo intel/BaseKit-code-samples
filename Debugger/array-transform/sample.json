@@ -1,0 +1,11 @@
+{
+  "name": "Array Transform",
+  "categories": ["Toolkit/Get Started", "Toolkit/Intel® oneAPI Base Toolkit/Debugger"],
+  "description": "A small DPC++ example that is used in the \"Get Started Guide\" of the application debugger to exercise major debugger functionality.",
+  "toolchain": ["dpcpp"],
+  "dependencies": ["debugger"],
+  "languages": [{"cpp":{}}],
+  "targetDevice": ["CPU", "GPU"],
+  "os": ["linux"],
+  "builder": ["cmake"]
+}

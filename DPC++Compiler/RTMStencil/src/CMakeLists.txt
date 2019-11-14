@@ -1,0 +1,15 @@
+#IF(CMAKE_BUILD_TYPE MATCHES Debug)
+#  message("Debug build.")
+#ELSE()
+#  message("Release build.")
+#ENDIF
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsycl")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+add_executable (rtmstencil init.cpp main.cpp)
+target_link_libraries(rtmstencil OpenCL sycl)
+if (WIN32)
+add_custom_target(run rtmstencil.exe)
+else()
+add_custom_target(run ./rtmstencil)
+endif()

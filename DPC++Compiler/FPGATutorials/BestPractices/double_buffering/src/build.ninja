@@ -1,0 +1,31 @@
+source_file = double_buffering.cpp
+target_name = double_buffering
+
+emulator_target = ${target_name}.fpga_emu.exe
+cpu_host_target = ${target_name}.cpu_host.exe
+report_target = ${target_name}.a
+
+hardware_flags = -fintelfpga -Xshardware -Xsno-accessor-aliasing
+emulator_flags = -fintelfpga -DFPGA_EMULATOR
+cpu_host_flags = -DCPU_HOST
+
+rule build_fpga_emu
+  command = dpcpp-cl /GX ${emulator_flags} $in -o $out
+
+rule build_cpu_host
+  command = dpcpp-cl /GX ${cpu_host_flags} $in -o $out
+
+rule gen_report
+  command = dpcpp-cl /GX ${hardware_flags} -fsycl-link $in -o $out
+
+# FPGA emulator
+build fpga_emu: phony ${emulator_target}
+build ${emulator_target}: build_fpga_emu ${source_file}
+
+# cpu host
+build cpu_host: phony ${cpu_host_target}
+build ${cpu_host_target}: build_cpu_host ${source_file}
+
+# report
+build report: phony ${report_target}
+build ${report_target}: gen_report ${source_file}

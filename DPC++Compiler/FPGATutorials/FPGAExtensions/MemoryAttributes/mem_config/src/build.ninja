@@ -1,0 +1,38 @@
+source_file = memory_attributes.cpp
+target_name = memory_attributes
+
+emulator_target = ${target_name}.fpga_emu.exe
+cpu_host_target = ${target_name}.cpu_host.exe
+
+hardware_flags = -fintelfpga -Xshardware -Xsno-accessor-aliasing
+emulator_flags = -fintelfpga -DFPGA_EMULATOR
+cpu_host_flags = -DCPU_HOST
+
+rule build_cpu_host
+  command = dpcpp-cl /GX ${cpu_host_flags} $in -o $out
+
+rule build_fpga_emu
+  command = dpcpp-cl /GX ${emulator_flags} $in -o $out
+
+rule gen_report_1x
+  command = dpcpp ${hardware_flags} -fsycl-link $in -DSINGLEPUMP -o $out
+
+rule gen_report_2x
+  command = dpcpp ${hardware_flags} -fsycl-link $in -DDOUBLEPUMP -o $out
+
+# FPGA emulator 
+build fpga_emu: phony ${emulator_target}
+build ${emulator_target}: build_fpga_emu ${source_file}
+
+# report
+report_target_1x = singlepump_report.a 
+report_target_2x = doublepump_report.a
+
+build report_1x: phony ${report_target_1x}
+build report_2x: phony ${report_target_2x}
+build ${report_target_1x}: gen_report_1x ${source_file} 
+build ${report_target_2x}: gen_report_2x ${source_file} 
+
+# cpu host
+build cpu_host: phony ${cpu_host_target}
+build ${cpu_host_target}: build_cpu_host ${source_file}
