@@ -20,23 +20,24 @@ void bootstrap_function(char *result) {
 // entry point for the program
 
 int main(int argc, char** argv) {
-        // default_selector my_selector;
-        queue my_queue;
-        std::cout << "Device : " << my_queue.get_device().get_info<info::device::name>() << std::endl;
+  // default_selector my_selector;
+  queue my_queue;
+  std::cout << "Device : " << my_queue.get_device().get_info<info::device::name>() << std::endl;
 
-        char result[N];
-        buffer<char, 1> my_buffer(result, range<1>(N));
-        my_queue.submit([&] (handler &my_handler){
-                auto my_accessor = my_buffer.get_access<access::mode::read_write>(my_handler);
-                my_handler.single_task<class bootstrap>([=](){
-                        bootstrap_function(&my_accessor[0]);
-                });
-        });
-        my_queue.wait_and_throw();
-        my_buffer.get_access<access::mode::read>();
+  char result[N];
+  {
+    buffer<char, 1> my_buffer(result, range<1>(N));
+    my_queue.submit([&] (handler &my_handler){
+      auto my_accessor = my_buffer.get_access<access::mode::read_write>(my_handler);
+      my_handler.single_task<class bootstrap>([=]{
+        bootstrap_function(&my_accessor[0]);
+      });
+    });
+  } // Copy back to result on buffer destruction
 
-        for(auto i = 0; i < N; ++i) { std::cout << result[i]; }
-        std::cout << std::endl;
+  for (auto c : result)
+    std::cout << c;
+  std::cout << std::endl;
 
-        return 0;
+  return 0;
 }
