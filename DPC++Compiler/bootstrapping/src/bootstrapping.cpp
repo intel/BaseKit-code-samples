@@ -23,8 +23,8 @@ int main(int argc, char** argv) {
         // default_selector my_selector;
         queue my_queue;
         std::cout << "Device : " << my_queue.get_device().get_info<info::device::name>() << std::endl;
-        
-        char result[14];        
+
+        char result[14];
         buffer<char, 1> my_buffer(result, range<1>(N));
         my_queue.submit([&] (handler &my_handler){
                 auto my_accessor = my_buffer.get_access<access::mode::read_write>(my_handler);
@@ -34,9 +34,9 @@ int main(int argc, char** argv) {
         });
         my_queue.wait_and_throw();
         my_buffer.get_access<access::mode::read>();
-        
-        for(auto i = 0; i < N; ++i) { std::cout << result[i]; } 
+
+        for(auto i = 0; i < N; ++i) { std::cout << result[i]; }
         std::cout << std::endl;
-        
+
         return 0;
 }
