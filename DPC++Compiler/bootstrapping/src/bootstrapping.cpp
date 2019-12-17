@@ -6,7 +6,7 @@
 
 #include <CL/sycl.hpp>
 using namespace cl::sycl;
-constexpr size_t N { 15 };
+constexpr size_t N { 14 };
 
 // ############################################################
 // bootstrap_function returns a char buffer thru an input buffer
@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
         queue my_queue;
         std::cout << "Device : " << my_queue.get_device().get_info<info::device::name>() << std::endl;
 
-        char result[14];
+        char result[N];
         buffer<char, 1> my_buffer(result, range<1>(N));
         my_queue.submit([&] (handler &my_handler){
                 auto my_accessor = my_buffer.get_access<access::mode::read_write>(my_handler);
