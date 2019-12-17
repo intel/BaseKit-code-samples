@@ -12,7 +12,7 @@ constexpr size_t N { 14 };
 // bootstrap_function returns a char buffer thru an input buffer
 
 void bootstrap_function(char *result) {
-    char bootstrap[N] = {'B','o','o','t','s','t','r','a','p','p','i','n','g','!','\0'};
+    char bootstrap[N] = {'B','o','o','t','s','t','r','a','p','p','i','n','g','!'};
     for( size_t i = 0; i < N; ++i ) { result[i] = bootstrap[i]; }
  }
 
