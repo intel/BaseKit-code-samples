@@ -3,7 +3,7 @@ target_name = pipe_array
 
 emulator_target = ${target_name}.fpga_emu.exe
 cpu_host_target = ${target_name}.cpu_host.exe
-report_target = ${target_name}.a
+report_target = ${target_name}_report.a
 
 hardware_flags = -fintelfpga -Xshardware -std=c++14
 emulator_flags = -fintelfpga -DFPGA_EMULATOR -std=c++14

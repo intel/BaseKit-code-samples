@@ -1,13 +1,13 @@
 CXX = dpcpp
-CXXFLAGS = -o
+CXXFLAGS = -O2 -g
 LDFLAGS = -lOpenCL -lsycl
-EXE_NAME = vector-add.exe
+EXE_NAME = vector-add
 SOURCES = src/vector-add.cpp
 
 all: main
 
 main:
-	$(CXX) $(CXXFLAGS) $(EXE_NAME) $(SOURCES) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $(EXE_NAME) $(SOURCES) $(LDFLAGS)
 
 run: 
 	./$(EXE_NAME)

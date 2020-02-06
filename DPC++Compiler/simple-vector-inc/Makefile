@@ -1,5 +1,5 @@
 CXX = dpcpp
-CXXFLAGS = -o
+CXXFLAGS = -g -o
 LDFLAGS = -lOpenCL -lsycl
 EXE_NAME = simple-vector-incr
 SOURCES = src/simple-vector-incr.cpp
@@ -14,5 +14,6 @@ main:
 run: 
 	$(BINDIR)/$(EXE_NAME)
 
+.PHONY: clean
 clean: 
 	rm -rf $(BINDIR)/$(EXE_NAME)

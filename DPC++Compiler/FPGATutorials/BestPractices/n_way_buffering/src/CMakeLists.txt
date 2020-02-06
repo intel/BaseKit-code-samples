@@ -10,7 +10,8 @@ set(EMULATOR_LINK_FLAGS " -lpthread -fintelfpga")
 set(CPU_HOST_COMPILE_FLAGS "-DCPU_HOST")
 set(CPU_HOST_LINK_FLAGS "-lpthread")
 
-set(HARDWARE_LINK_FLAGS "-fintelfpga -Xshardware")
+# use cmake -D USER_HARDWARE_FLAGS=<flags> to set extra flags for FPGA backend compilation
+set(HARDWARE_LINK_FLAGS "-fintelfpga -Xshardware ${USER_HARDWARE_FLAGS}")
 
 # fpga emulator
 if(WIN32)
@@ -55,8 +56,9 @@ set(FPGA_OBJ_FILE "dev_fpga.o")
 					   COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS} -fintelfpga -c ${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE_FILE} -o ${FPGA_OBJ_FILE} 
 					   DEPENDS ${SOURCE_FILE})
 
+    separate_arguments(HARDWARE_LINK_FLAGS_LIST UNIX_COMMAND "${HARDWARE_LINK_FLAGS}")
 	add_custom_command(OUTPUT ${FPGA_TARGET} 
-					   COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS} -fintelfpga -Xsno-accessor-aliasing -Xshardware ${FPGA_OBJ_FILE} -o  ${CMAKE_BINARY_DIR}/${FPGA_TARGET} -lpthread
+        COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS} ${HARDWARE_LINK_FLAGS_LIST} -Xsno-accessor-aliasing  ${FPGA_OBJ_FILE} -o  ${CMAKE_BINARY_DIR}/${FPGA_TARGET} -lpthread
 					   DEPENDS ${FPGA_OBJ_FILE})
 endif()
 

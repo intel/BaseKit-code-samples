@@ -216,8 +216,7 @@ development flow:
     for  `DictOffset` and the other uses a double-pumped memory system. Find the
     reports, respectively, in `singlepump_report.prj/reports/` and `singlepump_report.prj/reports/`. You can use the reports to verify that the compiler respected the attributes. For more information, see the section 'Using Reports to Verify the Design' below.
     ```
-    ninja report_1x
-    ninja report_2x
+    ninja report
     ``` 
 
 

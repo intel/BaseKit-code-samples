@@ -3,7 +3,19 @@ project(demux_decode)
 
 set(TARGET demux_decode)
 set(SRCS src/demux_decode.cpp)
-set(RUNARGS $ENV{VPL_DIR}/samples/content/cars_1280x720.avi -v)
+set(RUNARGS $ENV{VPL_DIR}/samples/content/cars_1280x720.avi)
+
+# Set default build type to RelWithDebInfo if not specified
+if(NOT CMAKE_BUILD_TYPE)
+  message(
+    STATUS "Default CMAKE_BUILD_TYPE not set using Release with Debug Info")
+  set(CMAKE_BUILD_TYPE
+      "RelWithDebInfo"
+      CACHE
+        STRING
+        "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel"
+        FORCE)
+endif()
 
 if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -73,12 +85,8 @@ endif()
 add_executable(${TARGET} ${SRCS})
 
 target_include_directories(${TARGET} PRIVATE $ENV{VPLINCLUDE})
-target_link_libraries(${TARGET}
-                      ${VPL_LIB}
-                      ${VPLMEMORY_LIB}
-                      ${AVCODEC_LIB}
-                      ${AVUTIL_LIB}
-                      ${AVFORMAT_LIB})
+target_link_libraries(${TARGET} ${VPL_LIB} ${VPLMEMORY_LIB} ${AVCODEC_LIB}
+                      ${AVUTIL_LIB} ${AVFORMAT_LIB})
 target_link_libraries(${TARGET} debug ${VPL_OPENCV_DEBUG_LIB})
 target_link_libraries(${TARGET} optimized ${VPL_OPENCV_LIB})
 

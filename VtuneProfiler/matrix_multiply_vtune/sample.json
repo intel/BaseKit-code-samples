@@ -1,0 +1,12 @@
+{
+ "name": "Matrix Multiplication - Intel VTune Profiler",
+ "categories": ["Toolkit/Intel® oneAPI Base Toolkit/VTune Profiler"],
+ "description": "Simple program that shows how to improve the DPC++ Matrix Multiplication program using VTune Profiler and Advisor.",
+ "toolchain": ["dpcpp"],
+ "dependencies": ["vtune"],
+ "languages": [{"cpp": { }}],
+ "os": ["linux", "windows"],
+ "targetDevice": ["CPU", "GPU"],
+ "builder": ["ide", "cmake"]
+}
+

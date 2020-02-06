@@ -6,6 +6,6 @@
   "dependencies": ["debugger"],
   "languages": [{"cpp":{}}],
   "targetDevice": ["CPU", "GPU"],
-  "os": ["linux"],
-  "builder": ["cmake"]
+  "os": ["linux", "windows"],
+  "builder": ["ide", "cmake"]
 }

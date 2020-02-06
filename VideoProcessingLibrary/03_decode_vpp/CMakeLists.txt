@@ -3,7 +3,19 @@ project(decode_vpp)
 
 set(TARGET decode_vpp)
 set(SRCS src/decode_vpp.cpp)
-set(RUNARGS $ENV{VPL_DIR}/samples/content/cars_1280x720.h264 -v)
+set(RUNARGS $ENV{VPL_DIR}/samples/content/cars_1280x720.h264)
+
+# Set default build type to RelWithDebInfo if not specified
+if(NOT CMAKE_BUILD_TYPE)
+  message(
+    STATUS "Default CMAKE_BUILD_TYPE not set using Release with Debug Info")
+  set(CMAKE_BUILD_TYPE
+      "RelWithDebInfo"
+      CACHE
+        STRING
+        "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel"
+        FORCE)
+endif()
 
 if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)

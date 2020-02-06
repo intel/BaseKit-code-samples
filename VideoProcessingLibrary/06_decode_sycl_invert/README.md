@@ -1,14 +1,14 @@
 # Decode and invert with DPC++ kernel
 
-This sample shows how to perform custom video processing using VPL and a DPC++
-kernel.
+This sample shows how to perform custom video processing using oneVPL and a
+DPC++ kernel.
 
 
 | Optimized for   | Description
 |---------------- | ----------------------------------------
 | OS              | Ubuntu* 18.04
 | Hardware        | Intel® Processor Graphics GEN9 or newer
-| Software        | Intel® Video Processing Library; Intel® Data Parallel C++ Compiler
+| Software        | Intel® oneAPI Video Processing Library; Intel® Data Parallel C++ Compiler
 
 ## What You Will Learn
 
@@ -26,7 +26,7 @@ kernel.
 ## Sample Details
 
 This sample is a command line application that takes an elementary stream as an
-argument and decodes it with the VPL decoder, takes those frames and performs
+argument and decodes it with the oneVPL decoder, takes those frames and performs
 custom processing (inverting the pixel values) using a DPC++ kernel, and
 displays the decoded raw frames to the screen.  The output can also be written
 to a file.
@@ -36,15 +36,14 @@ to a file.
 | ----------------- | ----------------------------------
 | Target device     | GPU
 | Input format      | H.264 video elementary stream
+| Input resolution  | 1920x1080
 | Output format     | RBGA
-| Output resolution | 1920x1080
-| Output file name  | out_gpu_1920x1080_inverse.rgba
+| Output resolution | 512x512
 
 ## Build and Run the Sample
 
 To build and run the sample you need to install prerequisite software and set up
-your environment. In addition you should install a raw frame viewer to display
-the output.
+your environment.
 
 ### Install Prerequisite Software
 
@@ -102,13 +101,6 @@ The run target runs the sample executable with the arguments
 where `<input-stream>` is
 `$VPL_DIR/samples/content/cars_1920x1080.h264` on Linux.
 
-
-## Check the Output
-Only applies if `-o` (write decoded frames to output file) is used.
-
-```
-ffplay -pix_fmt bgra -f rawvideo -video_size 1920x1080 -framerate 25 out_gpu_1920x1080_inverse.rgba
-```
 
 
 ## Change Where the DPC++ Kernel Runs

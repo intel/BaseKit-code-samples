@@ -116,6 +116,13 @@ int main(int argc, char **argv)
     std::string outfilename = "";
 
     char str_buffer[MAX_STRING_LEN] = {0};
+
+    // Check the number of arguments specified
+    if (argc != 3) {
+        std::cerr << "Incorrect number of arguments. Correct usage: " << argv[0] << " <input-file> -o=<output-file>" << std::endl;
+        return 1;
+    }
+
     for (int i=1; i < argc; i++) {
         if (argv[i][0] == '-') {
             std::string sarg(argv[i]);
@@ -209,7 +216,6 @@ int compress_file(
         int iterations,
         bool report ) 
 {
-    int status = 0;    
     size_t isz;
     char *pinbuf;
 
@@ -310,11 +316,8 @@ int compress_file(
     }
 
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
-
     std::chrono::duration<double> diff_total = (end_time - start_time0); 
-         
     double gbps = iterations * isz / (double) diff_total.count() / 1000000000.0;
-    double compression_ratio = (double)((double)compressed_sz / (double)isz / iterations); 
 
     // delete the file mapping now that all kernels are complete, and we've snapped the time delta
     delete pinbuf;
@@ -331,6 +334,7 @@ int compress_file(
     }
 
     if (report) {
+       double compression_ratio = (double)((double)compressed_sz / (double)isz / iterations); 
 #ifndef FPGA_EMULATOR
        std::cout << "Throughput: " << gbps << " GB/s " << std::endl;
 #endif

@@ -9,8 +9,10 @@ set(REPORTS_TARGET ${TARGET_NAME}_report)
 
 
 #specify -MMD -fsycl-link-targets=... instead of -fintelfpga to workaround known issue; lower report quality 
-set(HARDWARE_COMPILE_FLAGS -MMD -fsycl-link-targets=spir64_fpga-unknown-linux-sycldevice -c)
-set(HARDWARE_LINK_FLAGS -fintelfpga -Xshardware -Xsno-accessor-aliasing -Xsfmax=280 -Xsparallel=2 -Xsseed=1)
+set(HARDWARE_COMPILE_FLAGS -MMD -fsycl-link-targets=spir64_fpga-unknown-unknown-sycldevice -c)
+
+# use cmake -D USER_HARDWARE_FLAGS=<flags> to set extra flags for FPGA backend compilation
+set(HARDWARE_LINK_FLAGS -fintelfpga -Xshardware -Xsno-accessor-aliasing -Xsfmax=280 -Xsparallel=2 -Xsseed=1 ${USER_HARDWARE_FLAGS})
 set(FINAL_LINK_FLAGS -fintelfpga)
 
 set(EMULATOR_COMPILE_FLAGS "-fintelfpga -DFPGA_EMULATOR")
@@ -70,12 +72,12 @@ else()
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${DEVICE_HEADER_FILE} ${DEVICE_HEADER_FILE} COPYONLY)
 
     add_custom_command(OUTPUT ${REPORTS_TARGET}
-                      COMMAND ${CMAKE_CXX_COMPILER} ${HARDWARE_LINK_FLAGS} -fsycl-link ${DEVICE_SOURCE_FILE} -o ${CMAKE_BINARY_DIR}/${REPORTS_TARGET}
+                      COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS} ${HARDWARE_LINK_FLAGS} -fsycl-link ${DEVICE_SOURCE_FILE} -o ${CMAKE_BINARY_DIR}/${REPORTS_TARGET}
                       DEPENDS ${DEVICE_SOURCE_FILE} ${DEVICE_HEADER_FILE} kernels.h)
 endif()
 
 # run
 add_custom_target(run
-                  COMMAND ../${TARGET_NAME}.fpga_emu Makefile
+                  COMMAND ../${TARGET_NAME}.fpga_emu Makefile -o=test.gz
                   DEPENDS ${TARGET_NAME}.fpga_emu)
 

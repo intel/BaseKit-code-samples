@@ -1,7 +1,7 @@
 {
   "name": "Simple decode",
   "categories": ["Toolkit/Intel® oneAPI Base Toolkit/oneVPL"],
-  "description": "Sample that shows how to use VPL to perform a simple video decode",
+  "description": "Sample that shows how to use oneVPL to perform a simple video decode",
   "dependencies": ["vpl"],
   "os": ["linux", "windows"],
   "languages": [{"cpp":{}}],

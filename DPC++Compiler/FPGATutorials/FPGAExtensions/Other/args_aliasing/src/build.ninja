@@ -11,20 +11,19 @@ rule build_fpga_emu
   command = dpcpp-cl /GX ${emulator_flags} $in -o $out
 
 rule gen_report
-  command = dpcpp ${hardware_flags} -fsycl-link $in -o $out
+  command = dpcpp-cl /GX ${hardware_flags} -fsycl-link $in -o $out
 
 rule gen_report_noalias
-  command = dpcpp ${hardware_flags} -fsycl-link $in -Xsno-accessor-aliasing -o $out
+  command = dpcpp-cl /GX ${hardware_flags} -fsycl-link $in -Xsno-accessor-aliasing -o $out
 
 # FPGA emulator
 build fpga_emu: phony ${emulator_target}
 build ${emulator_target}: build_fpga_emu ${source_file}
 
 # report
-report_alias_target = ${target_name}_report_alias.a
-report_noalias_target = ${target_name}_report_noalias.a
+report_alias_target = ${target_name}_alias_report.a
+report_noalias_target = ${target_name}_noalias_report.a
 
-build report_alias: phony ${report_alias_target}
-build report: phony ${report_noalias_target}
+build report: phony ${report_noalias_target} ${report_alias_target}
 build ${report_alias_target}: gen_report ${source_file} 
 build ${report_noalias_target}: gen_report_noalias ${source_file} 

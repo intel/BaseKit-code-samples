@@ -1,0 +1,11 @@
+{
+ "name": "oneDNN Getting Started",
+ "categories": ["Toolkit/Intel® oneAPI Base Toolkit/oneDNN"],
+ "description": "Basic DNNL programming model for both Intel CPU and GPU.",
+ "toolchain": ["dpcpp"],
+ "languages": [{"cpp":{}}],
+ "dependencies": ["oneDNN", "tbb"],
+ "os": ["linux"],
+ "builder": ["cli","cmake"],
+ "targetDevice": ["CPU", "GPU"]
+}

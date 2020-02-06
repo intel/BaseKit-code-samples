@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 2.8.11)
+if("${CMAKE_CXX_COMPILER}" STREQUAL "")
+       set(CMAKE_C_COMPILER "clang")
+       set(CMAKE_CXX_COMPILER "dpcpp")
+endif()
+project (oneDNN_CNN)
+add_subdirectory ($ENV{DNNLROOT}/examples out)

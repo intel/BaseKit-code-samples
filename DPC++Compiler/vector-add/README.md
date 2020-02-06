@@ -83,16 +83,14 @@ Perform the following steps:
 2. Select the menu sequence **File** > **Open** > **Project/Solution**. 
 3. Locate the `vector-add` folder.
 4. Select the `vector-add.sln` file.
-5. Select the **Properties** option under the **Project** menu. The **Properties** dialog is launched.
-6. Perform the following steps in the **Properties** dialog:
-   
+5. Select the configuration 'Debug-fpga' or 'Release-fpga' that have the necessary project settings already below: 
+
+	Under the 'Project Property' dialog:
+
      a. Select the **DPC++** tab.
-    
-     b. In the **General** subtab, change the **Perform ahead of time compilation for the FPGA** setting to **Yes**.
-    
-     c. In the **Command Line** subtab, add **-DFPGA_EMULATOR** to the additional options.
-     
+     b. In the **General** subtab, the **Perform ahead of time compilation for the FPGA** setting is set to **Yes**.
+     c. In the **Preprocessor** subtab, the **Preprocessor Definitions" setting has **FPGA_EMULATOR** added.
      d. Close the dialog.
 
-7. Select **Project** > **Build** menu option to build the selected configuration.
-8. Select **Debug** > **Start Without Debugging** menu option to run the program.
+6. Select **Project** > **Build** menu option to build the selected configuration.
+7. Select **Debug** > **Start Without Debugging** menu option to run the program.

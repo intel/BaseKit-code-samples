@@ -57,15 +57,6 @@ void simple_pow ( std::unique_ptr<queue> &deviceQueue,
     const int p = POW-1; // Assumes pow >= 2;
     assert (POW >= 2);
 
-    /*
-      Explicitly instruct the SYCL runtime to copy the kernel's output buffer back to the host upon kernel completion.
-      This is not required for functionality since the buffer access in process_output() also implicitly instructs the runtime to copy the data back. But it should be noted that this buffer access 
-      blocks process_output() until the kernel is complete and the data is copied.
-      In contrast, update_host() instructs the runtime to perform the copy earlier. This allows process_output() to optionally perform more useful work *before* making the blocking buffer access.
-      Said another way, this allows process_output() to potentially perform more work in parallel with the runtime's copy operation.
-    */
-    cgh.update_host(accessorB); 
-
     cgh.single_task<class SimpleVpow>([=]() {
       for (int j = 0; j < p; j++) {
         if (j==0) {
@@ -79,6 +70,21 @@ void simple_pow ( std::unique_ptr<queue> &deviceQueue,
         }
       }
     });
+  });
+
+  queue_event = deviceQueue->submit([&](handler& cgh) {
+
+    auto accessorB = bufferB.template get_access<access::mode::discard_read_write>(cgh);
+
+    /*
+      Explicitly instruct the SYCL runtime to copy the kernel's output buffer back to the host upon kernel completion.
+      This is not required for functionality since the buffer access in process_output() also implicitly instructs the runtime to copy the data back. But it should be noted that this buffer access 
+      blocks process_output() until the kernel is complete and the data is copied.
+      In contrast, update_host() instructs the runtime to perform the copy earlier. This allows process_output() to optionally perform more useful work *before* making the blocking buffer access.
+      Said another way, this allows process_output() to potentially perform more work in parallel with the runtime's copy operation.
+    */
+    cgh.update_host(accessorB); 
+
   });
 
   deviceQueue->throw_asynchronous();

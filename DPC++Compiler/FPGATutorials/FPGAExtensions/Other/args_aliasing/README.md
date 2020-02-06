@@ -99,8 +99,8 @@ You are expected to see the following output in the console:
 make report
 ```
 
-The reports are available in the `no_accessor_aliasing_report_alias.prj/` and
-`no_accessor_aliasing_report_noalias.prj/` directories. You can compare how the two designs
+The reports are available in the `no_accessor_aliasing_alias_report.prj/` and
+`no_accessor_aliasing_noalias_report.prj/` directories. You can compare how the two designs
 differ in various optimization metrics.
 
 4. Compile and run on FPGA hardware:
@@ -109,12 +109,12 @@ differ in various optimization metrics.
 make fpga
 ```
 
-This generates two executables, `args_aliasing_report_alias.fpga` and
-`args_aliasing_report_noalias.fpga`. Run both of them:
+This generates two executables, `args_aliasing_alias.fpga` and
+`args_aliasing_noalias.fpga`. Run both of them:
 
 ```
-./args_aliasing_report_alias.fpga
-./args_aliasing_report_noalias.fpga
+./args_aliasing_alias.fpga
+./args_aliasing_noalias.fpga
 ```
 
 You are expected to see the following output in the console for each executable:
@@ -166,11 +166,10 @@ You are expected to see the following output in the console:
 
 ```
 ninja report
-ninja report_alias
 ```
 
-The reports are available in the `args_aliasing_report_alias.prj/` and
-`args_aliasing_report_noalias.prj/` directories. You can compare how the two designs
+The reports are available in the `args_aliasing_alias_report.prj/` and
+`args_aliasing_noalias_report.prj/` directories. You can compare how the two designs
 differ in various optimization metrics.
 
 4. **Not supported yet:** Compile and run on FPGA hardware:

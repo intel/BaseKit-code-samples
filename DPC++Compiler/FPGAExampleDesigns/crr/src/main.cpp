@@ -411,7 +411,7 @@ template <int End> struct unroller<End, End> {
 
 // Main function for CRR running on FPGA. It calcutles the option prices and
 // parameters for post-calculte Greeks.
-func_params crr_main_func(double nSteps, double u, double u2, double c1,
+func_params crr_main_func(int nSteps, double u, double u2, double c1,
                           double c2, double umin, double param_1,
                           double param_2) {
   [[intelfpga::numbanks(SPATIAL_UNROLL),
@@ -424,8 +424,11 @@ func_params crr_main_func(double nSteps, double u, double u2, double c1,
   // L4:
   // Initialization -- calculte the last level of the binomial tree.
   for (int i = 0; i <= nSteps; i++) {
-    double val =
-        cl::sycl::fmax(param_1 * cl::sycl::pow(u2, (double)i) - param_2, 0.0);
+        /* double val =
+        cl::sycl::fmax(param_1 * cl::sycl::powr(u2, (double)i) - param_2, 0.0); */
+        /* double val =
+        cl::sycl::fmax(param_1 * cl::sycl::pown(u2, i) - param_2, 0.0); */
+        double val = cl::sycl:: fmax(param_1 * cl::sycl:: exp(i*cl::sycl::log1p(u2-1))-param_2,0.0);
     init_optVal[i] = val;
     if (i == 0) {
       final_val = val;
@@ -441,8 +444,10 @@ func_params crr_main_func(double nSteps, double u, double u2, double c1,
     double next_reg0 = bottom_of_tree;
     double val_1;
     double val_2;
-    double pre_param = param_1 * cl::sycl::pow(u, (double)i);
-
+   /*  double pre_param = param_1 * cl::sycl::powr(u, (double)i); */
+   /*  double pre_param = param_1 * cl::sycl::pown(u, i); */
+   double pre_param = param_1 * cl::sycl::exp(i*cl::sycl::log1p(u-1));
+ 
     // L6:
     // Calculate all the elements in optVal[] -- all the tree nodes for one
     // level of the tree It is safe to use ivdep as the only access that
@@ -462,9 +467,13 @@ func_params crr_main_func(double nSteps, double u, double u2, double c1,
       next_reg0 = reg[spatial_unroll];
 
       unroller<0, spatial_unroll>::step([&](int m) {
-        double tmp = cl::sycl::fmax(
+            /* double tmp = cl::sycl::fmax(
             c1 * reg[m] + c2 * reg[m + 1],
-            pre_param * cl::sycl::pow(u2, (double)(j + m)) - param_2);
+            pre_param * cl::sycl::powr(u2, (double)(j + m)) - param_2);  */
+            /* double tmp = cl::sycl::fmax(
+            c1 * reg[m] + c2 * reg[m + 1],
+            pre_param * cl::sycl::pown(u2, (j + m)) - param_2); */
+            double tmp = cl::sycl::fmax(c1 * reg[m] + c2 * reg[m + 1], pre_param * cl::sycl::exp((j+m)*cl::sycl::log1p(u2-1))-param_2);
 
         // hack: Add reg[spatial_unroll] >= 0 as an dummy condition on the
         // store, so that the store to optVal depends on the previous load.
@@ -527,7 +536,7 @@ double sycl_device(vector<crr_in_params> &vals,
 
           // L2: one CRR with Greeks problem will run crr_main_func three times.
           [[intelfpga::ivdep]] for (int j = 0; j < 3; ++j) {
-            double iteration = accessorVals[i].nSteps + (j == 0 ? 2 : 0);
+            int iteration = accessorVals[i].nSteps + (j == 0 ? 2 : 0);
 
             func_params params;
             params = crr_main_func(

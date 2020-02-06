@@ -40,6 +40,8 @@ NOTE: The multiply1_1, multiply1_2, and multiply2_1 versions are only available 
 	To build other versions using included Makefile
 	cd <sample dir>/linux
 	make <clang/gcc/icc/mkl>
+	NOTE: mkl is only supported for the multiply5 version of the multiply function.
+
 
     Clean the program  
     make clean  

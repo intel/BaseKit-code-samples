@@ -1017,7 +1017,6 @@ void submit_gzip_tasks(
           const int NUM_NIBBLES_PARALLEL = 64;
           //this section of code should be on the hardware accelerator
           const int num_sections = accessor_isz / (NUM_NIBBLES_PARALLEL/2);   //how many loop iterations
-          int ctr = num_sections;
           unsigned int result = ~0;
 
           for (int i = 0; i < num_sections; i++) {
@@ -1027,13 +1026,13 @@ void submit_gzip_tasks(
               // total update for the crc is the xor of the updates from the nibbles
               #pragma unroll
               for (int nib=0; nib<NUM_NIBBLES_PARALLEL; nib++) {
-                  unsigned char this_input_nibble = (acc_pibuf[(i*NUM_NIBBLES_PARALLEL+nib)/2] >> (4*(nib%2))) & 0xf;
-                  unsigned char this_result_nibble = (nib<8) ? (result >> (4*nib)) & 0xf : 0;
+                  unsigned char this_input_nibble = (acc_pibuf[(i*NUM_NIBBLES_PARALLEL+nib)/2] >> (4*(nib%2)));
+                  unsigned char this_result_nibble = (nib<8) ? (result >> (4*nib)) : 0;
                   unsigned char this_table_index = this_input_nibble ^ this_result_nibble;
                   if (nib % 2) {
-                      result_update_odd ^= table64[nib][this_table_index];
+                      result_update_odd ^= table64[nib][this_table_index & 0xf];
                   } else {
-                      result_update_even ^= table64[nib][this_table_index];
+                      result_update_even ^= table64[nib][this_table_index & 0xf];
                   }
               }
               result = result_update_odd ^ result_update_even;
@@ -1293,13 +1292,13 @@ void submit_gzip_tasks(
 
             const char lasti = accessor_isz-(accessor_isz & ~(VEC-1));
             const char firstpos = first_valid_pos;
-            unroller<0, VEC>::step([&](char i) {
+            unroller<0, VEC>::step([&](unsigned char i) {
                 dist_offs_data.data[i] = 0;
                 dist_offs_data.len[i] = -1;
                 dist_offs_data.dist[i] = -1;
             });
 
-            unroller<0, VEC>::step([&](char i) {
+            unroller<0, VEC>::step([&](unsigned char i) {
                 bool pred = ((i-firstpos) < (lasti-firstpos)) && ((i-firstpos)>=0);
                 dist_offs_data.data[i] = pred ? current_window[i+VEC] : 0;
                 dist_offs_data.len[i] = pred ? 0 : -1; 
@@ -1326,7 +1325,6 @@ void submit_gzip_tasks(
             unsigned int outpos_huffman = 0;
 
             int ctr = ((accessor_isz)/VEC) + 2;
-            const int maxcnt = ctr; 
             int odx = 0;
 
             // Add the gzip start block marker. Assumes static huffman trees. 

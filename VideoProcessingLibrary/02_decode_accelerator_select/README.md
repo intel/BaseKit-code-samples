@@ -6,7 +6,7 @@ This sample shows how to select an accelerator to use for video decode.
 |---------------- | ----------------------------------------
 | OS              | Ubuntu* 18.04; Windows* 10
 | Hardware        | Intel® Processor Graphics GEN9 or newer
-| Software        | Intel® Video Processing Library
+| Software        | Intel® oneAPI Video Processing Library
 
 ## What You Will Learn
 
@@ -24,7 +24,7 @@ This sample shows how to select an accelerator to use for video decode.
 ## Sample Details
 
 This sample is a command line application that takes a file containing an H.264
-video elementary stream as an argument, decodes it with the VPL decoder using
+video elementary stream as an argument, decodes it with the oneVPL decoder using
 the CPU, and displays decoded YUV (NV12) to the screen. The decoded output can
 also be written to file `out.nv12`. This sample is different from sample
 decode_simple only in that it shows how the target accelerator is selectable
@@ -37,7 +37,6 @@ frame decode.
 | Input format      | H.264 video elementary stream
 | Output format     | NV12
 | Output resolution | same as input
-| Output file name  | out.nv12
 
 
 ## Build and Run the Sample
@@ -92,15 +91,6 @@ included environment variable setup utility: `<install_dir>\setvars.bat`)
 ```
 
 
-### Install a Raw Frame Viewer to Display the Output
-
-The sample can write output raw frames to the local filesystem.  A utility to
-display the output is needed to see the results.  This tutorial assumes FFmpeg,
-which can be quickly installed with 'apt install ffmpeg' in Ubuntu or from
-https://ffmpeg.zeranoe.com/builds for Windows.  Many other raw frame viewers
-would also work.
-
-
 ### Build the Sample
 
 From the directory containing this README:
@@ -123,10 +113,3 @@ The run target runs the sample executable with the argument
 `$VPL_DIR/samples/content/cars_1280x720.h264` on Linux and
 `%VPL_DIR%\samples\content\cars_1280x720.h264` on Windows.
 
-
-## Check the Output
-Only applies if `-o` (write decoded frames to output file) is used.
-```
-ffplay -s 1280x720 -pix_fmt nv12 -f rawvideo build/out.nv12 on Linux and
-ffplay -s 1280x720 -pix_fmt nv12 -f rawvideo build\out.nv12 on Windows
-```

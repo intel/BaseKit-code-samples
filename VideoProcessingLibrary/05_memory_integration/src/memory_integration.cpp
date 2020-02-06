@@ -3,202 +3,255 @@
   #
   # SPDX-License-Identifier: MIT
   ############################################################################*/
-/// @example 05_memory_integration.cpp
 /// Demonstration of integration in video pipeline
-///   3rd party demux -> decode -> custom operation
-/// @code
-#include <opencv2/opencv.hpp>
 #include <chrono>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <vector>
+
 #include <vplmemory/vplm++.h>
+#include <opencv2/opencv.hpp>
 #include "vpl/vpl.hpp"
-#include <iostream> 
 
 extern "C" {
 #include <libavformat/avformat.h>
 }
 
-void DisplayOutput(vplm_mem* img);
-#define IS_ARG_EQ(a, b) (!strcmp((a), (b)))
+#define PROGRAM_NAME "memory_integration"
+const int SUCCESS = 0;
+const int FAILURE = -1;
 
+void LogTrace(const char* fmt, ...);
+void InvertImage(vplm_mem* image);
+void DisplayFrame(vplm_mem* image);
+int DecodeAndRenderFile(const char* filename);
+void PrintUsage(FILE* stream);
+
+/// Simple timer that tracks total time elapsed between starts and stops
+class Timer {
+ public:
+  Timer() : elapsed_time_(elapsed_time_.zero()) {}
+  void Start() { start_time_ = std::chrono::system_clock::now(); }
+  void Stop() {
+    stop_time_ = std::chrono::system_clock::now();
+    elapsed_time_ += (stop_time_ - start_time_);
+  }
+  double Elapsed() const { return elapsed_time_.count(); }
+
+ private:
+  std::chrono::system_clock::time_point start_time_, stop_time_;
+  std::chrono::duration<double> elapsed_time_;
+};
+
+/// Program entry point
 int main(int argc, char* argv[]) {
-  printf("Demonstration of integration in video pipeline.\n");
-  printf("  3rd party demux -> decode -> custom operation.\n");
-
-  bool printHelp = false, verbose = false, bshow = true;
-  int opt_count = 0;
-  for (int argIdx = 1; argIdx < argc; argIdx++) {
-    if (IS_ARG_EQ(argv[argIdx], "-h")) {
-      printHelp = true;
-      opt_count++;
-    }
-    if (IS_ARG_EQ(argv[argIdx], "-v")) {
-      verbose = true;
-      opt_count++;
-    }
-    if (IS_ARG_EQ(argv[argIdx], "-o")) {
-      bshow = false;
-      opt_count++;
-    }
+  if (argc < 2) {
+    fprintf(stderr, "%s: missing file operand\n", PROGRAM_NAME);
+    PrintUsage(stderr);
+    return FAILURE;
   }
-  int pos_argc = argc - opt_count - 1;
-  if (1 != pos_argc) printHelp = true;
-  if (printHelp) {
-    printf("Usage: %s [container input file]\n", argv[0]);
-    printf("-h\t\tprint help options\n");
-    printf("-v\t\tverbose mode\n");
-    printf("-o\t\twrite decoded frames to output file\n");
-    printf("Example: %s content/cars_1280x720.avi\n", argv[0]);
-    printf("Note: may not work with all inputs. ");
-    printf("For simplicity this sample does not include ");
-    printf("bitstream filter conversion to annex b.");
-    return 1; 
+  FILE* input_stream = fopen(argv[1], "rb");
+  if (!input_stream) {
+    fprintf(stderr, "%s: could not open input file '%s'\n", PROGRAM_NAME,
+            argv[1]);
+    return FAILURE;
   }
+  fclose(input_stream);
+  int status = DecodeAndRenderFile(argv[1]);
+  return status;
+}
 
-  // Create H.264 decoder, default device is GPU if available
-  if (verbose) printf("Create H.264 decoder using default device.\n");
-  vpl::Decode decoder(VPL_FOURCC_H264);
+////////////////////////////////////////////////////////////////////////////////
+/// Main decode and render function
+////////////////////////////////////////////////////////////////////////////////
+int DecodeAndRenderFile(const char* filename) {
+  int status = FAILURE;
+  int avsts;
+  LogTrace("Creating H.264 decoder using default device (GPU if available)");
+  vpl::Workstream decoder(VPL_TARGET_DEVICE_DEFAULT,
+                          VPL_WORKSTREAM_DECODEVIDEOPROC);
+  decoder.SetConfig(VPL_PROP_SRC_BITSTREAM_FORMAT, VPL_FOURCC_H264);
 
-  // Set output color format
-  if (verbose) printf("Set target format and color-space (CSC).\n");
-  decoder.SetConfig(VPL_PROP_DST_FORMAT, VPL_FOURCC_I420);
+  LogTrace("Setting target format and color-space (CSC).");
+  decoder.SetConfig(VPL_PROP_DST_RAW_FORMAT, VPL_FOURCC_NV12);
 
-  // Set output resolution
-  if (verbose) printf("Set target resolution (scaling).\n");
+  LogTrace("Setting target resolution (scaling).");
   VplVideoSurfaceResolution output_size = {352, 288};
   decoder.SetConfig(VPL_PROP_OUTPUT_RESOLUTION, output_size);
 
-  if (verbose) printf("Create and initialize demux context with" \
-    "input file '%s'.\n", argv[1]);
-
+  LogTrace("Creating and initialize demux context.");
   AVFormatContext* fmt_ctx = NULL;
-  int avsts = avformat_open_input(&fmt_ctx, argv[1], NULL, NULL);
+  avsts = avformat_open_input(&fmt_ctx, filename, NULL, NULL);
   if (0 != avsts) {
-    printf("Error: could not open input file '%s'\n", argv[1]);
-    return 1;
+    fprintf(stderr, "Could not open input file '%s'\n", filename);
+    return FAILURE;
   }
-  if (verbose) printf("Select video stream from demux outputs.\n");
+
+  LogTrace("Selecting video stream from demux outputs.");
   avformat_find_stream_info(fmt_ctx, NULL);
   int stream_index =
       av_find_best_stream(fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
+  LogTrace("stream_index %d.", stream_index);
   AVPacket pkt = {0};
   av_init_packet(&pkt);
-  
-  VplFile* fOutput = nullptr;
-  if (!bshow) {
-    if (verbose) printf("Open Output file 'out_352x288.yuv'.\n");
-    fOutput = vplOpenFile("out_352x288.yuv", "wb");
-  }
 
-  // Loop until demux indicates stream read is done
-  // Note: To simplify code draining of cached frames is omitted.
-  if (verbose) {
-    printf("Enter main decode loop.\n");
-    printf("  If decoder has room read from demux.\n");
-    printf("  Request decoded frame.\n");
-    printf("  Apply custom operation (invert pixel values).\n");
-    printf("  If decoder has data write to output file.\n");
-  }
+  size_t frame_count = 0;
+  Timer timer;
 
-  int frameCount = 0;
-  double elapsedTime = 0.0;
-  while (av_read_frame(fmt_ctx, &pkt) >= 0) {
-    // select video packets to decode
-    if (pkt.stream_index == stream_index) {
-      auto decTimeStart = std::chrono::system_clock::now();
-      vplm_mem* image = decoder.DecodeFrame(pkt.data, pkt.size);
-      auto decTimeEnd = std::chrono::system_clock::now();
-      std::chrono::duration<double> t = decTimeEnd - decTimeStart;
-      elapsedTime += t.count();
-      if (!image) continue;
-      frameCount++;
-      // Access output frame data.  Here each pixel is read,
-      // inverted, and result is written back to the same
-      // location.  This is representative of a variety of
-      // frame processing operations such as inference or
-      // manipulation.
-      {
-        auto invTimeStart = std::chrono::system_clock::now();
-        vplm::cpu::image cpu_image(image, VPLM_ACCESS_MODE_READWRITE);
+  bool decode_done = false;
+  LogTrace("Entering main decode loop");
+  while (!decode_done) {
+    vplm_mem* image = nullptr;
+    size_t bytes_read = 0;
 
-        uint8_t* data = cpu_image.data(0);
-        for (int i = 0; i < cpu_image.buffer_size(); i++) {
-          data[i] = 255 - data[i];
+    switch (decoder.GetState()) {
+      case VPL_STATE_READ_INPUT:
+        // The decoder can accept more data, read it from file and pass it in.
+        timer.Start();
+        avsts = av_read_frame(fmt_ctx, &pkt);
+        if (avsts >= 0) {
+          if (pkt.stream_index == stream_index) {
+            image = decoder.DecodeProcessFrame(pkt.data, pkt.size);
+          }
+        } else {
+          image = decoder.DecodeFrame(nullptr, 0);
         }
-        auto invTimeEnd = std::chrono::system_clock::now();
-        std::chrono::duration<double> t = invTimeEnd - invTimeStart;
-        elapsedTime += t.count();
-      }
+        timer.Stop();
+        break;
 
-      if (bshow) {
-        // If decode resulted in a frame of output, display on screen
-        DisplayOutput(image);
-      } else {    
-        // If decode resulted in a frame of output write it to file
-        vplWriteData(fOutput, image);
-        printf(".");
-        fflush(stdout);        
-      }
+      case VPL_STATE_INPUT_BUFFER_FULL:
+        // The decoder cannot accept more data, call DecodeFrame to drain.
+        timer.Start();
+        image = decoder.DecodeFrame(nullptr, 0);
+        timer.Stop();
+        break;
+
+      case VPL_STATE_END_OF_OPERATION:
+        // The decoder has completed operation, and has no frames left to give.
+        LogTrace("Decode complete");
+        decode_done = true;
+        status = SUCCESS;
+        break;
+
+      case VPL_STATE_ERROR:
+        LogTrace("Error during decode. Exiting.");
+        decode_done = true;
+        status = FAILURE;
+        break;
+    }
+
+    if (image) {
+      InvertImage(image);
+      // DecodeFrame returned a frame, use it.
+      frame_count++;
+      fprintf(stderr, "Frame: %zu\r", frame_count);
+      DisplayFrame(image);
+      // Release the reference to the frame, so the memory can be reclaimed
+      vplm_unref(image);
     }
   }
-
-  if (verbose) printf("\nClose demux context input file '%s'.\n", argv[1]);
+  LogTrace("Close demux context input file.");
   avformat_close_input(&fmt_ctx);
-  if (!bshow) {
-    printf("Output file out_352x288.yuv written, ");
-    printf("containing i420 raw video format ");
-    printf("at the resolution of 352x288.\n");
-    if (verbose) printf("Close output file 'out_352x288.yuv'.\n");
-    vplCloseFile(fOutput); 
-    printf("\nTo view output: \n");
-    printf("\"ffplay -s 352x288 -pix_fmt yuv420p -f rawvideo out_352x288.yuv\".\n");
-  }
 
-  if (verbose) printf("\nDemux, Decode, VPP processing, and image " \
-    "inversion frames per second: %0.2f\n", frameCount / elapsedTime);
+  LogTrace("Frames decoded   : %zu", frame_count);
+  LogTrace("Frames per second: %02f", frame_count / timer.Elapsed());
 
-  return 0;
+  return status;
 }
 
-void DisplayOutput(vplm_mem* img) {
-  cv::Mat img_nv12, img_bgr;
+/// Invert pixel data
+void InvertImage(vplm_mem* image) {
   vplm_cpu_image handle = {0};
   vplm_image_info desc;
-  unsigned char *data;
-
-  // Read image description (width, height, etc) from vpl memory
-  vplm_get_image_info(img, &desc);
-  // Access data in read mode
-  vplm_status err = vplm_map_image(img, VPLM_ACCESS_MODE_READ, &handle);
-
-  // Need to rearrange data because of stride size
-  data = new unsigned char[((desc.height * 3) / 2) * desc.width];
+  vplm_get_image_info(image, &desc);
+  vplm_status err = vplm_map_image(image, VPLM_ACCESS_MODE_READWRITE, &handle);
 
   size_t pitch0 = handle.planes[0].stride;
   size_t pitch1 = handle.planes[1].stride;
-  size_t pitch2 = handle.planes[2].stride;
-  for(size_t y = 0; y < desc.height; y++){
-    memcpy(data + (desc.width * y), handle.planes[0].data + (pitch0 * y), desc.width);
-  }
-  unsigned char * dest_uv_base = &data[desc.width * desc.height];
-  unsigned char * src_u_base = handle.planes[1].data;
-  unsigned char * src_v_base = handle.planes[2].data;
-  for(size_t y = 0; y < desc.height/2; y++){
-    for(size_t x = 0; x < desc.width/2; x++){
-      dest_uv_base[x * 2] = src_u_base[x];
-      dest_uv_base[(x * 2) + 1] = src_v_base[x];
+  for (size_t y = 0; y < desc.height; y++) {
+    for (size_t x = 0; x < desc.width; x++) {
+      int value = handle.planes[0].data[x + (y * pitch0)];
+      value = 255 - value;
+      handle.planes[0].data[x + (y * pitch0)] = value;
     }
-    dest_uv_base += desc.width;
-    src_u_base += pitch1;
-    src_v_base += pitch2;
+  }
+  for (size_t y = 0; y < desc.height / 2; y++) {
+    for (size_t x = 0; x < desc.width; x++) {
+      int value = handle.planes[1].data[x + (y * pitch1)];
+      value = value - 128;
+      value = 128 - value;
+      handle.planes[1].data[x + (y * pitch1)] = value;
+    }
+  }
+  vplm_unmap_image(&handle);
+}
+
+/// Print command line usage
+void PrintUsage(FILE* stream) {
+  fprintf(stream, "Usage: %s FILE\n\n", PROGRAM_NAME);
+  fprintf(stream,
+          "Demux and decode FILE using Intel(R) oneAPI Video Processing "
+          "Library.\n\n"
+          "Then directly manipulate the decoded frame in code"
+          "Demux is done using 3rd party library.\n\n"
+          "FILE must be in H264 format\n\n"
+          "Example:\n"
+          "  %s %s\n",
+          PROGRAM_NAME, "content/cars_1280x720.avi");
+}
+
+/// Render frame to display
+void DisplayFrame(vplm_mem* image) {
+  cv::Mat img_nv12, img_bgra;
+  vplm_cpu_image handle = {0};
+  vplm_image_info desc;
+  unsigned char* data;
+
+  bool have_display = true;
+  static bool first_call = true;
+#ifdef __linux__
+  const char* display = getenv("DISPLAY");
+  if (!display) {
+    if (first_call) LogTrace("Display unavailable, continuing without...");
+    have_display = false;
+  }
+#endif
+
+  // Read image description (width, height, etc) from vpl memory
+  vplm_get_image_info(image, &desc);
+  // Access data in read mode
+  vplm_status err = vplm_map_image(image, VPLM_ACCESS_MODE_READ, &handle);
+
+  // Need to rearrange data because of stride size
+  data = new unsigned char[desc.height * 3 / 2 * desc.width];
+
+  size_t pitch0 = handle.planes[0].stride;
+  size_t pitch1 = handle.planes[1].stride;
+  for (size_t y = 0; y < desc.height; y++) {
+    memcpy(data + (desc.width * y), handle.planes[0].data + (pitch0 * y),
+           desc.width);
+  }
+  for (size_t y = 0; y < desc.height / 2; y++) {
+    memcpy(data + (desc.width * desc.height) + (desc.width * y),
+           handle.planes[1].data + (pitch1 * y), desc.width);
   }
 
-  img_nv12 = cv::Mat(desc.height * 3/2, desc.width, CV_8UC1, data);
+  img_nv12 = cv::Mat(desc.height * 3 / 2, desc.width, CV_8UC1, data);
   // Convert NV12 to BGRA format for displaying with OpenCV
-  cv::cvtColor(img_nv12, img_bgr, cv::COLOR_YUV2BGRA_NV12);
-  cv::imshow("Display decoded output", img_bgr);
+  cv::cvtColor(img_nv12, img_bgra, cv::COLOR_YUV2BGRA_NV12);
+  if (have_display) cv::imshow("Display decoded output", img_bgra);
   cv::waitKey(24);
   vplm_unmap_image(&handle);
   delete data;
-  return;  
+  return;
 }
-/// @endcode
+
+/// Print message to stderr
+void LogTrace(const char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  vfprintf(stderr, fmt, args);
+  fprintf(stderr, "\n");
+  va_end(args);
+}

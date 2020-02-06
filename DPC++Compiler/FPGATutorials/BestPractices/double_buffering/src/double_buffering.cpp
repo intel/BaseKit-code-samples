@@ -31,7 +31,7 @@ class SimpleVpow;
     Only supports pow >= 2.
     This kernel is not meant to be an optimal implementation of the power operation -- it's just a sample kernel for this tutorial whose execution time is easily controlled via the pow parameter.
     SYCL buffers are created externally and passed in by reference to control (external to this function) when the buffers are destructed. 
-    The destructor causes a blocking buffer transfer from device to host and double buffering requires us to not block here (because we need to another kernel).
+    The destructor causes a blocking buffer transfer from device to host and double buffering requires us to not block here (because we need to launch another kernel).
     So we only want this transfer to occur at the end of overall execution, not at the end of each individual kernel execution.
 */
 void simple_pow ( std::unique_ptr<queue> &deviceQueue,
@@ -50,15 +50,6 @@ void simple_pow ( std::unique_ptr<queue> &deviceQueue,
     assert (POW >= 2);
     const int p = POW-1; // Assumes pow >= 2;
 
-    /*
-      Explicitly instruct the SYCL runtime to copy the kernel's output buffer back to the host upon kernel completion.
-      This is not required for functionality since the buffer access in process_output() also implicitly instructs the runtime to copy the data back. But it should be noted that this buffer access 
-      blocks process_output() until the kernel is complete and the data is copied.
-      In contrast, update_host() instructs the runtime to perform the copy earlier. This allows process_output() to optionally perform more useful work *before* making the blocking buffer access.
-      Said another way, this allows process_output() to potentially perform more work in parallel with the runtime's copy operation.
-    */
-    cgh.update_host(accessorB); 
-
     cgh.single_task<class SimpleVpow>([=]() {
       for (int j = 0; j < p; j++) {
         if (j==0) {
@@ -72,6 +63,21 @@ void simple_pow ( std::unique_ptr<queue> &deviceQueue,
         }
       }
     });
+  });
+
+  
+  queue_event = deviceQueue->submit([&](handler& cgh) {
+    auto accessorB = bufferB.template get_access<access::mode::discard_read_write>(cgh);
+
+    /*
+      Explicitly instruct the SYCL runtime to copy the kernel's output buffer back to the host upon kernel completion.
+      This is not required for functionality since the buffer access in process_output() also implicitly instructs the runtime to copy the data back. But it should be noted that this buffer access 
+      blocks process_output() until the kernel is complete and the data is copied.
+      In contrast, update_host() instructs the runtime to perform the copy earlier. This allows process_output() to optionally perform more useful work *before* making the blocking buffer access.
+      Said another way, this allows process_output() to potentially perform more work in parallel with the runtime's copy operation.
+    */
+    cgh.update_host(accessorB); 
+
   });
 
   deviceQueue->throw_asynchronous();

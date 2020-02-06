@@ -136,7 +136,7 @@ PASSED
 `-Xsfmax=300` | the FPGA backend attempts to achieve 300 MHz
 `-Xsfp-relaxed` | allows backend to relax the order of additions 
 `-Xsparallel=2` | uses 2 cores when compiling the bitstream through Quartus
-`-Xsseed=4` | uses seed 4 during Quartus, yields slightly higher fmax
+`-Xsseed=2` | uses seed 2 during Quartus, yields slightly higher fmax
 
 
 ## Performance disclaimers

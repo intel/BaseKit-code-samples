@@ -190,6 +190,7 @@
       <EnableSyclOffload>false</EnableSyclOffload>
       <SYCLWarningLevel>Level3</SYCLWarningLevel>
       <PreprocessorDefinitions>FPGA_EMULATOR;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <EnableFPGACompilationAhead>true</EnableFPGACompilationAhead>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -269,6 +270,8 @@
       <EnableSyclOffload>false</EnableSyclOffload>
       <SYCLWarningLevel>Level3</SYCLWarningLevel>
       <PreprocessorDefinitions>FPGA_EMULATOR;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SYCLOptimization>MaxSpeed</SYCLOptimization>
+      <EnableFPGACompilationAhead>true</EnableFPGACompilationAhead>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

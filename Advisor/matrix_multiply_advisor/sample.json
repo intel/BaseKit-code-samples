@@ -1,7 +1,7 @@
 {
- "name": "Matrix Multiplication - Intel(R) Advisor",
+ "name": "Matrix Multiplication - Intel Advisor",
  "categories": ["Toolkit/Intel® oneAPI Base Toolkit/Advisor"],
- "description": "Simple program that shows how to improve the DPC++ Matrix Multiplication program using VTune Profiler and Advisor.",
+ "description": "Simple program that shows how to improve the DPC++ Matrix Multiplication program using VTune Profiler and Advisor. ",
  "toolchain": ["dpcpp"],
  "dependencies": ["advisor"],
  "languages": [{"cpp": { }}],

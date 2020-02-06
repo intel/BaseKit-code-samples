@@ -81,7 +81,6 @@ cd src
    * Generate HTML optimization reports.
      ```
      ninja report
-     ninja report_registerd
      ```
      Locate the reports in:
      1. `fpga_reg_report.prj/reports/report.html` 

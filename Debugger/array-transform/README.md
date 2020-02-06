@@ -6,7 +6,7 @@ of the debugger.
 
 | Optimized for                   | Description
 |---------------------------------|--------------
-| OS                              | Linux Ubuntu 18.04
+| OS                              | Linux Ubuntu 18.04, Windows 10
 | Hardware                        | Kaby Lake with GEN9 (on GPU) or newer (on CPU)
 | Software                        | Intel&reg; oneAPI DPC++ Compiler (beta) 
 | What you will learn             | Essential debugger features for effective debugging of DPC++ on CPU and GPU
@@ -52,3 +52,27 @@ To clean up:
 ```
 $ make clean
 ```
+
+### On Windows
+
+#### Command line using MSBuild
+
+* `set CL_CONFIG_USE_NATIVE_DEBUGGER=1`
+* `set SYCL_PROGRAM_BUILD_OPTIONS=-g -cl-opt-disable`
+* `MSBuild array-transform.sln /t:Rebuild /p:Configuration="debug"`
+
+#### Visual Studio IDE
+
+* Open Visual Studio 2017 or Visual Studio 2019
+
+* Open in Visual Studio "Tools > Options > Debugging > General" and
+  ensure that "Require source files to exactly match the original
+  version" Debugging option is **not** checked.  
+  ![](vs-debugger-option.png)
+
+* Select Menu "File > Open > Project/Solution", browse to the
+  "array-transform" folder, and select "array-transform.sln".
+
+* Select Menu "Build > Build Solution" to build the selected configuration.
+
+* Select Menu "Debug > Start Debugging" to run the program.

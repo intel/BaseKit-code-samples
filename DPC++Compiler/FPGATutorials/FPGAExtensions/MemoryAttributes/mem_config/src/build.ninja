@@ -15,10 +15,10 @@ rule build_fpga_emu
   command = dpcpp-cl /GX ${emulator_flags} $in -o $out
 
 rule gen_report_1x
-  command = dpcpp ${hardware_flags} -fsycl-link $in -DSINGLEPUMP -o $out
+  command = dpcpp-cl /GX ${hardware_flags} -fsycl-link $in -DSINGLEPUMP -o $out
 
 rule gen_report_2x
-  command = dpcpp ${hardware_flags} -fsycl-link $in -DDOUBLEPUMP -o $out
+  command = dpcpp-cl /GX ${hardware_flags} -fsycl-link $in -DDOUBLEPUMP -o $out
 
 # FPGA emulator 
 build fpga_emu: phony ${emulator_target}
@@ -28,8 +28,7 @@ build ${emulator_target}: build_fpga_emu ${source_file}
 report_target_1x = singlepump_report.a 
 report_target_2x = doublepump_report.a
 
-build report_1x: phony ${report_target_1x}
-build report_2x: phony ${report_target_2x}
+build report: phony ${report_target_1x} ${report_target_2x}
 build ${report_target_1x}: gen_report_1x ${source_file} 
 build ${report_target_2x}: gen_report_2x ${source_file} 
 

@@ -1,5 +1,5 @@
 CXX = dpcpp
-CXXFLAGS = -o
+CXXFLAGS = -g -o
 LDFLAGS = -lOpenCL -lsycl
 EXE_NAME = poly_integral.exe
 SOURCES = src/Polynomial_Integral.cpp

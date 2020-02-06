@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 2.8.11)
+set(CMAKE_C_COMPILER "clang")
+set(CMAKE_CXX_COMPILER "dpcpp")
+project (oneDNN_SYCL_InterOp)
+add_subdirectory ($ENV{DNNLROOT}/examples out)

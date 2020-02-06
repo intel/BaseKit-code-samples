@@ -1,22 +1,22 @@
 # Memory integration
 
-This sample shows how to use VPL memory functions to access output pixel data
+This sample shows how to use oneVPL memory functions to access output pixel data
 for integration into user pipelines.
 
 | Optimized for   | Description
 |---------------- | ----------------------------------------
 | OS              | Ubuntu* 18.04; Windows* 10
 | Hardware        | Intel® Processor Graphics GEN9 or newer
-| Software        | Intel® Video Processing Library
+| Software        | Intel® oneAPI Video Processing Library
 
 ## What You Will Learn
 
 - How to create a workstream
 - How to use a standard FFmpeg API to demux the video stream and connect to the
-  VPL input
+  oneVPL input
 - How to configure the workstream to set the color format and resolution
 - How to create a decode loop
-- How to use VPL memory to process each frame with an algorithm
+- How to use oneVPL memory to process each frame with an algorithm
 - How to output the raw video stream to a file
 
 
@@ -28,7 +28,7 @@ for integration into user pipelines.
 ## Sample Details
 
 This sample is a command line application that takes an AVI container with an
-H.264 stream as an argument, decodes it with the VPL decoder, converts the
+H.264 stream as an argument, decodes it with the oneVPL decoder, converts the
 output to I420 (yuv420p) format with 352x288 resolution, takes those frames and
 performs custom processing (inverting the pixel values), and displays the
 decoded raw frames to the screen. The decoded output can also be written to file
@@ -41,7 +41,6 @@ processing, and pixel inversion loop.
 | Input format      | AVI container with H.264 stream
 | Output format     | I420 (yuv420p)
 | Output resolution | 352x288
-| Output file name  | out_352x288.yuv
 
 ## Build and Run the Sample
 
@@ -95,15 +94,6 @@ included environment variable setup utility: `<install_dir>\setvars.bat`)
 ```
 
 
-### Install a Raw Frame Viewer to Display the Output
-
-The sample can write output raw frames to the local filesystem.  A utility to
-display the output is needed to see the results.  This tutorial assumes FFmpeg,
-which can be quickly installed with 'apt install ffmpeg' in Ubuntu or from
-https://ffmpeg.zeranoe.com/builds for Windows.  Many other raw frame viewers
-would also work.
-
-
 ### Build the Sample
 
 From the directory containing this README:
@@ -127,9 +117,3 @@ The run target runs the sample executable with the argument
 `%VPL_DIR%\samples\content\cars_1280x720.avi` on Windows.
 
 
-## Check the Output
-Only applies if `-o` (write decoded frames to output file) is used.
-```
-ffplay -s 352x288 build/out_352x288.yuv on Linux and
-ffplay -s 352x288 build\out_352x288.yuv on Windows
-```

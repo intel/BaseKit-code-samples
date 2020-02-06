@@ -23,17 +23,29 @@ typedef TYPE array[NUM];
 // kernel being used can be reported when the test is run.
 #define MULTIPLY multiply1
 
-extern void multiply0(int msize, int tidx, int numt, TYPE a[][NUM], TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
-extern void multiply1(int msize, int tidx, int numt, TYPE a[][NUM], TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
-extern void multiply1_1(int msize, int tidx, int numt, TYPE a[][NUM], TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
-extern void multiply1_2(int msize, int tidx, int numt, TYPE a[][NUM], TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
-extern void multiply1_3(int msize, int tidx, int numt, TYPE a[][NUM], TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
-extern void multiply1_4(int msize, int tidx, int numt, TYPE a[][NUM], TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
-extern void multiply2(int msize, int tidx, int numt, TYPE a[][NUM], TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
-extern void multiply2_1(int msize, int tidx, int numt, TYPE a[][NUM], TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
-extern void multiply3(int msize, int tidx, int numt, TYPE a[][NUM], TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
-extern void multiply4(int msize, int tidx, int numt, TYPE a[][NUM], TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
-extern void multiply5(int msize, int tidx, int numt, TYPE a[][NUM], TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
+extern void multiply0(int msize, int tidx, int numt, TYPE a[][NUM],
+                      TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
+extern void multiply1(int msize, int tidx, int numt, TYPE a[][NUM],
+                      TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
+extern void multiply1_1(int msize, int tidx, int numt, TYPE a[][NUM],
+                        TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
+extern void multiply1_2(int msize, int tidx, int numt, TYPE a[][NUM],
+                        TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
+extern void multiply1_3(int msize, int tidx, int numt, TYPE a[][NUM],
+                        TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
+extern void multiply1_4(int msize, int tidx, int numt, TYPE a[][NUM],
+                        TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
+extern void multiply2(int msize, int tidx, int numt, TYPE a[][NUM],
+                      TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
+extern void multiply2_1(int msize, int tidx, int numt, TYPE a[][NUM],
+                        TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
+extern void multiply3(int msize, int tidx, int numt, TYPE a[][NUM],
+                      TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
+extern void multiply4(int msize, int tidx, int numt, TYPE a[][NUM],
+                      TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
+extern void multiply5(int msize, int tidx, int numt, TYPE a[][NUM],
+                      TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
 
-void ParallelMultiply(int msize, TYPE a[][NUM], TYPE b[][NUM], TYPE c[][NUM], TYPE t[][NUM]);
+void ParallelMultiply(int msize, TYPE a[][NUM], TYPE b[][NUM], TYPE c[][NUM],
+                      TYPE t[][NUM]);
 void GetModelParams(int* nthreads, int* msize, int print);

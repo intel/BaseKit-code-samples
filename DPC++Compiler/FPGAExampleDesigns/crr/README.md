@@ -1,5 +1,4 @@
 
-
 # FPGA Example Design: CRR Binomial Tree Model for Option Pricing
 
 | Optimized for                     | Description
@@ -14,7 +13,7 @@ Performance
 
 | CRR                              | Performance Data (see performance disclaimers section below)
 |:---                              |:---
-| SYCL                             | 60 assets/s
+| SYCL                             | 38 assets/s
 
 ## Description
 This sample implements the Cox-Ross-Rubinstein (CRR) binomial tree model that is used in the finance field for American exercise options with five Greeks (delta, gamma, theta, vega and rho). The simple idea is to model all possible assets price paths using a binomial tree. 
@@ -172,11 +171,11 @@ Avg throughput: 60.8 assets/s
 
 Tests document performance of components on a particular test, in specific systems. Differences in hardware, software, or configuration will affect actual performance. Consult other sources of information to evaluate performance as you consider your purchase.  For more complete information about performance and benchmark results, visit [www.intel.com/benchmarks](www.intel.com/benchmarks).
 
-Performance results are based on testing as of October 1, 2019 and may not reflect all publicly available security updates.  See configuration disclosure for details.  No product or component can be absolutely secure.
+Performance results are based on testing as of January 20, 2020 and may not reflect all publicly available security updates.  See configuration disclosure for details.  No product or component can be absolutely secure.
 
 Intel technologies’ features and benefits depend on system configuration and may require enabled hardware, software or service activation. Performance varies depending on system configuration. Check with your system manufacturer or retailer or learn more at [intel.com](www.intel.com).
 
-The performance was measured by Intel on October 1, 2019
+The performance was measured by Intel on January 20, 2020
 
 Intel and the Intel logo are trademarks of Intel Corporation or its subsidiaries in the U.S. and/or other countries.
 

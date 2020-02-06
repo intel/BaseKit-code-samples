@@ -1,5 +1,5 @@
 CXX = dpcpp
-CXXFLAGS = -o
+CXXFLAGS = -g -o
 LDFLAGS = -lOpenCL -lsycl
 EXE_NAME = projectile_range.exe
 SOURCES = src/Projectile_range.cpp

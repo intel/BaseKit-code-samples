@@ -142,23 +142,27 @@ int main() {
     auto input_buf = buffer<uint32_t>(range<1>(INIT_NUM_INPUTS));
     auto output_buf = buffer<uint32_t>(range<1>(NUM_OUTPUTS));
 
-    // Get host-side accessors to the SYCL buffers
-    auto _input_host = input_buf.template get_access<access::mode::write>();
-    // Initialize random input
     srand(INIT_SEED);
-    for (int i = 0; i < INIT_NUM_INPUTS; ++i) {
-      _input_host[i] = rand();
-    }  
 
     // Compute the reference solution
     uint32_t gold[NUM_OUTPUTS];
-    for (int b = 0; b < NUM_OUTPUTS; ++b) {
-      gold[b] = 0;
-    }
-    for (int i = 0; i < INIT_NUM_INPUTS; ++i) {
-      int b = _input_host[i] % NUM_OUTPUTS;
-      gold[b]++;
-    }
+
+    {
+      // Get host-side accessors to the SYCL buffers
+      auto _input_host = input_buf.template get_access<access::mode::write>();
+      // Initialize random input
+      for (int i = 0; i < INIT_NUM_INPUTS; ++i) {
+        _input_host[i] = rand();
+      }  
+
+      for (int b = 0; b < NUM_OUTPUTS; ++b) {
+        gold[b] = 0;
+      }
+      for (int i = 0; i < INIT_NUM_INPUTS; ++i) {
+        int b = _input_host[i] % NUM_OUTPUTS;
+        gold[b]++;
+      }
+    } // Host accessor goes out-of-scope and is destructed. This is required in order to unblock the kernel's subsequent accessor to the same buffer.
 
     for (int i=0;i<NUM_RUNS;i++) {
       

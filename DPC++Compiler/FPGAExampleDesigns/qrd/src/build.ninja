@@ -7,7 +7,7 @@ emulator_target = ${target_name}.fpga_emu.exe
 cpu_host_target = ${target_name}.cpu_host.exe
 report_target = ${target_name}.a
 
-hardware_flags = -fintelfpga -Xshardware -Xsno-accessor-aliasing -Xsfmax=300 -Xsfp-relaxed -Xsparallel=2 -Xsseed=4
+hardware_flags = -fintelfpga -Xshardware -Xsno-accessor-aliasing -Xsfmax=300 -Xsfp-relaxed -Xsparallel=2 -Xsseed=2
 emulator_flags = -fintelfpga -DFPGA_EMULATOR
 cpu_host_flags = -DCPU_HOST
 

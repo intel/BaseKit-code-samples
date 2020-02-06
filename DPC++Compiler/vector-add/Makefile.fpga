@@ -1,4 +1,5 @@
 CXX := dpcpp
+CXXFLAGS = -O2 -g
 SRC := src/vector-add.cpp
 
 .PHONY: fpga_emu run_emu clean 

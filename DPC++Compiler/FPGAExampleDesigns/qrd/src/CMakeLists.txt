@@ -9,7 +9,9 @@ set(FPGA_TARGET ${TARGET_NAME}.fpga)
 set(REPORTS_TARGET ${TARGET_NAME}_report) 
 
 set(HARDWARE_COMPILE_FLAGS -fintelfpga -c)
-set(HARDWARE_LINK_FLAGS -fintelfpga -Xshardware -Xsno-accessor-aliasing -Xsfmax=300 -Xsfp-relaxed -Xsparallel=2 -Xsseed=4)
+
+# use cmake -D USER_HARDWARE_FLAGS=<flags> to set extra flags for FPGA backend compilation
+set(HARDWARE_LINK_FLAGS -fintelfpga -Xshardware -Xsno-accessor-aliasing -Xsfmax=300 -Xsfp-relaxed -Xsparallel=2 -Xsseed=2 ${USER_HARDWARE_FLAGS})
 set(FINAL_LINK_FLAGS -fintelfpga)
 
 set(EMULATOR_COMPILE_FLAGS "-fintelfpga -DFPGA_EMULATOR")

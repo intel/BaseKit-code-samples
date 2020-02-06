@@ -1,13 +1,13 @@
 # Decode with video post-processing
 
 This sample shows how to select a color format and output resolution when
-decoding with VPL.
+decoding with oneVPL.
 
 | Optimized for   | Description
 |---------------- | ----------------------------------------
 | OS              | Ubuntu* 18.04; Windows* 10
 | Hardware        | Intel® Processor Graphics GEN9 or newer
-| Software        | Intel® Video Processing Library
+| Software        | Intel® oneAPI Video Processing Library
 
 ## What You Will Learn
 
@@ -25,7 +25,7 @@ decoding with VPL.
 ## Sample Details
 
 This sample is a command line application that takes a file containing an H.264
-video elementary stream as an argument, decodes it with the VPL decoder,
+video elementary stream as an argument, decodes it with the oneVPL decoder,
 converts the output to BGRA format with 352x288 resolution, and displays decoded
 raw frames to the screen. The decoded output can also be written to file
 `out_352x288.rgba`. If there is a difference between input and output format
@@ -41,7 +41,6 @@ The printed frame rate is measured over the decode and VPP processing.
 | Input format      | H.264 video elementary stream
 | Output format     | BGRA
 | Output resolution | 352x288
-| Output file name  | out_352x288.rgba
 
 
 ## Build and Run the Sample
@@ -96,16 +95,6 @@ included environment variable setup utility: `<install_dir>\setvars.bat`)
 <install_dir>\setvars.bat
 ```
 
-
-### Install a Raw Frame Viewer to Display the Output
-
-The sample can write output raw frames to the local filesystem.  A utility to
-display the output is needed to see the results.  This tutorial assumes FFmpeg,
-which can be quickly installed with 'apt install ffmpeg' in Ubuntu or from
-https://ffmpeg.zeranoe.com/builds for Windows.  Many other raw frame viewers
-would also work.
-
-
 ### Build the Sample
 
 From the directory containing this README:
@@ -127,14 +116,6 @@ cmake --build build --target run
 The run target runs the sample executable with the argument
 `$VPL_DIR/samples/content/cars_1280x720.h264` on Linux and
 `%VPL_DIR%\samples\content\cars_1280x720.h264` on Windows.
-
-
-## Check the Output
-Only applies if `-o` (write decoded frames to output file) is used.
-```
-ffplay -s 352x288 -pix_fmt bgra -f rawvideo build/out_352x288.rgba on Linux and
-ffplay -s 352x288 -pix_fmt bgra -f rawvideo build\out_352x288.rgba on Windows
-```
 
 ___
 ***NOTE***

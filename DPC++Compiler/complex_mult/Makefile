@@ -1,5 +1,5 @@
 CXX = dpcpp
-CXXFLAGS = -o
+CXXFLAGS = -g -o
 LDFLAGS = -lOpenCL -lsycl
 EXE_NAME = complex_mult.exe
 SOURCES = src/complex_mult.cpp

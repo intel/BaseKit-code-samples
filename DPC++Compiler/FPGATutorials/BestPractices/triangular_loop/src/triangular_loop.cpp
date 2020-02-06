@@ -141,22 +141,25 @@ int main() {
     // Create input and output buffers
     auto input_buf = buffer<uint32_t>(range<1>(SIZE));
     auto output_buf = buffer<uint32_t>(range<1>(SIZE));
-
-    // Get host-side accessors to the SYCL buffers
-    auto _input_host = input_buf.template get_access<access::mode::write>();
-    
-    // Initialize random input
+  
     srand(INIT_SEED);
-
-    for (int i = 0; i < SIZE; ++i) {
-      _input_host[i] = rand() % 256;
-    }  
 
     // Compute the reference solution
     uint32_t gold[SIZE];
-    for (int i = 0; i < SIZE; ++i) {
-      gold[i] = _input_host[i];
-    }  
+
+    {
+      // Get host-side accessors to the SYCL buffers.
+      auto _input_host = input_buf.template get_access<access::mode::write>();      
+      // Initialize random input
+      for (int i = 0; i < SIZE; ++i) {
+        _input_host[i] = rand() % 256;
+      }  
+
+      for (int i = 0; i < SIZE; ++i) {
+        gold[i] = _input_host[i];
+      }
+    }  // Host accessor goes out-of-scope and is destructed. This is required in order to unblock the kernel's subsequent accessor to the same buffer.
+
     for (int x = 0; x < SIZE; x++) {
       for (int y = x + 1; y < SIZE; y++) {
         gold[y] += something_complicated(gold[x]);

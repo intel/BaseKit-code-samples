@@ -25,7 +25,6 @@
 // This agreement shall be governed in all respects by the laws of the State of California and
 // by the laws of the United States of America.
 
-#include <stdlib.h>
 #include "CompareGzip.h"
 
 // returns 0 on success, otherwise failure 
