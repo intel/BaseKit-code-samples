@@ -72,7 +72,8 @@ void simple_pow ( std::unique_ptr<queue> &deviceQueue,
     });
   });
 
-  queue_event = deviceQueue->submit([&](handler& cgh) {
+  event update_host_event;
+  update_host_event = deviceQueue->submit([&](handler& cgh) {
 
     auto accessorB = bufferB.template get_access<access::mode::discard_read_write>(cgh);
 

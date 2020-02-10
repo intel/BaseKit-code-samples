@@ -65,8 +65,8 @@ void simple_pow ( std::unique_ptr<queue> &deviceQueue,
     });
   });
 
-  
-  queue_event = deviceQueue->submit([&](handler& cgh) {
+  event update_host_event;
+  update_host_event = deviceQueue->submit([&](handler& cgh) {
     auto accessorB = bufferB.template get_access<access::mode::discard_read_write>(cgh);
 
     /*
@@ -235,6 +235,7 @@ int main() {
         // Process input for first 2 kernel launches and queue them. Then block on processing the output of the first kernel.
         process_input(input_buf[0]);
         process_input(input_buf[1]);
+        std::cout << "Launching kernel #0" << std::endl; 
         simple_pow(device_queue, input_buf[0], output_buf[0], sycl_events[0]);
         for (int i=1; i < TIMES; i++) {
           if (i%10 == 0) { std::cout << "Launching kernel #" << i << std::endl; } // Only print every few iterations, just to limit the prints.
