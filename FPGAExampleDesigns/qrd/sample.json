@@ -1,0 +1,11 @@
+{
+  "name": "FPGA example design: QR decomposition",
+  "categories": ["Toolkit/Intel® oneAPI Base Toolkit/FPGA/Example Designs"],
+  "description": "Example design demonstrating high-performance QR decomposition of matrices",
+  "toolchain": ["dpcpp"],
+  "os": ["linux", "windows"],
+  "builder": ["ide", "cmake"],
+  "targetDevice": ["FPGA"],
+  "languages": [{"cpp":{}}],
+  "altindex":true
+}

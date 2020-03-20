@@ -1,0 +1,10 @@
+{
+  "name": "FPGA tutorial: pipe_array",
+  "categories": ["Toolkit/Intel® oneAPI Base Toolkit/FPGA/Tutorials"],
+  "description": "Tutorial design to demonstrate usage of pipes",
+  "toolchain": ["dpcpp"],
+  "os": ["linux", "windows"],
+  "targetDevice": ["FPGA"],
+  "builder": ["ide", "cmake"],
+  "languages": [{"cpp":{}}]
+}

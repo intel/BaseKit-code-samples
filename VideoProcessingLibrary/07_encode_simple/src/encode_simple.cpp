@@ -73,8 +73,8 @@ int main(int argc, char* argv[]) {
 ////////////////////////////////////////////////////////////////////////////////
 int EncodeFile(const char* input, int width, int height, std::ofstream& dest) {
   int status = FAILURE;
-  LogTrace("Creating H.264 encoder using default device (GPU if available)");
-  vpl::Workstream encoder(VPL_TARGET_DEVICE_DEFAULT, VPL_WORKSTREAM_ENCODE);
+  LogTrace("Creating H.264 encoder using Gen GPU ");
+  vpl::Workstream encoder(VPL_TARGET_DEVICE_GPU_GEN, VPL_WORKSTREAM_ENCODE);
   encoder.SetConfig(VPL_PROP_DST_BITSTREAM_FORMAT, VPL_FOURCC_H264);
   VplVideoSurfaceResolution srcResolution = {0};
   srcResolution.height = height;
@@ -112,6 +112,7 @@ int EncodeFile(const char* input, int width, int height, std::ofstream& dest) {
           frame_count++;
           fprintf(stderr, "Frame: %zu\r", frame_count);
           timer.Start();
+          vplm_ref(raw_image);
           encoded_bytes = encoder.EncodeFrame(raw_image, &enc_buffer[0]);
           timer.Stop();
         } else {

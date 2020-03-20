@@ -67,12 +67,12 @@ endif()
 
 message(STATUS "Check for presence of OpenCV library")
 if(WIN32)
-  find_library(VPL_OPENCV_DEBUG_LIB opencv_world opencv_world412d
+  find_library(VPL_OPENCV_DEBUG_LIB opencv_world opencv_world420d
                HINTS $ENV{VPLLIB})
-  find_library(VPL_OPENCV_LIB opencv_world opencv_world412 HINTS $ENV{VPLLIB})
+  find_library(VPL_OPENCV_LIB opencv_world opencv_world420 HINTS $ENV{VPLLIB})
 else()
-  find_library(VPL_OPENCV_LIB opencv_world opencv_world412 HINTS $ENV{VPLLIB})
-  find_library(VPL_OPENCV_DEBUG_LIB opencv_world opencv_world412
+  find_library(VPL_OPENCV_LIB opencv_world opencv_world420 HINTS $ENV{VPLLIB})
+  find_library(VPL_OPENCV_DEBUG_LIB opencv_world opencv_world420
                HINTS $ENV{VPLLIB})
 endif()
 if(NOT VPL_OPENCV_LIB OR NOT VPL_OPENCV_DEBUG_LIB)

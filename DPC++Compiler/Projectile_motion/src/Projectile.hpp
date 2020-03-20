@@ -12,50 +12,51 @@ using namespace std;
 // Projectile class
 class Projectile {
  private:
-  float m_angle;
-  float m_velocity;
-  float m_range;
-  float m_totalTime;
-  float m_maxHeight;
+  float m_angle_;
+  float m_velocity_;
+  float m_range_;
+  float m_totalTime_;
+  float m_maxHeight_;
 
  public:
   Projectile() {
-    m_angle = 0;
-    m_velocity = 0;
-    m_range = 0;
-    m_totalTime = 0;
-    m_maxHeight = 0;
+    m_angle_ = 0;
+    m_velocity_ = 0;
+    m_range_ = 0;
+    m_totalTime_ = 0;
+    m_maxHeight_ = 0;
   }
 
-  Projectile(float angles, float velocitys, float r, float t, float m) {
-    m_angle = angles;
-    m_velocity = velocitys;
-    m_range = r;
-    m_totalTime = t;
-    m_maxHeight = m;
+  Projectile(float angle, float velocity, float range, float time,
+             float maxheight) {
+    m_angle_ = angle;
+    m_velocity_ = velocity;
+    m_range_ = range;
+    m_totalTime_ = time;
+    m_maxHeight_ = maxheight;
   }
 
-  float getangle() const { return m_angle; }
-  float getvelocity() const { return m_velocity; }
+  float getangle() const { return m_angle_; }
+  float getvelocity() const { return m_velocity_; }
   // Set the Range and total flight time
   void setRangeandTime(float frange, float ttime, float angle_s,
                        float velocity_s, float height_s) {
-    m_range = frange;
-    m_totalTime = ttime;
-    m_angle = angle_s;
-    m_velocity = velocity_s;
-    m_maxHeight = height_s;
+    m_range_ = frange;
+    m_totalTime_ = ttime;
+    m_angle_ = angle_s;
+    m_velocity_ = velocity_s;
+    m_maxHeight_ = height_s;
   }
-  float getRange() const { return m_range; }
+  float getRange() const { return m_range_; }
 
-  float gettotalTime() const { return m_totalTime; }
+  float gettotalTime() const { return m_totalTime_; }
 
-  float getmaxHeight() const { return m_maxHeight; }
+  float getmaxHeight() const { return m_maxHeight_; }
   // Overloaded == operator to compare two projectile objects
-  friend bool operator==(const Projectile& a, const Projectile& b) {
-    return (a.m_angle == b.m_angle) && (a.m_velocity == b.m_velocity) &&
-           (a.m_range == b.m_range) && (a.m_totalTime == b.m_totalTime) &&
-           (a.m_maxHeight == b.m_maxHeight);
+  friend bool operator!=(const Projectile& a, const Projectile& b) {
+    return (a.m_angle_ != b.m_angle_) || (a.m_velocity_ != b.m_velocity_) ||
+           (a.m_range_ != b.m_range_) || (a.m_totalTime_ != b.m_totalTime_) ||
+           (a.m_maxHeight_ != b.m_maxHeight_);
   }
   // Ostream operator overloaded to display a projectile object
   friend ostream& operator<<(ostream& out, const Projectile& obj) {

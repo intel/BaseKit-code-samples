@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.902
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vector-add", "vector-add.vcxproj", "{B72444E1-2797-4CA5-8A2D-DCE79CF4D0BA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug-fpga|x64 = Debug-fpga|x64
+		Release|x64 = Release|x64
+		Release-fpga|x64 = Release-fpga|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B72444E1-2797-4CA5-8A2D-DCE79CF4D0BA}.Debug|x64.ActiveCfg = Debug|x64
+		{B72444E1-2797-4CA5-8A2D-DCE79CF4D0BA}.Debug|x64.Build.0 = Debug|x64
+		{B72444E1-2797-4CA5-8A2D-DCE79CF4D0BA}.Debug-fpga|x64.ActiveCfg = Debug-fpga|x64
+		{B72444E1-2797-4CA5-8A2D-DCE79CF4D0BA}.Debug-fpga|x64.Build.0 = Debug-fpga|x64
+		{B72444E1-2797-4CA5-8A2D-DCE79CF4D0BA}.Release|x64.ActiveCfg = Release|x64
+		{B72444E1-2797-4CA5-8A2D-DCE79CF4D0BA}.Release|x64.Build.0 = Release|x64
+		{B72444E1-2797-4CA5-8A2D-DCE79CF4D0BA}.Release-fpga|x64.ActiveCfg = Release-fpga|x64
+		{B72444E1-2797-4CA5-8A2D-DCE79CF4D0BA}.Release-fpga|x64.Build.0 = Release-fpga|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {91A2979F-0CD0-45D0-B8AB-D9B8D8781942}
+	EndGlobalSection
+EndGlobal

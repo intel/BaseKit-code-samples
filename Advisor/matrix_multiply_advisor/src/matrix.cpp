@@ -4,34 +4,20 @@
 // SPDX-License-Identifier: MIT
 // =============================================================
 
-#ifdef WIN32
-#include <time.h>
-#include <windows.h>
-#else
-#include <pthread.h>
-#include <stdlib.h>
-#include <sys/time.h>
-#ifdef ICC  // The ICC is defined (by default) for enabling Intel Compiler
-            // specific headers and calls
-#include <immintrin.h>
-#endif
-#endif
-
 #include <malloc.h>
-#include <stdio.h>
+#include <chrono>
+#include <iostream>
 
-#include "multiply.h"
+#include "multiply.hpp"
 
 typedef unsigned long long UINT64;
+#define xstr(s) x_str(s)
+#define x_str(s) #s
 
-double TRIP_COUNT = (double)NUM * (double)NUM * (double)NUM;
-int FLOP_PER_ITERATION = 2;  // basic matrix multiplication
-
-extern int getCPUCount();
-extern double getCPUFreq();
+using namespace std;
 
 // routine to initialize an array with data
-void init_arr(TYPE row, TYPE col, TYPE off, TYPE a[][NUM]) {
+void InitArr(TYPE row, TYPE col, TYPE off, TYPE a[][NUM]) {
   int i, j;
 
   for (i = 0; i < NUM; i++) {
@@ -42,173 +28,75 @@ void init_arr(TYPE row, TYPE col, TYPE off, TYPE a[][NUM]) {
 }
 
 // routine to print out contents of small arrays
-void print_arr(char *name, TYPE array[][NUM]) {
+void PrintArr(char *name, TYPE Array[][NUM]) {
   int i, j;
 
-  printf("\n%s\n", name);
+  cout << "\n"<<name<<"\n";
+
   for (i = 0; i < NUM; i++) {
     for (j = 0; j < NUM; j++) {
-      printf("%g\t", array[i][j]);
+	  cout << Array[i][j] << "\t";
+
     }
-    printf("\n");
-    fflush(stdout);
+	cout << endl;
+
   }
 }
 
 int main() {
-#ifdef WIN32
-  clock_t start = 0.0, stop = 0.0;
-#else  // Pthreads
-  double start = 0.0, stop = 0.0;
-  struct timeval before, after;
-#endif
-  double secs;
-  double flops;
-  double mflops;
+	
 
   char *buf1, *buf2, *buf3, *buf4;
   char *addr1, *addr2, *addr3, *addr4;
-  array *a, *b, *c, *t;
+  Array *a, *b, *c, *t;
   int Offset_Addr1 = 128, Offset_Addr2 = 192, Offset_Addr3 = 0,
       Offset_Addr4 = 64;
 
 // malloc arrays space
-// Define ALIGNED in the preprocessor
-// Also add '/Oa' for Windows and '-fno-alias' for Linux
-#ifdef ALIGNED
 
-#ifdef WIN32
-#ifdef ICC
-  buf1 = _mm_malloc((sizeof(double)) * NUM * NUM, 64);
-  buf2 = _mm_malloc((sizeof(double)) * NUM * NUM, 64);
-  buf3 = _mm_malloc((sizeof(double)) * NUM * NUM, 64);
-  buf4 = _mm_malloc((sizeof(double)) * NUM * NUM, 64);
-#else
-  buf1 = _aligned_malloc((sizeof(double)) * NUM * NUM, 64);
-  buf2 = _aligned_malloc((sizeof(double)) * NUM * NUM, 64);
-  buf3 = _aligned_malloc((sizeof(double)) * NUM * NUM, 64);
-  buf4 = _aligned_malloc((sizeof(double)) * NUM * NUM, 64);
-#endif  // ICC
-#else   // WIN32
-  buf1 = _mm_malloc((sizeof(double)) * NUM * NUM, 64);
-  buf2 = _mm_malloc((sizeof(double)) * NUM * NUM, 64);
-  buf3 = _mm_malloc((sizeof(double)) * NUM * NUM, 64);
-  buf4 = _mm_malloc((sizeof(double)) * NUM * NUM, 64);
-#endif  // WIN32
-  addr1 = buf1;
-  addr2 = buf2;
-  addr3 = buf3;
-  addr4 = buf4;
-
-#else  //! ALIGNED
   buf1 = (char *)malloc(NUM * NUM * (sizeof(double)) + 1024);
-  printf("Addr of buf1 = %p\n", buf1);
-  fflush(stdout);
+  cout << "Address of buf1 = " << (void*)buf1 << endl;
   addr1 = buf1 + 256 - ((UINT64)buf1 % 256) + (UINT64)Offset_Addr1;
-  printf("Offs of buf1 = %p\n", addr1);
-  fflush(stdout);
+  cout << "Offset of buf1 = " << (void*)addr1 << endl;
 
   buf2 = (char *)malloc(NUM * NUM * (sizeof(double)) + 1024);
-  printf("Addr of buf2 = %p\n", buf2);
-  fflush(stdout);
+  cout << "Address of buf2 = " << (void*)buf2 << endl;
   addr2 = buf2 + 256 - ((UINT64)buf2 % 256) + (UINT64)Offset_Addr2;
-  printf("Offs of buf2 = %p\n", addr2);
-  fflush(stdout);
+  cout << "Offset of buf2 = " << (void*)addr2 << endl;
 
   buf3 = (char *)malloc(NUM * NUM * (sizeof(double)) + 1024);
-  printf("Addr of buf3 = %p\n", buf3);
-  fflush(stdout);
+  cout << "Address of buf3 = " << (void*)buf3 << endl;
   addr3 = buf3 + 256 - ((UINT64)buf3 % 256) + (UINT64)Offset_Addr3;
-  printf("Offs of buf3 = %p\n", addr3);
-  fflush(stdout);
+  cout << "Offset of buf3 = " << (void*)addr3 << endl;
 
   buf4 = (char *)malloc(NUM * NUM * (sizeof(double)) + 1024);
-  printf("Addr of buf4 = %p\n", buf4);
-  fflush(stdout);
+  cout << "Address of buf4 = " << (void*)buf4 << endl;
   addr4 = buf4 + 256 - ((UINT64)buf4 % 256) + (UINT64)Offset_Addr4;
-  printf("Offs of buf4 = %p\n", addr4);
-  fflush(stdout);
+  cout << "Offset of buf4 = " << (void*)addr4 << endl;
 
-#endif  // ALIGNED
-
-  a = (array *)addr1;
-  b = (array *)addr2;
-  c = (array *)addr3;
-  t = (array *)addr4;
+  a = (Array *)addr1;
+  b = (Array *)addr2;
+  c = (Array *)addr3;
+  t = (Array *)addr4;
 
   // initialize the arrays with data
-  init_arr(3, -2, 1, a);
-  init_arr(-2, 1, 3, b);
-  // Printing model parameters
-  GetModelParams(0, 0, 1);
+  InitArr(3, -2, 1, a);
+  InitArr(-2, 1, 3, b);
 
-// start timing the matrix multiply code
-#ifdef WIN32
-  start = clock();
-#else
-#ifdef ICC
-  start = (double)_rdtsc();
-#else
-  gettimeofday(&before, NULL);
-#endif
-#endif
+  cout << "Using multiply kernel: "<<  xstr(MULTIPLY)<< "\n";
 
+  // start timing the matrix multiply code
+  auto start = std::chrono::steady_clock::now();
   ParallelMultiply(NUM, a, b, c, t);
+  auto end = std::chrono::steady_clock::now();
 
-#ifdef WIN32
-  stop = clock();
-  secs = ((double)(stop - start)) / CLOCKS_PER_SEC;
-#else
-#ifdef ICC
-  stop = (double)_rdtsc();
-  secs = ((double)(stop - start)) / (double)getCPUFreq();
-#else
-  gettimeofday(&after, NULL);
-  secs = (after.tv_sec - before.tv_sec) +
-         (after.tv_usec - before.tv_usec) / 1000000.0;
-#endif
-#endif
-
-  flops = TRIP_COUNT * FLOP_PER_ITERATION;
-  mflops = flops / 1000000.0f / secs;
-  printf("Execution time = %2.3lf seconds\n", secs);
-  fflush(stdout);
-  // printf("MFLOPS: %2.3f mflops\n", mflops);
-
-  // print simple test case of data to be sure multiplication is correct
-  if (NUM < 5) {
-    print_arr("a", a);
-    fflush(stdout);
-    print_arr("b", b);
-    fflush(stdout);
-    print_arr("c", c);
-    fflush(stdout);
-  }
+  std::chrono::duration<double> elapsed_seconds = end-start;
+  cout << "Elapsed Time: " << elapsed_seconds.count() << "s\n";
 
   // free memory
-#ifdef ALIGNED
-#ifdef WIN32
-#ifdef ICC
-  _mm_free(buf1);
-  _mm_free(buf2);
-  _mm_free(buf3);
-  _mm_free(buf4);
-#else
-  _aligned_free(buf1);
-  _aligned_free(buf2);
-  _aligned_free(buf3);
-  _aligned_free(buf4);
-#endif  // ICC
-#else   // ICC or GCC Linux
-  _mm_free(buf1);
-  _mm_free(buf2);
-  _mm_free(buf3);
-  _mm_free(buf4);
-#endif  // WIN32
-#else   // ALIGNED
   free(buf1);
   free(buf2);
   free(buf3);
   free(buf4);
-#endif  // ALIGNED
+
 }

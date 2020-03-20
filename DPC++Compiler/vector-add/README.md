@@ -35,6 +35,26 @@ Perform the following steps:
     ```
     make clean 
 
+### On a Windows* System Using a Command Line Interface
+1. Select **Programs** > **Intel oneAPI 2021** > **Intel oneAPI Command Prompt** to launch a command window.
+2. Build the program using the following `nmake` commands:
+   ``` 
+   nmake -f Makefile.win clean
+   nmake -f Makefile.win
+   nmake -f Makefile.win run
+   ```
+		
+
+### On a Windows* System Using Visual Studio* Version 2017 or Newer
+Perform the following steps:
+1. Launch the Visual Studio* 2017.
+2. Select the menu sequence **File** > **Open** > **Project/Solution**. 
+3. Locate the `vector-add` folder.
+4. Select the `vector-add.sln` file.
+5. Select the configuration 'Debug' or 'Release'  
+6. Select **Project** > **Build** menu option to build the selected configuration.
+7. Select **Debug** > **Start Without Debugging** menu option to run the program.
+
 ## Building the `vector-add` Program for Intel(R) FPGA
 
 ### On a Linux* System
@@ -78,7 +98,6 @@ Perform the following steps:
 		
 ### On a Windows* System Using Visual Studio* Version 2017 or Newer
 Perform the following steps:
-  
 1. Launch the Visual Studio* 2017.
 2. Select the menu sequence **File** > **Open** > **Project/Solution**. 
 3. Locate the `vector-add` folder.

@@ -1,194 +1,168 @@
 //==============================================================
-// Copyright © 2019 Intel Corporation
+// Copyright © 2020 Intel Corporation
 //
 // SPDX-License-Identifier: MIT
 // =============================================================
-
 #include <CL/sycl.hpp>
+#if defined(FPGA) || defined(FPGA_EMULATOR)
 #include <CL/sycl/intel/fpga_extensions.hpp>
+#endif
 #include <array>
 #include <iostream>
 
 using namespace cl::sycl;
 
-// This is the class used to name the kernel for the runtime.
-// This must be done when the kernel is expressed as a lambda.
-class ArrayAdd;
-
-// Convience access definitions
+// Convience data access definitions
 constexpr access::mode dp_read = access::mode::read;
 constexpr access::mode dp_write = access::mode::write;
 
-// Problem size for this example
+// ARRAY type & data size for use in this example
 constexpr size_t array_size = 10000;
+typedef std::array<int, array_size> IntArray;
 
-// Define the ARRAY type for use in this example
-typedef std::array<cl::sycl::cl_int, array_size> IntArray;
+// output message for runtime exceptions
+#define EXCEPTION_MSG \
+  "    If you are targeting an FPGA hardware, please ensure that an FPGA board is plugged to the system, \n\
+        set up correctly and compile with -DFPGA  \n\
+    If you are targeting the FPGA emulator, compile with -DFPGA_EMULATOR.\n"
 
-//
-// Initialize the @param a of size array_size with consecutive
-// elements from 0 to array_size-1
-//
+//************************************
+// Function description: initialize the array from 0 to array_size-1
+//************************************
 void initialize_array(IntArray &a) {
-	for (size_t i = 0; i < a.size(); i++) {
-		a[i] = i;  // Initializing to the index
-	}
+  for (size_t i = 0; i < a.size(); i++) a[i] = i;
 }
 
-//
-// Computes the sum of two arrays in scalar with a simple loop.
-//
-void add_arrays_scalar(IntArray &sum, const IntArray &addend_1,
-	const IntArray &addend_2) {
-	for (size_t i = 0; i < sum.size(); i++) {
-		sum[i] = addend_1[i] + addend_2[i];
-	}
-}
-
-//
-// Select the device and allocate the queue
-//
-std::unique_ptr<queue> initialize_device_queue() {
-	// DPC++ model: A host is connected to OpenCL devices
-	// Selectors are used to choose devices to be used
-	// FPGA emulator and FPGA hardware devices can be targetted explicity
-	// The default selector will choose the most performant device
-	// Ex: It will use an accelerator if it can find one
-
-	// including an async exception handler
-	auto ehandler = [](cl::sycl::exception_list exceptionList) {
-		for (std::exception_ptr const &e : exceptionList) {
-			try {
-				std::rethrow_exception(e);
-			}
-			catch (cl::sycl::exception const &e) {
-				std::cout << "fail" << std::endl;
-				// std::terminate() will exit the process, return non-zero, and output a
-				// message to the user about the exception
-				std::terminate();
-			}
-		}
-	};
-
-	// FPGA device selector:  Emulator or Hardware
+//************************************
+// Function description: create a device queue with the default selector or
+// explicit FPGA selector when FPGA macro is defined
+//    return: DPC++ queue object
+//************************************
+queue create_device_queue() {
+  // create device selector for the device of your interest
 #ifdef FPGA_EMULATOR
-	intel::fpga_emulator_selector device_selector;
+  // DPC++ extension: FPGA emulator selector on systems without FPGA card
+  intel::fpga_emulator_selector dselector;
 #elif defined(FPGA)
-	intel::fpga_selector device_selector;
+  // DPC++ extension: FPGA selector on systems with FPGA card
+  intel::fpga_selector dselector;
 #else
-  // Initializing the devices queue with the default selector
-  // The device queue is used to enqueue the kernels and encapsulates
-  // all the states needed for execution
-	default_selector device_selector;
+  // the default device selector: it will select the most performant device
+  // available at runtime.
+  default_selector dselector;
 #endif
 
-	std::unique_ptr<queue> q;
+  // create an async exception handler so the program fails more gracefully.
+  auto ehandler = [](cl::sycl::exception_list exceptionList) {
+    for (std::exception_ptr const &e : exceptionList) {
+      try {
+        std::rethrow_exception(e);
+      } catch (cl::sycl::exception const &e) {
+        std::cout << "Caught an asynchronous DPC++ exception, terminating the "
+                     "program."
+                  << std::endl;
+        std::cout << EXCEPTION_MSG;
+        std::terminate();
+      }
+    }
+  };
 
-	// Catch device selector runtime error
-	try {
-		q.reset(new queue(device_selector, ehandler));
-	}
-	catch (cl::sycl::exception const &e) {
-		std::cout << "Caught a synchronous DPC++ exception:" << std::endl
-			<< e.what() << std::endl;
-		std::cout << "If you are targeting an FPGA hardware, please "
-			"ensure that your system is plugged to an FPGA board that is "
-			"set up correctly and compile with -DFPGA"
-			<< std::endl;
-		std::cout << "If you are targeting the FPGA emulator, compile with "
-			"-DFPGA_EMULATOR."
-			<< std::endl;
-		std::terminate();
-	}
+  try {
+    // create the devices queue with the selector above and the exception
+    // handler to catch async runtime errors the device queue is used to enqueue
+    // the kernels and encapsulates all the states needed for execution
+    queue q(dselector, ehandler);
 
-	std::cout << "Device: " << q->get_device().get_info<info::device::name>()
-		<< std::endl;
-
-	return q;
+    return q;
+  } catch (cl::sycl::exception const &e) {
+    // catch the exception from devices that are not supported.
+    std::cout << "An exception is caught when creating a device queue."
+              << std::endl;
+    std::cout << EXCEPTION_MSG;
+    std::terminate();
+  }
 }
 
-//
-// Computes the sum of two arrays in parallel using DPC++.
-//
-void add_arrays_parallel(IntArray &sum, const IntArray &addend_1,
-	const IntArray &addend_2) {
-	std::unique_ptr<queue> q = initialize_device_queue();
+//************************************
+// Compute vector addition in DPC++ on device: sum of the data is returned in
+// 3rd parameter "sum_parallel"
+//************************************
+void VectorAddInDPCPP(const IntArray &addend_1, const IntArray &addend_2,
+                      IntArray &sum_parallel) {
+  queue q = create_device_queue();
 
-	// The range of the arrays managed by the buffer
-	range<1> num_items{ array_size };
+  // print out the device information used for the kernel code
+  std::cout << "Device: " << q.get_device().get_info<info::device::name>()
+            << std::endl;
 
-	// Buffers are used to tell DPC++ which data will be shared between the host
-	// and the devices because they usually don't share physical memory
-	// The pointer that's being passed as the first parameter transfers ownership
-	// of the data to DPC++ at runtime. The destructor is called when the buffer
-	// goes out of scope and the data is given back to the std::arrays.
-	// The second parameter specifies the range given to the buffer.
-	buffer<cl_int, 1> addend_1_buf(addend_1.data(), num_items);
-	buffer<cl_int, 1> addend_2_buf(addend_2.data(), num_items);
-	buffer<cl_int, 1> sum_buf(sum.data(), num_items);
+  // create the range object for the arrays managed by the buffer
+  range<1> num_items{array_size};
 
-	// queue::submit takes in a lambda that is passed in a command group handler
-	// constructed at runtime. The lambda also contains a command group, which
-	// contains the device-side operation and its dependencies
-	q->submit([&](handler &h) {
-		// Accessors are the only way to get access to the memory owned
-		// by the buffers initialized above. The first get_access template parameter
-		// specifies the access mode for the memory and the second template
-		// parameter is the type of memory to access the data from; this parameter
-		// has a default value
-		auto addend_1_accessor = addend_1_buf.template get_access<dp_read>(h);
-		auto addend_2_accessor = addend_2_buf.template get_access<dp_read>(h);
+  // create buffers that hold the data shared between the host and the devices.
+  //    1st parameter: pointer of the data;
+  //    2nd parameter: size of the data
+  // the buffer destructor is responsible to copy the data back to host when it
+  // goes out of scope.
+  buffer<int, 1> addend_1_buf(addend_1.data(), num_items);
+  buffer<int, 1> addend_2_buf(addend_2.data(), num_items);
+  buffer<int, 1> sum_buf(sum_parallel.data(), num_items);
 
-		// Note: Can use access::mode::discard_write instead of access::mode::write
-		// because we're replacing the contents of the entire buffer.
-		auto sum_accessor = sum_buf.template get_access<dp_write>(h);
+  // submit a command group to the queue by a lambda function that
+  // contains the data access permission and device computation (kernel)
+  q.submit([&](handler &h) {
+    // create an accessor for each buffer with access permission: read, write or
+    // read/write the accessor is the only mean to access the memory in the
+    // buffer.
+    auto addend_1_accessor = addend_1_buf.get_access<dp_read>(h);
+    auto addend_2_accessor = addend_2_buf.get_access<dp_read>(h);
 
-		// Use parallel_for to run array addition in parallel. This executes the
-		// kernel. The first parameter is the number of work items to use and the
-		// second is the kernel, a lambda that specifies what to do per work item.
-		// The template parameter ArrayAdd is used to name the kernel at runtime.
-		// The parameter passed to the lambda is the work item id of the current
-		// item.
-		//
-		// To remove the requirement to specify the kernel name you can enable
-		// unnamed lamdba kernels with the option:
-		//     dpcpp -fsycl-unnamed-lambda
-		h.parallel_for<class ArrayAdd>(num_items, [=](id<1> i) {
-			sum_accessor[i] = addend_1_accessor[i] + addend_2_accessor[i];
-		});
-	});
+    // the sum_accessor is used to store (with write permision) the sum data
+    auto sum_accessor = sum_buf.get_access<dp_write>(h);
 
-	// call wait_and_throw to catch async exception
-	q->wait_and_throw();
+    // Use parallel_for to run array addition in parallel on device. This
+    // executes the kernel.
+    //    1st parameter is the number of work items to use
+    //    2nd parameter is the kernel, a lambda that specifies what to do per
+    //    work item. the parameter of the lambda is the work item id of the
+    //    current item.
+    // DPC++ supports unnamed lambda kernel by default.
+    h.parallel_for(num_items, [=](id<1> i) {
+      sum_accessor[i] = addend_1_accessor[i] + addend_2_accessor[i];
+    });
+  });
 
-	// DPC++ will enqueue and run the kernel. Recall that the buffer's data is
-	// given back to the host at the end of the method's scope.
+  // q.submit() is an asynchronously call. DPC++ runtime enqueues and runs the
+  // kernel asynchronously. at the end of the DPC++ scope the buffer's data is
+  // copied back to the host.
 }
 
-//
-// Demonstrate summation of arrays both in scalar and parallel
-//
+//************************************
+// Demonstrate summation of arrays both in scalar on CPU and parallel on device
+//************************************
 int main() {
-	IntArray addend_1, addend_2, sum_scalar, sum_parallel;
+  // create int array objects with "array_size" to store the input and output
+  // data
+  IntArray addend_1, addend_2, sum_scalar, sum_parallel;
 
-	// Initialize arrays with values from 0 to array_size-1
-	initialize_array(addend_1);
-	initialize_array(addend_2);
-	initialize_array(sum_scalar);
-	initialize_array(sum_parallel);
+  // Initialize input arrays with values from 0 to array_size-1
+  initialize_array(addend_1);
+  initialize_array(addend_2);
 
-	// Add arrays in scalar and in parallel
-	add_arrays_scalar(sum_scalar, addend_1, addend_2);
-	add_arrays_parallel(sum_parallel, addend_1, addend_2);
+  // Compute vector addition in DPC++
+  VectorAddInDPCPP(addend_1, addend_2, sum_parallel);
 
-	// Verify that the two sum arrays are equal
-	for (size_t i = 0; i < sum_parallel.size(); i++) {
-		if (sum_parallel[i] != sum_scalar[i]) {
-			std::cout << "fail" << std::endl;
-			return -1;
-		}
-	}
-	std::cout << "success" << std::endl;
+  // Computes the sum of two arrays in scalar for validation
+  for (size_t i = 0; i < sum_scalar.size(); i++)
+    sum_scalar[i] = addend_1[i] + addend_2[i];
 
-	return 0;
+  // Verify that the two sum arrays are equal
+  for (size_t i = 0; i < sum_parallel.size(); i++) {
+    if (sum_parallel[i] != sum_scalar[i]) {
+      std::cout << "fail" << std::endl;
+      return -1;
+    }
+  }
+  std::cout << "success" << std::endl;
+
+  return 0;
 }

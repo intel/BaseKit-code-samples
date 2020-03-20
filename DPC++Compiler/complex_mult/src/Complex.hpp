@@ -9,34 +9,34 @@
 using namespace std;
 class Complex2 {
  private:
-  int real, imag;
+  int m_real_, m_imag_;
 
  public:
   Complex2() {
-    real = 0;
-    imag = 0;
+    m_real_ = 0;
+    m_imag_ = 0;
   }
   Complex2(int x, int y) {
-    real = x;
-    imag = y;
+    m_real_ = x;
+    m_imag_ = y;
   }
 
-  // Overloading the  == operator
-  friend bool operator==(const Complex2& a, const Complex2& b) {
-    return (a.real == b.real) && (a.imag == b.imag);
+  // Overloading the  != operator
+  friend bool operator!=(const Complex2& a, const Complex2& b) {
+    return (a.m_real_ != b.m_real_) || (a.m_imag_ != b.m_imag_);
   }
 
   // The function performs Complex number multiplication and returns a Complex2
   // object.
   Complex2 complex_mul(const Complex2& obj) {
-    return Complex2(((real * obj.real) - (imag * obj.imag)),
-                    ((real * obj.imag) + (imag * obj.real)));
+    return Complex2(((m_real_ * obj.m_real_) - (m_imag_ * obj.m_imag_)),
+                    ((m_real_ * obj.m_imag_) + (m_imag_ * obj.m_real_)));
   }
 
   // Overloading the ostream operator to print the objects of the Complex2
   // object
   friend ostream& operator<<(ostream& out, const Complex2& obj) {
-    out << "(" << obj.real << " : " << obj.imag << "i)";
+    out << "(" << obj.m_real_ << " : " << obj.m_imag_ << "i)";
     return out;
   }
 };

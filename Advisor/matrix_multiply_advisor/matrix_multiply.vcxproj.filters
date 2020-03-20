@@ -21,22 +21,16 @@
     <ClCompile Include="src\multiply.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\thrmodel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\util.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\multiply.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="License.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\multiply.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

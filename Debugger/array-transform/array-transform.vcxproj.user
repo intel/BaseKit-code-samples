@@ -3,7 +3,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerEnvironment>SYCL_DEVICE_TYPE=CPU
 CL_CONFIG_USE_NATIVE_DEBUGGER=1
-SYCL_PROGRAM_BUILD_OPTIONS=-g -cl-opt-disable</LocalDebuggerEnvironment>
+SYCL_PROGRAM_COMPILE_OPTIONS=-g -cl-opt-disable</LocalDebuggerEnvironment>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

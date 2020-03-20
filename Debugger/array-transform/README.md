@@ -44,7 +44,7 @@ $ make debug-session
 ```
 
 *Note:* This will set the environment variable
-`SYCL_PROGRAM_BUILD_OPTIONS` to `"-g -cl-opt-disable"` before starting
+`SYCL_PROGRAM_COMPILE_OPTIONS` to `"-g -cl-opt-disable"` before starting
 the debugger.
 
 To clean up:
@@ -58,7 +58,7 @@ $ make clean
 #### Command line using MSBuild
 
 * `set CL_CONFIG_USE_NATIVE_DEBUGGER=1`
-* `set SYCL_PROGRAM_BUILD_OPTIONS=-g -cl-opt-disable`
+* `set SYCL_PROGRAM_COMPILE_OPTIONS=-g -cl-opt-disable`
 * `MSBuild array-transform.sln /t:Rebuild /p:Configuration="debug"`
 
 #### Visual Studio IDE

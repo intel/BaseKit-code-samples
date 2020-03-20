@@ -13,8 +13,8 @@ if (NOT CMAKE_BUILD_TYPE MATCHES Debug)
 endif ()
 
 # Check for the clBuildProgram flags.
-if (NOT $ENV{SYCL_PROGRAM_BUILD_OPTIONS} MATCHES "-g -cl-opt-disable")
-  message (WARNING "Set the SYCL_PROGRAM_BUILD_OPTIONS environment "
+if (NOT $ENV{SYCL_PROGRAM_COMPILE_OPTIONS} MATCHES "-g -cl-opt-disable")
+  message (WARNING "Set the SYCL_PROGRAM_COMPILE_OPTIONS environment "
     "variable to '-g -cl-opt-disable' for a proper debug session.")
 endif ()
 
@@ -30,12 +30,12 @@ if (NOT GDBSERVER)
 endif ()
 
 add_executable (${PROJECT_NAME} src/array-transform.cpp)
-target_compile_options (${PROJECT_NAME} PRIVATE -fsycl -O0)
+target_compile_options (${PROJECT_NAME} PRIVATE -fsycl -g -O0)
 target_link_libraries (${PROJECT_NAME} sycl)
 
 # Add custom target for starting a debug session
 add_custom_target (debug-session
-  ${CMAKE_COMMAND} -E env SYCL_PROGRAM_BUILD_OPTIONS='-g -cl-opt-disable' ${GDB} ./${PROJECT_NAME}
+  ${CMAKE_COMMAND} -E env SYCL_PROGRAM_COMPILE_OPTIONS='-g -cl-opt-disable' ${GDB} ./${PROJECT_NAME}
   DEPENDS ${PROJECT_NAME})
 
 # Add custom target for running

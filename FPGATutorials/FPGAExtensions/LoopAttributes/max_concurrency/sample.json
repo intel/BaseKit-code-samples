@@ -1,0 +1,10 @@
+{
+  "name": "FPGA tutorial: Loop Max Concurrency",
+  "categories": ["Toolkit/Intel® oneAPI Base Toolkit/FPGA/Tutorials"],
+  "description": "Tutorial design to demonstrate usage of loop max_concurrency attribute",
+  "toolchain": ["dpcpp"],
+  "os": ["linux", "windows"],
+  "targetDevice": ["FPGA"],
+  "builder": ["ide", "cmake"],
+  "languages": [{"cpp":{}}]
+}

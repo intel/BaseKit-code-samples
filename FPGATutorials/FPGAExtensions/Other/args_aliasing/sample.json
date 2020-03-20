@@ -1,0 +1,10 @@
+{
+  "name": "FPGA tutorial: No accessor aliasing",
+  "categories": ["Toolkit/Intel® oneAPI Base Toolkit/FPGA/Tutorials"],
+  "description": "Tutorial design to demonstrate usage of the -no-accessor-aliasing compiler flag",
+  "toolchain": ["dpcpp"],
+  "os": ["linux", "windows"],
+  "targetDevice": ["FPGA"],
+  "builder": ["ide", "cmake"],
+  "languages": [{"cpp":{}}]
+}

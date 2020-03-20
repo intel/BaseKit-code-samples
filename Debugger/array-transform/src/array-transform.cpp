@@ -14,76 +14,75 @@
 #include <iostream>
 
 // A device function, called from inside the kernel.
-static int get_dim(cl::sycl::id<1> wi, int dim) {
+static int GetDim(cl::sycl::id<1> wi, int dim) {
   return wi[dim];
 }
 
 int main() {
   using namespace cl::sycl;
 
-  constexpr size_t LENGTH = 64;
-  int input[LENGTH];
-  int output[LENGTH];
+  constexpr size_t length = 64;
+  int input[length];
+  int output[length];
 
   // Initialize the input
-  for (unsigned int i = 0; i < LENGTH; i++)
+  for (unsigned int i = 0; i < length; i++)
     input[i] = i + 100;
 
-  auto exception_handler = [](cl::sycl::exception_list exceptionList) {
+  auto exception_handler = [](sycl::exception_list exceptionList) {
     for (std::exception_ptr const& e : exceptionList) {
       try {
         std::rethrow_exception(e);
-      } catch (cl::sycl::exception const& e) {
+      } catch (sycl::exception const& e) {
         std::terminate();
       }
     }
   };
 
   try {
-    queue device_queue(exception_handler);
+    queue q(exception_handler);
     std::cout << "[SYCL] Using device: ["
-              << device_queue.get_device().get_info<info::device::name>() << "]"
-              << std::endl;
+              << q.get_device().get_info<info::device::name>()
+              << "]\n";
 
-    range<1> data_range{LENGTH};
-    buffer<int, 1> buffer_in{&input[0], data_range};
-    buffer<int, 1> buffer_out{&output[0], data_range};
+    range<1> data_range{length};
+    buffer<int> buffer_in{&input[0], data_range};
+    buffer<int> buffer_out{&output[0], data_range};
 
-    device_queue.submit([&](handler& cgh) {
-      auto acc_in = buffer_in.get_access<access::mode::read>(cgh);
-      auto acc_out = buffer_out.get_access<access::mode::write>(cgh);
+    q.submit([&](handler& h) {
+      auto in = buffer_in.get_access<access::mode::read>(h);
+      auto out = buffer_out.get_access<access::mode::write>(h);
 
       // kernel-start
-      cgh.parallel_for<class kernel>(data_range, [=](id<1> index) {
-        int id0 = get_dim(index, 0);
-        int element = acc_in[index];  // breakpoint-here
+      h.parallel_for(data_range, [=](id<1> index) {
+        int id0 = GetDim(index, 0);
+        int element = in[index];  // breakpoint-here
         int result = element + 50;
         if (id0 % 2 == 0) {
           result = result + 50;  // then-branch
         } else {
           result = -1;  // else-branch
         }
-        acc_out[index] = result;
+        out[index] = result;
       });
       // kernel-end
     });
 
-    device_queue.wait_and_throw();
-  } catch (cl::sycl::exception const& e) {
-    std::cout << "fail; synchronous exception occurred: " << e.what()
-              << std::endl;
+    q.wait_and_throw();
+  } catch (sycl::exception const& e) {
+    std::cout << "fail; synchronous exception occurred: " << e.what() << "\n";
     return -1;
   }
 
   // Verify the output
-  for (unsigned int i = 0; i < LENGTH; i++) {
+  for (unsigned int i = 0; i < length; i++) {
     int result = (i % 2 == 0) ? (input[i] + 100) : -1;
     if (output[i] != result) {
-      std::cout << "fail; element " << i << " is " << output[i] << std::endl;
+      std::cout << "fail; element " << i << " is " << output[i] << "\n";
       return -1;
     }
   }
 
-  std::cout << "success; result is correct." << std::endl;
+  std::cout << "success; result is correct.\n";
   return 0;
 }

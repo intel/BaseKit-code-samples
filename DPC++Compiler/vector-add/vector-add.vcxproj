@@ -191,6 +191,7 @@
       <SYCLWarningLevel>Level3</SYCLWarningLevel>
       <PreprocessorDefinitions>FPGA_EMULATOR;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <EnableFPGACompilationAhead>true</EnableFPGACompilationAhead>
+      <ObjectFileName>$(IntDir)vector-add.obj</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -272,6 +273,7 @@
       <PreprocessorDefinitions>FPGA_EMULATOR;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SYCLOptimization>MaxSpeed</SYCLOptimization>
       <EnableFPGACompilationAhead>true</EnableFPGACompilationAhead>
+      <ObjectFileName>$(IntDir)vector-add.obj</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
