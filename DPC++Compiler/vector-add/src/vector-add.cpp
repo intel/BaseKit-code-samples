@@ -12,7 +12,7 @@
 
 using namespace cl::sycl;
 
-// Convience data access definitions
+// Convenience data access definitions
 constexpr access::mode dp_read = access::mode::read;
 constexpr access::mode dp_write = access::mode::write;
 
@@ -22,7 +22,7 @@ typedef std::array<int, array_size> IntArray;
 
 // output message for runtime exceptions
 #define EXCEPTION_MSG \
-  "    If you are targeting an FPGA hardware, please ensure that an FPGA board is plugged to the system, \n\
+  "    If you are targeting FPGA hardware, please ensure that an FPGA board is plugged to the system, \n\
         set up correctly and compile with -DFPGA  \n\
     If you are targeting the FPGA emulator, compile with -DFPGA_EMULATOR.\n"
 
@@ -111,7 +111,7 @@ void VectorAddInDPCPP(const IntArray &addend_1, const IntArray &addend_2,
   // contains the data access permission and device computation (kernel)
   q.submit([&](handler &h) {
     // create an accessor for each buffer with access permission: read, write or
-    // read/write the accessor is the only mean to access the memory in the
+    // read/write. The accessor is the only means to access the memory in the
     // buffer.
     auto addend_1_accessor = addend_1_buf.get_access<dp_read>(h);
     auto addend_2_accessor = addend_2_buf.get_access<dp_read>(h);
@@ -131,8 +131,8 @@ void VectorAddInDPCPP(const IntArray &addend_1, const IntArray &addend_2,
     });
   });
 
-  // q.submit() is an asynchronously call. DPC++ runtime enqueues and runs the
-  // kernel asynchronously. at the end of the DPC++ scope the buffer's data is
+  // q.submit() is an asynchronous call. DPC++ runtime enqueues and runs the
+  // kernel asynchronously. At the end of the DPC++ scope the buffer's data is
   // copied back to the host.
 }
 
