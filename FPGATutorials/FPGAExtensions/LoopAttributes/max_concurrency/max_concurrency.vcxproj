@@ -13,6 +13,9 @@
   <ItemGroup>
     <ClCompile Include="src\max_concurrency.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{f0ce4972-62af-4b9f-996f-1d1db14d76b7}</ProjectGuid>

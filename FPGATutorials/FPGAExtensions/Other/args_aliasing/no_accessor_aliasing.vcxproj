@@ -13,6 +13,9 @@
   <ItemGroup>
     <ClCompile Include="src\no_accessor_aliasing.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{f9714156-ab88-4b07-83af-a6bcbb36525e}</ProjectGuid>

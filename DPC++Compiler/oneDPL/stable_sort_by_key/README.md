@@ -33,15 +33,7 @@ mkdir build && cd build  # execute in this directory
 ### Linux
 
 ```bash
-CXX=dpcpp cmake ..
+cmake ..
 cmake --build .  # or "make"
 cmake --build . --target run  # or "make run"
-```
-
-### Windows
-
-```bash
-cmake -G "MinGW Makefiles" -DCMAKE_MAKE_PROGRAM=gmake -DCMAKE_CXX_COMPILER=dpcpp-cl ..
-cmake --build .  # or "gmake"
-cmake --build . --target run  # or "gmake run"
 ```

@@ -27,17 +27,17 @@ generate more efficient hardware. This flag affects all kernels in the program.
 
 ### Example: Kernel Pointer in SYCL*
 ```c++
-queue_event = deviceQueue.submit([&](handler &cgh) {
-  auto accessorA = bufferA.get_access<sycl_read>(cgh);
-  auto accessorB = bufferB.get_access<sycl_read>(cgh);
-  auto accessorC = bufferC.get_access<sycl_write>(cgh);
+queue_event = device_queue.submit([&](handler &cgh) {
+  auto accessor_A = buffer_A.get_access<sycl_read>(cgh);
+  auto accessor_B = buffer_B.get_access<sycl_read>(cgh);
+  auto accessor_C = buffer_C.get_access<sycl_write>(cgh);
   auto n_items = n;
   cgh.single_task<class SimpleVadd>([=]() {
     for (int i = 0; i < n_items; i += 4) {
-      accessorC[i    ] = accessorA[i    ] + accessorB[i    ];
-      accessorC[i + 1] = accessorA[i + 1] + accessorB[i + 1];
-      accessorC[i + 2] = accessorA[i + 2] + accessorB[i + 2];
-      accessorC[i + 3] = accessorA[i + 3] + accessorB[i + 3];
+      accessor_C[i    ] = accessor_A[i    ] + accessor_B[i    ];
+      accessor_C[i + 1] = accessor_A[i + 1] + accessor_B[i + 1];
+      accessor_C[i + 2] = accessor_A[i + 2] + accessor_B[i + 2];
+      accessor_C[i + 3] = accessor_A[i + 3] + accessor_B[i + 3];
     }
   });
 });
@@ -45,13 +45,13 @@ queue_event = deviceQueue.submit([&](handler &cgh) {
 
 In the `for` loop above, the same three operations are repeated four times with
 different indices:
-  - A load from `accessorA`
-  - A load from `accessorB`
-  - A store to `accessorC`
+  - A load from `accessor_A`
+  - A load from `accessor_B`
+  - A store to `accessor_C`
 
-The compiler is not able to prove that `accessorA` and `accessorB` at index `i`
-do not point to the same memory location as `accessorC` at index `i+1`. In
-fact, it cannot prove that `accessorA`, `accessorB`, and `accessorC` never
+The compiler is not able to prove that `accessor_A` and `accessor_B` at index `i`
+do not point to the same memory location as `accessor_C` at index `i+1`. In
+fact, it cannot prove that `accessor_A`, `accessor_B`, and `accessor_C` never
 points to the same memory location under any combination of indices. This
 causes the compiler to be conservative about possible dependencies between
 the memory instructions. For example, eight loads cannot perform simultaneously as
@@ -59,7 +59,7 @@ soon as a loop iteration starts, because one of the stores might change the
 value of a load.
 
 By applying the `-no-accessor-aliasing` flag, the compiler is assured 
-that `accessorA`, `accessorB`, and `accessorC` never points to the same
+that `accessor_A`, `accessor_B`, and `accessor_C` never points to the same
 memory location. This information allows the compiler to parallelize most of
 the memory operations contained in this loop. For example, all eight loads can now
 perform in parallel as soon as the loop iteration starts, since no store in

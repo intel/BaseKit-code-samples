@@ -1,5 +1,8 @@
 # `vector-add` Sample
 
+Vector Add is the equivalent of a Hello, World! sample for data parallel programs. Building and running the sample verifies that your development environment is setup correctly and demonstrates the use of the core features of DPC++. 
+For comprehensive instructions regarding DPC++ Programming, go to https://software.intel.com/en-us/oneapi-programming-guide and search based on relevant terms noted in the comments.
+
 | Optimized for                     | Description
 |:---                               |:---
 | OS                                | Linux* Ubuntu* 18.04, Windows 10 
@@ -7,7 +10,7 @@
 | Software                          | Intel&reg; oneAPI DPC++ Compiler (beta)  
   
 ## Purpose
-The `vector-add` is a simple program that adds two large vectors of integers and verifies the results. This program is implemented using C++ and Data Parallel C++ (DPC++) languages for Intel(R) CPU and accelerators. 
+The `vector-add` is a simple program that adds two large vectors of integers and verifies the results. This program is implemented using C++ and Data Parallel C++ (DPC++) languages for Intel(R) CPU and accelerators. If successful, the name of the offload device and a success message are displayed. And, your development environment is setup correctly!
 
 In this example, you can learn how to use the most basic code in C++ language that offloads computations to a GPU or an FPGA using the DPC++ language.
 

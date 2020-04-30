@@ -1,0 +1,10 @@
+{
+  "name": "Simple encode with Python",
+  "categories": ["Toolkit/Intel® oneAPI Base Toolkit/oneVPL"],
+  "description": "Sample that shows how to use oneVPL to perform a simple video encode in Python",
+  "dependencies": ["vpl"],
+  "os": ["linux", "windows"],
+  "languages": [{"python":{}}],
+  "builder": [ "ide", "cmake"],
+  "targetDevice": ["CPU", "GPU"]
+}

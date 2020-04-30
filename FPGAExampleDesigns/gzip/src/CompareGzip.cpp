@@ -26,18 +26,16 @@
 // This agreement shall be governed in all respects by the laws of the State of
 // California and by the laws of the United States of America.
 
-#include "CompareGzip.h"
+#include "CompareGzip.hpp"
 
 // returns 0 on success, otherwise failure
-int compare_gzip_files(
-    const std::string
-        original_file,  // original input file to compare gzip uncompressed
-    const std::string input_gzfile)  // gzip file to check
+int CompareGzipFiles(
+    const std::string &original_file,  // original input file to compare gzip uncompressed
+    const std::string &input_gzfile)  // gzip file to check
 {
 #ifdef _MSC_VER
   std::cout
-      << "Info: skipping output verification on Windows, no builtin gunzip"
-      << std::endl;
+      << "Info: skipping output verification on Windows, no builtin gunzip\n";
   return 0;
 #else
   //------------------------------------------------------------------

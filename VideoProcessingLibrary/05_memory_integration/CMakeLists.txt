@@ -3,6 +3,7 @@ project(memory_integration)
 
 set(TARGET memory_integration)
 set(SRCS src/memory_integration.cpp)
+set(CMAKE_MSVCIDE_RUN_PATH $ENV{PATH})
 set(RUNARGS $ENV{VPL_DIR}/samples/content/cars_1280x720.avi)
 
 # Set default build type to RelWithDebInfo if not specified

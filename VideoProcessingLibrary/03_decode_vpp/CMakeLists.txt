@@ -3,6 +3,7 @@ project(decode_vpp)
 
 set(TARGET decode_vpp)
 set(SRCS src/decode_vpp.cpp)
+set(CMAKE_MSVCIDE_RUN_PATH $ENV{PATH})
 set(RUNARGS $ENV{VPL_DIR}/samples/content/cars_1280x720.h264)
 
 # Set default build type to RelWithDebInfo if not specified

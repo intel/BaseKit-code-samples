@@ -32,7 +32,7 @@ and be expanded as necessary.
 Include the top-level header in your design:
 
 ```c++
-#include "pipe_array.h"
+#include "pipe_array.hpp"
 ```
 
 Just like pipes, an array of pipes needs template parameters for an ID, for the
@@ -44,47 +44,47 @@ with `capacity=4` that operate on `int` values, as shown in the following code s
 using ProducerToConsumerPipeMatrix = PipeArray< // Defined in "pipe_array.h".
     class ProducerConsumerPipe,                 // An identifier for the pipe.
     uint64_t,                                   // The type of data in the pipe.
-    DEPTH,                                      // The capacity of each pipe.
-    NUM_ROWS,                                   // array dimension.
-    NUM_COLS                                    // array dimension.
+    kDepth,                                      // The capacity of each pipe.
+    kNumRows,                                   // array dimension.
+    kNumCols                                    // array dimension.
     >;
 ```
 
 The uniqueness of a pipe array is derived from a combination of all template
 parameters.
 
-Indexing inside a pipe array can be done with the `PipeArray::pipe_at` type alias,
+Indexing inside a pipe array can be done with the `PipeArray::PipeAt` type alias,
 as shown in the following code snippet:
 
 ```c++
-ProducerToConsumerPipeMatrix::pipe_at<0,0>::write(17);
-auto x = ProducerToConsumerPipeMatrix::pipe_at<0,0>::read();
+ProducerToConsumerPipeMatrix::PipeAt<0,0>::write(17);
+auto x = ProducerToConsumerPipeMatrix::PipeAt<0,0>::read();
 ```
 The pipe being used must be known at compile time. Therefore, the index is
-passed to `pipe_at` through a template parameter.
+passed to `PipeAt` through a template parameter.
 
-While it is possible to use `pipe_at` to write or read from individual pipes in
+While it is possible to use `PipeAt` to write or read from individual pipes in
 the array, all pipes in the array can be written or read from using a static
 form of loop unrolling, as shown in the following code snippet:
 
 ```c++
-unroller<0, NUM_ROWS>::step([&input_idx, input_accessor](auto i_idx) {
+Unroller<0, kNumRows>::step([&input_idx, input_accessor](auto i_idx) {
   constexpr int i = i_idx.value;
 
-  unroller<0, NUM_COLS>::step([&input_idx, input_accessor](auto j_idx) {
+  Unroller<0, kNumCols>::step([&input_idx, input_accessor](auto j_idx) {
     constexpr int j = j_idx.value;
-    ProducerToConsumerPipeMatrix::pipe_at<i,j>::write(17);
+    ProducerToConsumerPipeMatrix::PipeAt<i,j>::write(17);
   }
 }
 ```
 
 There are many powerful C++ libraries capable of doing this. This design 
-includes a simple header file `unroller.h`, which implements the `unroller`
+includes a simple header file `unroller.hpp`, which implements the `Unroller`
 functionality.
 
 ### Example 2: Using a Pipe Array in SYCL*
 
-This example defines a `producer` kernel that reads data from host
+This example defines a `Producer` kernel that reads data from host
 memory and fowards this data into a two dimensional pipe matrix, 
 as shown in the following code snippet:
 
@@ -92,13 +92,13 @@ as shown in the following code snippet:
 cgh.single_task<ProducerTutorial>([=]() {
   int input_idx = 0;
   for (int pass = 0; pass < num_passes; pass++) {
-    unroller<0, NUM_ROWS>::step([&input_idx, input_accessor](auto i_idx) {
+    Unroller<0, kNumRows>::step([&input_idx, input_accessor](auto i_idx) {
       constexpr int i = i_idx.value;
 
-      unroller<0, NUM_COLS>::step([&input_idx, input_accessor](auto j_idx) {
+      Unroller<0, kNumCols>::step([&input_idx, input_accessor](auto j_idx) {
         constexpr int j = j_idx.value;
 
-        ProducerToConsumerPipeMatrix::pipe_at<i, j>::write(
+        ProducerToConsumerPipeMatrix::PipeAt<i, j>::write(
             input_accessor[input_idx++]);
       });
     });
@@ -106,23 +106,23 @@ cgh.single_task<ProducerTutorial>([=]() {
 });
 ```
 
-This example also defines `consumer` kernels that read from a unique pipe in
+This example also defines `Consumer` kernels that read from a unique pipe in
 `ProducerToConsumerPipeMatrix` and process the data, writing the result to the host
 memory, as shown in the following code snippet:
 
 ```c++
-uint64_t consumer_work(uint64_t i) { return i * i; }
+uint64_t ConsumerWork(uint64_t i) { return i * i; }
 
 // ...
-// Inside consumer function:
+// Inside Consumer function:
 
 cgh.single_task<ConsumerTutorial<ConsumerID>>([=]() {
-  constexpr int consumer_x = ConsumerID / NUM_COLS;
-  constexpr int consumer_y = ConsumerID % NUM_COLS;
+  constexpr int consumer_x = ConsumerID / kNumCols;
+  constexpr int consumer_y = ConsumerID % kNumCols;
   for (int i = 0; i < num_elements; ++i) {
-    auto input = ProducerToConsumerPipeMatrix::pipe_at<consumer_x,
+    auto input = ProducerToConsumerPipeMatrix::PipeAt<consumer_x,
                                                        consumer_y>::read();
-    auto answer = consumer_work(input);
+    auto answer = ConsumerWork(input);
     output_accessor[i] = answer;
   }
 });
@@ -134,20 +134,20 @@ following code snippet:
 ```c++
 {
 // Inside main:
-    queue deviceQueue(device_selector);
+    queue device_queue(device_selector);
 
     buffer<uint64_t, 1> producer_buffer(producer_input.data(), array_size);
-    producer(deviceQueue, producer_buffer);
+    Producer(device_queue, producer_buffer);
 
     std::vector<buffer<uint64_t, 1>> consumer_buffers;
-    unroller<0, NUMBER_OF_CONSUMERS>::step([&](auto idx) {
+    Unroller<0, kNumberOfConsumers>::step([&](auto idx) {
       constexpr int consumer_id = idx.value;
       consumer_buffers.emplace_back(consumer_output[consumer_id].data(),
                                     items_per_consumer);
-      consumer<consumer_id>(deviceQueue, consumer_buffers.back());
+      Consumer<consumer_id>(device_queue, consumer_buffers.back());
     });
 
-    deviceQueue.wait_and_throw();
+    device_queue.wait_and_throw();
 }
 ```
 

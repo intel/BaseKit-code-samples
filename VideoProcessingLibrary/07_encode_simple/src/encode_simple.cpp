@@ -86,7 +86,8 @@ int EncodeFile(const char* input, int width, int height, std::ofstream& dest) {
   Timer timer;
   int raw_buffer_size = (width * height * 3) / 2;
   std::vector<uint8_t> raw_buffer(raw_buffer_size);
-  std::vector<uint8_t> enc_buffer(1024 * 1024 * 80);
+  const size_t enc_buffer_size = 1024 * 1024 * 80;
+  std::vector<uint8_t> enc_buffer(enc_buffer_size);
   size_t total_encoded_bytes = 0;
   bool encode_done = false;
 
@@ -113,11 +114,11 @@ int EncodeFile(const char* input, int width, int height, std::ofstream& dest) {
           fprintf(stderr, "Frame: %zu\r", frame_count);
           timer.Start();
           vplm_ref(raw_image);
-          encoded_bytes = encoder.EncodeFrame(raw_image, &enc_buffer[0]);
+          encoded_bytes = encoder.EncodeFrame(raw_image, &enc_buffer[0], enc_buffer_size);
           timer.Stop();
         } else {
           timer.Start();
-          encoded_bytes = encoder.EncodeFrame(nullptr, &enc_buffer[0]);
+          encoded_bytes = encoder.EncodeFrame(nullptr, &enc_buffer[0], enc_buffer_size);
           timer.Stop();
           encode_done = encoded_bytes == 0;
           if (encode_done) status = SUCCESS;

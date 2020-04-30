@@ -13,6 +13,9 @@
   <ItemGroup>
     <ClCompile Include="src\memory_attributes.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{d6a634e7-9f2b-46c2-a21c-2402f631a55a}</ProjectGuid>

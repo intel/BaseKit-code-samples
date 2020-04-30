@@ -13,6 +13,9 @@
   <ItemGroup>
     <ClCompile Include="src\pipes.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{be9e5e70-f644-4119-9a1f-e2b75c85b9e2}</ProjectGuid>

@@ -3,6 +3,7 @@ project(demux_decode)
 
 set(TARGET demux_decode)
 set(SRCS src/demux_decode.cpp)
+set(CMAKE_MSVCIDE_RUN_PATH $ENV{PATH})
 set(RUNARGS $ENV{VPL_DIR}/samples/content/cars_1280x720.avi)
 
 # Set default build type to RelWithDebInfo if not specified

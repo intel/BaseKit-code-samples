@@ -3,6 +3,7 @@ project(decode_simple)
 
 set(TARGET decode_simple)
 set(SRCS src/decode_simple.cpp)
+set(CMAKE_MSVCIDE_RUN_PATH $ENV{PATH})
 set(RUNARGS $ENV{VPL_DIR}/samples/content/cars_1280x720.h264)
 
 # Set default build type to RelWithDebInfo if not specified

@@ -18,6 +18,9 @@
     <ClInclude Include="src\pipe_array_internal.h" />
     <ClInclude Include="src\unroller.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{fa3fb2d1-ba98-4b4e-a8fa-a9be6f8ca204}</ProjectGuid>

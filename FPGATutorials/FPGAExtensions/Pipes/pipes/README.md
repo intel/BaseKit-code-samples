@@ -92,25 +92,25 @@ the same template parameters, they define the same pipe.
 
 ### Example: Using a Pipe in SYCL*
 
-This example defines a `consumer` and a `producer` kernel connected
+This example defines a `Consumer` and a `Producer` kernel connected
 by the pipe `ProducerToConsumerPipe`. Kernels use the
 `ProducerToConsumerPipe::write` and `ProducerToConsumerPipe::read` methods for
 communication.
 
-The `producer` kernel reads integers from the global memory and writes those integers
+The `Producer` kernel reads integers from the global memory and writes those integers
 into `ProducerToConsumerPipe`, as shown in the following code snippet:
 
 ```c++
-void producer(const std::vector<int> &input) {
+void Producer(const std::vector<int> &input) {
   auto property_list =
       cl::sycl::property_list{cl::sycl::property::queue::enable_profiling()};
-  queue deviceQueue(no_host{}, property_list);
+  queue device_queue(no_host{}, property_list);
 
   auto num_elements = input.size();
   buffer<int, 1> input_buffer(input.data(), num_elements);
 
   event queue_event;
-  queue_event = deviceQueue.submit([&](handler &cgh) {
+  queue_event = device_queue.submit([&](handler &cgh) {
     auto input_accessor= input_buffer.get_access<sycl_read>(cgh);
 
     cgh.single_task<class ProducerTutorial>([=]() {
@@ -121,44 +121,44 @@ void producer(const std::vector<int> &input) {
 
   });
 
-  deviceQueue.wait_and_throw();
+  device_queue.wait_and_throw();
 }
 ```
 
-The `consumer` kernel reads integers from `ProducerToConsumerPipe`, processses
-the integers (`consumer_work(i)`), and writes the result into the global memory.
+The `Consumer` kernel reads integers from `ProducerToConsumerPipe`, processses
+the integers (`ConsumerWork(i)`), and writes the result into the global memory.
 
 ```c++
-void consumer(std::vector<int> &output) {
+void Consumer(std::vector<int> &output) {
   auto property_list =
       cl::sycl::property_list{cl::sycl::property::queue::enable_profiling()};
-  queue deviceQueue(no_host{}, property_list);
+  queue device_queue(no_host{}, property_list);
 
   auto num_elements = output.size();
   buffer<int, 1> output_buffer(output.data(), num_elements);
 
   event queue_event;
-  queue_event = deviceQueue.submit([&](handler &cgh) {
+  queue_event = device_queue.submit([&](handler &cgh) {
     auto output_accessor = output_buffer.get_access<sycl_write>(cgh);
 
     cgh.single_task<class ConsumerTutorial>([=]() {
       for (int i = 0; i < num_elements; ++i) {
 	auto input = ProducerToConsumerPipe::read();
-	auto answer = consumer_work(input);
+	auto answer = ConsumerWork(input);
 	output_accessor[i] = answer;
       }
     });
 
   });
 
-  deviceQueue.wait_and_throw();
+  device_queue.wait_and_throw();
 }
 ```
 
 **NOTE:** The `read` and `write` operations used are blocking. If
-`consumer_work` is an expensive operation, then `producer` might fill
-`ProducerToConsumerPipe` faster than `consumer` can read from it, causing
-`producer` to block occasionally.
+`ConsumerWork` is an expensive operation, then `Producer` might fill
+`ProducerToConsumerPipe` faster than `Consumer` can read from it, causing
+`Producer` to block occasionally.
 
 ## Building the Example (Linux)
 

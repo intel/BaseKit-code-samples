@@ -18,8 +18,12 @@ Those CCL sample codes are implemented using C++, C and DPC++ language for CPU a
 | sycl_alltoall_cpp_test.cpp  | sycl_alltoall_test.cpp | [Alltoall](https://intel.github.io/oneccl/spec/communication_primitives.html#alltoall) |
 | sycl_bcast_cpp_test.cpp | sycl_bcast_test.cpp | [Broadcast](https://intel.github.io/oneccl/spec/communication_primitives.html#broadcast)|
 | sycl_reduce_cpp_test.cpp  | sycl_reduce_test.cpp | [Reduce](https://intel.github.io/oneccl/spec/communication_primitives.html#reduce) |
-| cpu_allreduce_cpp_test.cpp | cpu_allreduce_test.cpp |[Allreduce](https://intel.github.io/oneccl/spec/communication_primitives.html#allreduce) |
-
+| cpu_allreduce_cpp_test.cpp | cpu_allreduce_test.cpp/cpu_allreduce_bfp16.c |[Allreduce](https://intel.github.io/oneccl/spec/communication_primitives.html#allreduce) |
+|oneCCL_Getting_Started.ipynb (check below Notice)| | |
+>  Notice : Please use Intel oneAPI DevCloud as the environment for jupyter notebook samples. \
+Users can refer to [DevCloud Getting Started](https://devcloud.intel.com/oneapi/get-started/) for using DevCloud \
+Users can use JupyterLab from DevCloud via "One-click Login in", and download samples via "git clone" or the "oneapi-cli" tool \
+Once users are in the JupyterLab with download jupytered notebook samples, they can start following the steps without further installion needed.
 
 ## License  
 Those code samples are licensed under MIT license

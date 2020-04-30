@@ -83,7 +83,13 @@ or
   ```
   ./out/sycl-interop-cpp gpu  
   ```
-
+>  NOTE: Zero Level runtime is enabled by default. Please make sure proper installation of zero level driver \
+including level-zero-devel package following installation guide. \
+If users still encounter runtime issue such as "could not create a primitive", \
+Please apply workaround to set SYCL_BE=PI_OPENCL before running a DPC++ program \
+ \
+For applying the workaround in this sample, users can add `export SYCL_BE=PI_OPENCL` in CMakeLists.txt. \
+After applying the worklaround, sample use OpenCL runtime instead.\
 
 ## Result Validation 
 

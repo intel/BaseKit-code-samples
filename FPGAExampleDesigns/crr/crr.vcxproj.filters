@@ -34,5 +34,6 @@
     <None Include="src\data\ordered_inputs.csv">
       <Filter>Source Files\src\data</Filter>
     </None>
+    <None Include="README.md" />
   </ItemGroup>
 </Project>

@@ -545,7 +545,7 @@ double sycl_device(vector<crr_in_params> &vals,
       auto accessorRes =
           resParams.template get_access<cl::sycl::access::mode::write>(cgh);
 
-      cgh.single_task<CRRSolver>([=]() {
+      cgh.single_task<CRRSolver>([=]() [[intel::kernel_args_restrict]] {
         // L1:
         // n_crr is the number of CRRs. Each iteration of this loop implement
         // one CRR with Greeks.

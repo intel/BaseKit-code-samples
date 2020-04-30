@@ -31,7 +31,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-#include "crc32.h"
+#include "crc32.hpp"
 
 // This table is CRC32s for all single byte values created by using the
 // makecrc.c utility from gzip for compatibility with gzip. makecrc.c can be
@@ -96,29 +96,31 @@ const unsigned int crc32_table[] = {
     0x2d02ef8dL};
 
 //
-// This routine creates a crc32 from a memory buffer (address, and length), and
+// This routine creates a Crc32 from a memory buffer (address, and length), and
 // a previous crc. This routine can be called iteratively on different portions
 // of the same buffer, using a previously returned crc value. The
 // value 0xffffffff is used for the first buffer invocation.
-unsigned int crc32_host(
-    const char *pbuf,          // pointer to the buffer to crc
-    size_t sz,                 // number of bytes
-    unsigned int previousCrc)  // previous CRC, allows combining.
+unsigned int Crc32Host(
+    const char *pbuf,           // pointer to the buffer to crc
+    size_t sz,                  // number of bytes
+    unsigned int previous_crc)  // previous CRC, allows combining.
 {
-  unsigned int currCrc = ~previousCrc;
+  unsigned int curr_crc = ~previous_crc;
   if (sz) do {
-      currCrc = crc32_table[((int)currCrc ^ (*pbuf++)) & 0xff] ^ (currCrc >> 8);
+      curr_crc =
+          crc32_table[((int)curr_crc ^ (*pbuf++)) & 0xff] ^ (curr_crc >> 8);
     } while (--sz);
-  return currCrc ^ 0xffffffffL;
+  return curr_crc ^ 0xffffffffL;
 }
 
-unsigned int crc32(const char *in, size_t buffer_sz, unsigned int previousCrc) {
-  const int NUM_NIBBLES_PARALLEL = 64;
+unsigned int Crc32(const char *in, size_t buffer_sz,
+                   unsigned int previous_crc) {
+  const int num_nibbles_parallel = 64;
   const int num_sections =
-      buffer_sz / (NUM_NIBBLES_PARALLEL / 2);  // how many loop iterations
+      buffer_sz / (num_nibbles_parallel / 2);  // how many loop iterations
   // now deal with the remainder, this should be done on the software host
   // the post-invert also happens inside crc_reference
-  const char *remaining_data = &in[num_sections * (NUM_NIBBLES_PARALLEL / 2)];
-  int remaining_bytes = buffer_sz % (NUM_NIBBLES_PARALLEL / 2);
-  return crc32_host(remaining_data, remaining_bytes, previousCrc);
+  const char *remaining_data = &in[num_sections * (num_nibbles_parallel / 2)];
+  int remaining_bytes = buffer_sz % (num_nibbles_parallel / 2);
+  return Crc32Host(remaining_data, remaining_bytes, previous_crc);
 }

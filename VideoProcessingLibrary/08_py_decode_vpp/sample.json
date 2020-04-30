@@ -1,0 +1,10 @@
+{
+  "name": "Decode with video post-processing with Python",
+  "categories": ["Toolkit/Intel® oneAPI Base Toolkit/oneVPL"],
+  "description": "Sample that shows how to select a color format and output resolution when decoding with oneVPL in Python.",
+  "dependencies": ["vpl"],
+  "os": ["linux", "windows"],
+  "languages": [{"python":{}}],
+  "builder": [ "ide", "cmake"],
+  "targetDevice": ["CPU", "GPU"]
+}

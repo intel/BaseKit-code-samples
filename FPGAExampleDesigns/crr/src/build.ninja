@@ -5,7 +5,7 @@ emulator_target = ${target_name}.fpga_emu.exe
 cpu_host_target = ${target_name}.cpu_host.exe
 report_target = ${target_name}.a
 
-hardware_flags = -fintelfpga -Xshardware -Xsno-accessor-aliasing -Xsfpc -Xsparallel=2 -Xsseed=2
+hardware_flags = -fintelfpga -Xshardware -Xsfpc -Xsparallel=2 -Xsseed=2 -Xsboard=intel_a10gx_pac:pac_a10
 emulator_flags = -fintelfpga -DFPGA_EMULATOR
 cpu_host_flags = -DCPU_HOST
 
@@ -29,3 +29,4 @@ build ${cpu_host_target}: build_cpu_host ${source_file}
 # report
 build report: phony ${report_target}
 build ${report_target}: gen_report ${source_file}
+

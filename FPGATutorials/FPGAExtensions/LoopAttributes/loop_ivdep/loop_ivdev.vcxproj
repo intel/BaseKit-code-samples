@@ -13,6 +13,9 @@
   <ItemGroup>
     <ClCompile Include="src\loop_ivdep.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{3f5364b3-f987-4676-89a5-1f19ba3d4b75}</ProjectGuid>

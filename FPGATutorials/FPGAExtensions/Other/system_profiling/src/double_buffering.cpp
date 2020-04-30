@@ -64,7 +64,7 @@ void simple_pow(std::unique_ptr<queue> &deviceQueue,
       assert(POW >= 2);
       const int p = POW - 1;  // Assumes pow >= 2;
 
-      cgh.single_task<class SimpleVpow>([=]() {
+      cgh.single_task<class SimpleVpow>([=]() [[intel::kernel_args_restrict]] {
         for (int j = 0; j < p; j++) {
           if (j == 0) {
             for (int i = 0; i < num; i++) {

@@ -17,6 +17,7 @@
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="README.md" />
     <None Include="src\data\ordered_inputs.csv" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

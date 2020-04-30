@@ -8,11 +8,13 @@
 #include <iostream>
 #include "CL/sycl.hpp"
 #include "device_selector.hpp"
+#include "dpc_common.hpp"
 
-#define IMG_WIDTH 2048
-#define IMG_HEIGHT 2048
+
+constexpr auto IMG_WIDTH = 2048;
+constexpr auto IMG_HEIGHT = 2048;
 #define IMG_SIZE (IMG_WIDTH * IMG_HEIGHT)
-#define CHANNELS_PER_PIXEL 4
+constexpr auto CHANNELS_PER_PIXEL = 4;
 
 using namespace sycl;
 
@@ -73,7 +75,7 @@ __attribute__((always_inline)) static void sepia_impl(float *src_image,
   }
 }
 
-// Few useful acronyms; 'using namespace sycl;' also helps.
+// Few useful acronyms.
 constexpr auto sycl_read = access::mode::read;
 constexpr auto sycl_write = access::mode::write;
 constexpr auto sycl_global_buffer = access::target::global_buffer;
@@ -118,25 +120,6 @@ int main(int argc, char **argv) {
   std::memset(image_exp2, 0, img_len * sizeof(float));
   img_len -= CHANNELS_PER_PIXEL;
 
-  // exception handler
-  /*
-    The exception_list parameter is an iterable list of std::exception_ptr
-    objects. But those pointers are not always directly readable. So, we rethrow
-    the pointer, catch it,  and then we have the exception itself. Note:
-    depending upon the operation there may be several exceptions.
-  */
-  auto exception_handler = [](exception_list exceptionList) {
-    for (std::exception_ptr const &e : exceptionList) {
-      try {
-        std::rethrow_exception(e);
-      } catch (exception const &e) {
-        // std::terminate() will exit the process, return non-zero, and output a
-        // message to the user about the exception
-        std::terminate();
-      }
-    }
-  };
-
   // Create a device selector which rates available devices in the preferred
   // order for the runtime to select the highest rated device
   MyDeviceSelector sel;
@@ -148,9 +131,9 @@ int main(int argc, char **argv) {
   try {
     // Create a command queue using the device selector above, and request
     // profiling
-    auto propList =
+    auto prop_list =
         property_list{property::queue::enable_profiling()};
-    queue q(sel, exception_handler, propList);
+    queue q(sel, dpc_common::exception_handler, prop_list);
 
     // See what device was actually selected for this queue.
     std::cout << "Running on "
@@ -198,8 +181,7 @@ int main(int argc, char **argv) {
       // <class sepia> is the kernel name required by the spec, the lambda
       // parameter of the parallel_for is the kernel, which actually executes
       // on device
-      h.parallel_for<class sepia>(
-          range<1>(IMG_SIZE), [=](id<1> i) {
+      h.parallel_for(range<1>(IMG_SIZE), [=](id<1> i) {
             sepia_impl(image_acc.get_pointer(), image_exp_acc.get_pointer(),
                        i.get(0));
           });
@@ -255,6 +237,11 @@ int main(int argc, char **argv) {
   std::cout << "Verifying functor...\n";
   error_cnt += verify(image_ref, image_exp2, img_len);
   std::cout << (error_cnt ? "FAILED" : "passed") << "\n";
+
+  delete [] image;
+  delete [] image_ref;
+  delete [] image_exp1;
+  delete [] image_exp2;
 
   return error_cnt ? 1 : 0;
 }

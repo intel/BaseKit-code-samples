@@ -9,6 +9,12 @@
 | What you will learn               | basic oneDNN programming model for Intel CPU and GPU
 | Time to complete                  | 15 minutes
 
+A oneDNN_Getting_Started.ipynb is also included.
+This Jupyter Notebook demonstrates how to compile a oneDNN sample with different releases via batch jobs on the Intel oneAPI DevCloud (check below Notice)
+>  Notice : Please use Intel oneAPI DevCloud as the environment for jupyter notebook samples. \
+Users can refer to [DevCloud Getting Started](https://devcloud.intel.com/oneapi/get-started/) for using DevCloud \
+Users can use JupyterLab from DevCloud via "One-click Login in", and download samples via "git clone" or the "oneapi-cli" tool \
+Once users are in the JupyterLab with downloaded jupyter notebook samples, they can start following the steps without further installion needed.
 
 
 ## What you will learn
@@ -76,6 +82,14 @@ make getting-started-cpp
   ```
   ./out/getting-started-cpp gpu
   ```
+>  NOTE: Zero Level runtime is enabled by default. Please make sure proper installation of zero level driver \
+including level-zero-devel package following installation guide. \
+If users still encounter runtime issue such as "could not create a primitive", \
+Please apply workaround to set SYCL_BE=PI_OPENCL before running a DPC++ program \
+ \
+For applying the workaround in this sample, users can add `export SYCL_BE=PI_OPENCL` in CMakeLists.txt. \
+After applying the worklaround, sample use OpenCL runtime instead.\
+
 
 
 

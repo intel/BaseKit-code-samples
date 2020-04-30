@@ -14,18 +14,18 @@ using namespace cl::sycl;
 using namespace std;
 
 // Number of complex numbers passing to the DPC++ code
-static const int NumElements = 100;
+static const int num_elements = 100;
 
-// in_vect1 and in_vect2 are the vectors with NumElements complex nubers and are inputs to
+// in_vect1 and in_vect2 are the vectors with num_elements complex nubers and are inputs to
 // the parallel function
 void DpcppParallel(queue &q, std::vector<Complex2> &in_vect1,
                    std::vector<Complex2> &in_vect2, std::vector<Complex2> &out_vect) {
   // Setup input buffers
-  buffer<Complex2, 1> bufin_vect1(in_vect1.data(), range<1>(NumElements));
-  buffer<Complex2, 1> bufin_vect2(in_vect2.data(), range<1>(NumElements));
+  buffer<Complex2, 1> bufin_vect1(in_vect1.data(), range<1>(num_elements));
+  buffer<Complex2, 1> bufin_vect2(in_vect2.data(), range<1>(num_elements));
 
   // Setup Output buffers
-  buffer<Complex2, 1> bufout_vect(out_vect.data(), range<1>(NumElements));
+  buffer<Complex2, 1> bufout_vect(out_vect.data(), range<1>(num_elements));
 
   std::cout << "Target Device: "
             << q.get_device().get_info<info::device::name>() << "\n";
@@ -36,7 +36,7 @@ void DpcppParallel(queue &q, std::vector<Complex2> &in_vect1,
     auto V2 = bufin_vect2.get_access<access::mode::read>(h);
     // Accessor set to Write mode
     auto V3 = bufout_vect.get_access<access::mode::write>(h);
-    h.parallel_for(range<1>(NumElements), [=](id<1> i) {
+    h.parallel_for(range<1>(num_elements), [=](id<1> i) {
       // Kernel code. Call the complex_mul function here.
       V3[i] = V1[i].complex_mul(V2[i]);
     });
@@ -45,7 +45,7 @@ void DpcppParallel(queue &q, std::vector<Complex2> &in_vect1,
 }
 void DpcppScalar(std::vector<Complex2> &in_vect1, std::vector<Complex2> &in_vect2,
                  std::vector<Complex2> &out_vect) {
-  for (int i = 0; i < NumElements; i++) {
+  for (int i = 0; i < num_elements; i++) {
     out_vect[i] = in_vect1[i].complex_mul(in_vect2[i]);
   }
 }
@@ -53,7 +53,7 @@ void DpcppScalar(std::vector<Complex2> &in_vect1, std::vector<Complex2> &in_vect
 // should be equal
 int Compare(std::vector<Complex2> &v1, std::vector<Complex2> &v2) {
   int ret_code = 1;
-  for (int i = 0; i < NumElements; i++) {
+  for (int i = 0; i < num_elements; i++) {
     if (v1[i] != v2[i]) {
       ret_code = -1;
       break;
@@ -68,7 +68,7 @@ int main() {
   vector<Complex2> out_vect_parallel;
   vector<Complex2> out_vect_scalar;
 
-  for (int i = 0; i < NumElements; i++) {
+  for (int i = 0; i < num_elements; i++) {
     input_vect1.push_back(Complex2(i + 2, i + 4));
     input_vect2.push_back(Complex2(i + 4, i + 6));
     out_vect_parallel.push_back(Complex2(0, 0));
@@ -104,9 +104,9 @@ int main() {
           "in Parallel********************************************************"
        << std::endl;
   // Print the outputs of the Parallel function
-  for (int i = 0; i < NumElements; i++) {
+  for (int i = 0; i < num_elements; i++) {
     cout << out_vect_parallel[i] << ' ';
-    if (i == NumElements - 1) {
+    if (i == num_elements - 1) {
       cout << "\n\n";
     }
   }

@@ -5,11 +5,33 @@ set(CPU_HOST_TARGET ${TARGET_NAME}.cpu_host)
 set(FPGA_TARGET ${TARGET_NAME}.fpga)
 set(REPORTS_TARGET ${TARGET_NAME}_report)
 
+# Intel supported FPGA Boards and their names
+set(A10_PAC_BOARD_NAME "intel_a10gx_pac:pac_a10")
+set(S10_PAC_BOARD_NAME "intel_s10sx_pac:pac_s10")
+
+# set FPGA_BOARD value for the example design
+IF (NOT DEFINED FPGA_BOARD)
+    MESSAGE(STATUS "\tFPGA_BOARD was not specified, defaulting to using the ${A10_PAC_BOARD_NAME} (A10 PAC) board. Please refer to the README for more information on how to run the design on the S10 PAC board.")
+    SET(FPGA_BOARD ${A10_PAC_BOARD_NAME})
+
+ELSEIF(FPGA_BOARD STREQUAL ${A10_PAC_BOARD_NAME})
+    MESSAGE(STATUS "\tConfiguring the design to run on the ${A10_PAC_BOARD_NAME} (A10 PAC) board.")
+    SET(FPGA_BOARD ${A10_PAC_BOARD_NAME})
+
+ELSEIF(FPGA_BOARD STREQUAL ${S10_PAC_BOARD_NAME})
+    MESSAGE(STATUS "\tConfiguring the design to run on the ${S10_PAC_BOARD_NAME} (S10 PAC) board.")
+    SET(FPGA_BOARD ${S10_PAC_BOARD_NAME})
+
+ELSE()
+    MESSAGE(STATUS "\tAn invalid board name was specified using the FPGA_BOARD flag. The default ${A10_PAC_BOARD_NAME} (A10 PAC) board will be used. Please refer to the README for the list of valid board names.")
+    SET(FPGA_BOARD ${A10_PAC_BOARD_NAME})
+ENDIF()
+
 set(HARDWARE_COMPILE_FLAGS -fintelfpga -c)
 
 # use cmake -D USER_HARDWARE_FLAGS=<flags> to set extra flags for FPGA backend compilation
 separate_arguments(USER_HARDWARE_FLAGS)
-set(HARDWARE_LINK_FLAGS -fintelfpga -Xshardware -Xsno-accessor-aliasing -Xsdaz -Xsrounding=faithful -Xsparallel=2 -Xsseed=2 ${USER_HARDWARE_FLAGS})
+set(HARDWARE_LINK_FLAGS -fintelfpga -Xshardware -Xsdaz -Xsrounding=faithful -Xsparallel=2 -Xsseed=2 -Xsboard=${FPGA_BOARD} ${USER_HARDWARE_FLAGS})
 
 set(EMULATOR_COMPILE_FLAGS "-fintelfpga -DFPGA_EMULATOR")
 set(EMULATOR_LINK_FLAGS "-fintelfpga")

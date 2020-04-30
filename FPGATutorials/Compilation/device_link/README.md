@@ -114,8 +114,10 @@ Perform the following steps:
 
 ## Building the `device_link` Example (Windows)
 
-Perform the following steps:
 Note: `cmake` is not yet supported on Windows, a build.ninja file is provided instead. 
+Note: Ensure that Microsoft Visual Studio* (2019 Version 16.4 or newer) with "Desktop development with C++" workload is installed on your system.
+
+Perform the following steps:
 
 1. Enter source file directory.
 

@@ -32,7 +32,18 @@ This code sample is licensed under MIT license.
 ```
 mkdir build
 cd build
-cmake .. 
+```
+
+If you are compiling for the A10 PAC board, run `cmake` using the command:
+
+```
+cmake ..
+```
+
+If instead you are compiling for the S10 PAC board, run `cmake` using the command:
+
+```
+cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
 ```
 
 2. Compile the design through the generated `Makefile`. The following three build targets are provided, matching the recommended development flow:
@@ -72,18 +83,13 @@ cd src
 
 2. Compile the design. The following three build targets are provided, matching the recommended development flow:
 
-    * Compile and run for emulation (fast compile time, targets emulated FPGA device). Use a small file for emulation, for example, `<src/gzip.cpp>`.
-
-       ```
-       ninja fpga_emu
-       gzip.fpga_emu.exe ../src/gzip.cpp -o=test.gz 
-       ```
-
     * Generate HTML optimization report. You can find the report in `../src/gzipkernel.prj/reports/report.html`.
 
        ```
        ninja report
        ``` 
+
+    * **Not supported:** Compile and run for emulation.
 
     * **Not supported yet:** Compile and run on FPGA hardware.
 
@@ -147,7 +153,6 @@ PASSED
 ---    |---
 `-Xshardware` | target FPGA hardware
 `-Xsno-accessor-aliasing` | indicates that the arguments are independent from each other
-`-Xsfmax=280` | the FPGA backend attempts to achieve 280 MHz
 `-Xsparallel=2` | uses 2 cores when compiling the bitstream through Quartus
 `-Xsseed=1` | uses seed 1 during Quartus, yields slightly higher fmax
 

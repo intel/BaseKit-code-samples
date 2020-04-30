@@ -11,7 +11,7 @@
 using namespace cl::sycl;
 using namespace std;
 
-static const int NumElements = 100;
+static const int num_elements = 100;
 const double kPIValue = 3.1415;
 const double kGValue = 9.81;
 
@@ -36,7 +36,7 @@ inline void CalculateRange(Projectile& obj, Projectile& pObj) {
 // should be equal
 int Compare(std::vector<Projectile>& v1, std::vector<Projectile>& v2) {
   int ret_code = 1;
-  for (int i = 0; i < NumElements; i++) {
+  for (int i = 0; i < num_elements; i++) {
     if (v1[i] != v2[i]) {
       ret_code = -1;
       break;
@@ -49,8 +49,8 @@ int Compare(std::vector<Projectile>& v1, std::vector<Projectile>& v2) {
 // parallel function
 void DpcppParallel(queue& q, std::vector<Projectile>& in_vect,
                     std::vector<Projectile>& out_vect) {
-  buffer<Projectile, 1> bufin_vect(in_vect.data(), range<1>(NumElements));
-  buffer<Projectile, 1> bufout_vect(out_vect.data(), range<1>(NumElements));
+  buffer<Projectile, 1> bufin_vect(in_vect.data(), range<1>(num_elements));
+  buffer<Projectile, 1> bufout_vect(out_vect.data(), range<1>(num_elements));
 
   std::cout << "Target Device: "
             << q.get_device().get_info<info::device::name>() << "\n";
@@ -63,7 +63,7 @@ void DpcppParallel(queue& q, std::vector<Projectile>& in_vect,
     // Output accessor set to write mode.
     auto V2 = bufout_vect.get_access<access::mode::write>(h);
 
-    h.parallel_for(range<1>(NumElements), [=](id<1> i) {
+    h.parallel_for(range<1>(num_elements), [=](id<1> i) {
       // Call the Inline function calculate_range
       CalculateRange(V1[i], V2[i]);
     });
@@ -72,7 +72,7 @@ void DpcppParallel(queue& q, std::vector<Projectile>& in_vect,
 }
 // scalar function to calculate the range
 void DpcppScalar(std::vector<Projectile>& v1, std::vector<Projectile>& v2) {
-  for (int i = 0; i < NumElements; i++) {
+  for (int i = 0; i < num_elements; i++) {
     CalculateRange(v1[i], v2[i]);
   }
 }
@@ -83,7 +83,7 @@ int main() {
   float init_vel = 0;
   vector<Projectile> input_vect1, out_parallel_vect2, out_scalar_vect3;
   // Initialize the Input and Output vectors
-  for (int i = 0; i < NumElements; i++) {
+  for (int i = 0; i < num_elements; i++) {
     init_angle = rand() % 90 + 10;
     init_vel = rand() % 400 + 10;
     input_vect1.push_back(Projectile(init_angle, init_vel, 1.0, 1.0, 1.0));
@@ -116,11 +116,11 @@ int main() {
   // call the DpcppScalar with input_vect1 as input and out_scalar_vect3 as
   // output
   DpcppScalar(input_vect1, out_scalar_vect3);
-  for (int i = 0; i < NumElements; i++) {
+  for (int i = 0; i < num_elements; i++) {
     // Displaying the Scalar computation results. Uncomment to viee the results
     // cout<<"Scalar "<<out_scalar_vect3[i];
   }
-  for (int i = 0; i < NumElements; i++) {
+  for (int i = 0; i < num_elements; i++) {
     // Displaying the Parallel computation results.
     cout << "Parallel " << out_parallel_vect2[i];
   }

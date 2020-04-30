@@ -28,7 +28,18 @@ This code sample is licensed under MIT license.
 ```
 mkdir build
 cd build
-cmake ..
+```
+
+If you are compiling for the A10 PAC board, run `cmake` using the command:
+
+```
+cmake .. 
+```
+
+If instead you are compiling for the S10 PAC board, run `cmake` using the command:
+
+```
+cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
 ```
 
 2. Compile the design through the generated `Makefile`. The following four targets are provided, matching the recommended development flow:
@@ -55,6 +66,11 @@ cmake ..
        make fpga 
        ./qrd.fpga 32768 
        ```
+
+       For the S10 PAC board, run on the hardware with the command:
+       ```
+       ./qrd.fpga 40960 
+       ```
        
     * Compile and run on CPU hardware (not optimized). This step generates a random matrix and computes QR decomposition.
 
@@ -67,6 +83,7 @@ cmake ..
 ## Building the Example Design (Windows)
 
 Note: `cmake` is not yet supported on Windows, a build.ninja file is provided instead. 
+Note: Ensure that Microsoft Visual Studio* (2019 Version 16.4 or newer) with "Desktop development with C++" workload is installed on your system.
 
 1. Enter source file directory.
 
@@ -76,18 +93,13 @@ cd src
 
 2. Compile the design. The following four targets are provided, matching the recommended development flow:
 
-    * Compile and run for emulation (fast compile time, targets emulated FPGA device). This step generates a random matrix and computes QR decomposition.
-
-       ```
-       ninja fpga_emu
-       ./qrd.fpga_emu 
-       ```
-
     * Generate HTML performance report. Find the report in `../src/qrd.prj/reports/report.html`directory.
 
        ```
        ninja report
        ``` 
+
+    * **Not supported:** Compile and run for emulation.
 
     * **Not supported yet:** Compile and run on an FPGA hardware.
 
@@ -132,11 +144,13 @@ PASSED
 | Flag | Description
 ---    |---
 `-Xshardware` | target FPGA hardware
-`-Xsno-accessor-aliasing` | indicates that the arguments are independent from each other
-`-Xsfmax=300` | the FPGA backend attempts to achieve 300 MHz
+`-Xsclock=300MHz` | the FPGA backend attempts to achieve 300 MHz
 `-Xsfp-relaxed` | allows backend to relax the order of additions 
 `-Xsparallel=2` | uses 2 cores when compiling the bitstream through Quartus
 `-Xsseed=2` | uses seed 2 during Quartus, yields slightly higher fmax
+`-DFIXED_ITERATIONS=64` | uses the value 64 for the constant FIXED_ITERATIONS. This constant is passed to the ivdep attribute for a loop in the design.
+
+NOTE: the Xsseed and DFIXED_ITERATIONS values differ depending on the board being targeted.
 
 
 ## Performance disclaimers

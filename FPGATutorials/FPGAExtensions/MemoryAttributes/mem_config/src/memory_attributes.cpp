@@ -8,14 +8,14 @@
 
 using namespace cl::sycl;
 
-constexpr access::mode sycl_read = access::mode::read;
-constexpr access::mode sycl_write = access::mode::write;
+constexpr access::mode kSyclRead = access::mode::read;
+constexpr access::mode kSyclWrite = access::mode::write;
 
-constexpr unsigned ROWS = 8;
-constexpr unsigned VEC = 4;
-constexpr unsigned MAXVAL = 512;
-constexpr unsigned NUMTESTS = 64;
-constexpr int MAXITER = 8;
+constexpr unsigned kRows = 8;
+constexpr unsigned kVec = 4;
+constexpr unsigned kMaxVal = 512;
+constexpr unsigned kNumTests = 64;
+constexpr int kMaxIter = 8;
 
 // forward declare the class name used in lamda for defining the kernel
 class KernelCompute;
@@ -25,59 +25,58 @@ auto exception_handler = [](cl::sycl::exception_list exceptions) {
     try {
       std::rethrow_exception(e);
     } catch (cl::sycl::exception const& e) {
-      std::cout << "Caught asynchronous SYCL exception:\n"
-                << e.what() << std::endl;
+      std::cout << "Caught asynchronous SYCL exception:\n" << e.what() << "\n";
       std::terminate();
     }
   }
 };
 
 // The shared compute function for host and device code
-unsigned compute(unsigned Init, unsigned int DictOffset[][VEC]) {
-  using UintArray = cl_uint[VEC];
-  using Uint2DArray = cl_uint[VEC][VEC];
+unsigned Compute(unsigned init, unsigned int dict_offset[][kVec]) {
+  using UintArray = cl_uint[kVec];
+  using Uint2DArray = cl_uint[kVec][kVec];
 
-  // We do not provide any attributes for CompareOffset and Hash;
+  // We do not provide any attributes for compare_offset and hash;
   // we let the compiler decide what's best based on the access pattern
   // and their size.
-  Uint2DArray CompareOffset;
-  UintArray Hash;
+  Uint2DArray compare_offset;
+  UintArray hash;
 
 #pragma unroll
-  for (unsigned char i = 0; i < VEC; i++) {
-    Hash[i] = (++Init) & (ROWS - 1);
+  for (unsigned char i = 0; i < kVec; i++) {
+    hash[i] = (++init) & (kRows - 1);
   }
 
-  int Count = 0, Iter = 0;
+  int count = 0, iter = 0;
   do {
-    // After unrolling both loops, we have VEC*VEC reads from DictOffset
+    // After unrolling both loops, we have kVec*kVec reads from dict_offset
 #pragma unroll
-    for (int i = 0; i < VEC; i++) {
+    for (int i = 0; i < kVec; i++) {
 #pragma unroll
-      for (int k = 0; k < VEC; ++k) {
-        CompareOffset[k][i] = DictOffset[Hash[i]][k];
+      for (int k = 0; k < kVec; ++k) {
+        compare_offset[k][i] = dict_offset[hash[i]][k];
       }
     }
 
-    // After unrolling, we have VEC writes to DictOffset
+    // After unrolling, we have kVec writes to dict_offset
 #pragma unroll
-    for (unsigned char k = 0; k < VEC; ++k) {
-      DictOffset[Hash[k]][k] = (Init << k);
+    for (unsigned char k = 0; k < kVec; ++k) {
+      dict_offset[hash[k]][k] = (init << k);
     }
-    Init++;
+    init++;
 
 #pragma unroll
-    for (int i = 0; i < VEC; i++) {
+    for (int i = 0; i < kVec; i++) {
 #pragma unroll
-      for (int k = 0; k < VEC; ++k) {
-        Count += CompareOffset[i][k];
+      for (int k = 0; k < kVec; ++k) {
+        count += compare_offset[i][k];
       }
     }
-  } while (++Iter < MAXITER);
-  return Count;
+  } while (++iter < kMaxIter);
+  return count;
 }
 
-unsigned runKernel(unsigned Init, unsigned int const DictOffsetInit[]) {
+unsigned RunKernel(unsigned init, unsigned int const dict_offset_init[]) {
   cl_uint result = 0;
   // Include all the SYCL work in a {} block to ensure all
   // SYCL tasks are completed before exiting the block.
@@ -90,39 +89,40 @@ unsigned runKernel(unsigned Init, unsigned int const DictOffsetInit[]) {
     intel::fpga_selector device_selector;
 #endif
 
-    queue DeviceQueue(device_selector, exception_handler);
+    queue device_queue(device_selector, exception_handler);
 
     // set up the buffers.
-    buffer<cl_uint, 1> bufferDictOffsetInit(DictOffsetInit,
-                                            range<1>(ROWS * VEC));
-    buffer<cl_uint, 1> bufferR(&result, range<1>(1));
+    buffer<cl_uint, 1> buffer_dict_offset_init(dict_offset_init,
+                                               range<1>(kRows * kVec));
+    buffer<cl_uint, 1> buffer_R(&result, range<1>(1));
 
-    event QueueEvent;
-    QueueEvent = DeviceQueue.submit([&](handler& cgh) {
+    event queue_event;
+    queue_event = device_queue.submit([&](handler& cgh) {
       // create accessors from global memory buffers to read input data and
       // to write the results.
-      auto accessorD = bufferDictOffsetInit.get_access<sycl_read>(cgh);
-      auto accessorR = bufferR.get_access<sycl_write>(cgh);
+      auto accessor_D = buffer_dict_offset_init.get_access<kSyclRead>(cgh);
+      auto accessor_R = buffer_R.get_access<kSyclWrite>(cgh);
 
-      cgh.single_task<class KernelCompute>([=]() {
+      cgh.single_task<class KernelCompute>([=
+      ]() [[intel::kernel_args_restrict]] {
 #if defined(SINGLEPUMP)
         [[intelfpga::singlepump, intelfpga::memory("MLAB"),
-          intelfpga::numbanks(VEC), intelfpga::max_replicates(VEC)]]
+          intelfpga::numbanks(kVec), intelfpga::max_replicates(kVec)]]
 #elif defined(DOUBLEPUMP)
         [[intelfpga::doublepump, intelfpga::memory("MLAB"),
-          intelfpga::numbanks(VEC), intelfpga::max_replicates(VEC)]]
+          intelfpga::numbanks(kVec), intelfpga::max_replicates(kVec)]]
 #endif
-        unsigned int DictOffset[ROWS][VEC];
+        unsigned int dict_offset[kRows][kVec];
 
-        // Initialize 'DictOffset' with values from global memory.
-        for (int i = 0; i < ROWS; ++i) {
+        // Initialize 'dict_offset' with values from global memory.
+        for (int i = 0; i < kRows; ++i) {
 #pragma unroll
-          for (unsigned char k = 0; k < VEC; ++k) {
-            // After unrolling, we end up with VEC writes to DictOffset.
-            DictOffset[i][k] = accessorD[i * VEC + k];
+          for (unsigned char k = 0; k < kVec; ++k) {
+            // After unrolling, we end up with kVec writes to dict_offset.
+            dict_offset[i][k] = accessor_D[i * kVec + k];
           }
         }
-        accessorR[0] = compute(Init, DictOffset);
+        accessor_R[0] = Compute(init, dict_offset);
       });
     });
   }
@@ -131,14 +131,14 @@ unsigned runKernel(unsigned Init, unsigned int const DictOffsetInit[]) {
 
 // This host side function performs the same computation as the device side
 // kernel, and is used to verify functional correctness.
-unsigned goldenRun(unsigned Init, unsigned int const DictOffsetInit[]) {
-  unsigned int DictOffset[ROWS][VEC];
-  for (int i = 0; i < ROWS; ++i) {
-    for (unsigned char k = 0; k < VEC; ++k) {
-      DictOffset[i][k] = DictOffsetInit[i * VEC + k];
+unsigned GoldenRun(unsigned init, unsigned int const dict_offset_init[]) {
+  unsigned int dict_offset[kRows][kVec];
+  for (int i = 0; i < kRows; ++i) {
+    for (unsigned char k = 0; k < kVec; ++k) {
+      dict_offset[i][k] = dict_offset_init[i * kVec + k];
     }
   }
-  return compute(Init, DictOffset);
+  return Compute(init, dict_offset);
 }
 
 int main() {
@@ -152,51 +152,48 @@ int main() {
   printf("Testing kernel with no attributes applied to memories\n");
 #endif
 
-  bool Passed = true;
-  for (unsigned j = 0; j < NUMTESTS; j++) {
+  bool passed = true;
+  for (unsigned j = 0; j < kNumTests; j++) {
     // initialize input data with random values
-    const unsigned Init = rand() % MAXVAL;
-    unsigned int DictOffsetInit[ROWS * VEC];
-    for (int i = 0; i < ROWS; ++i) {
-      for (char k = 0; k < VEC; ++k) {
-        DictOffsetInit[i * VEC + k] = rand() % MAXVAL;
+    const unsigned init = rand() % kMaxVal;
+    unsigned int dict_offset_init[kRows * kVec];
+    for (int i = 0; i < kRows; ++i) {
+      for (char k = 0; k < kVec; ++k) {
+        dict_offset_init[i * kVec + k] = rand() % kMaxVal;
       }
     }
 
     try {
       // run the device side kernel, the result in retunrned in R, the
       // time taken for the kernel to execute is return in KernelRunTimeNs.
-      auto KernelResult = runKernel(Init, DictOffsetInit);
+      auto kernel_result = RunKernel(init, dict_offset_init);
 
       // compute the golden result
-      auto GoldenResult = goldenRun(Init, DictOffsetInit);
+      auto golden_result = GoldenRun(init, dict_offset_init);
 
       // kernel run is functionally correct only if its result matches the
       // golden result.
-      Passed = (KernelResult == GoldenResult);
+      passed = (kernel_result == golden_result);
 
-      if (!Passed) {
-        printf("  Test#%u: mismatch: %d != %d (KernelResult != GoldenResult)\n",
-               j, KernelResult, GoldenResult);
+      if (!passed) {
+        printf(
+            "  Test#%u: mismatch: %d != %d (kernel_result != golden_result)\n",
+            j, kernel_result, golden_result);
       }
     } catch (cl::sycl::exception const& e) {
-      std::cout << "Caught a synchronous SYCL exception: " << e.what()
-                << std::endl;
+      std::cout << "Caught a synchronous SYCL exception: " << e.what() << "\n";
       std::cout << "   If you are targeting an FPGA hardware, "
                    "ensure that your system is plugged to an FPGA board that "
-                   "is set up correctly"
-                << std::endl;
+                   "is set up correctly\n";
       std::cout << "   If you are targeting the FPGA emulator, compile with "
-                   "-DFPGA_EMULATOR"
-                << std::endl;
+                   "-DFPGA_EMULATOR\n";
       std::cout << "   If you are targeting a CPU host device, compile with "
-                   "-DCPU_HOST"
-                << std::endl;
+                   "-DCPU_HOST\n";
       return 1;
     }
   }
 
-  if (Passed) {
+  if (passed) {
     printf("PASSED: all kernel results are correct.\n");
   } else {
     printf("FAILED\n");

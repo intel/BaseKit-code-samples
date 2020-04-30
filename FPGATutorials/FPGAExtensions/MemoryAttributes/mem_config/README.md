@@ -45,15 +45,15 @@ declarations. The compiler supports the following memory attributes:
 | intelfpga::singlepump            | Specifies that the memory implementing the variable or array should be clocked at the same rate as the accesses to it.
 | intelfpga::doublepump            | Specifies that the memory implementing the variable or array should be clocked at twice the rate as the accesses to it.
 | intelfpga::max_replicates(N)     | Specifies that a maximum of N replicates should be created to enable simultaneous reads from the datapath.
-| intelfpga::max_private_copies(N) | Specifies that a maximum of N private copies should be created to enable concurrent execution of N pipelined threads.
+| intelfpga::private_copies(N)     | Specifies that a maximum of N private copies should be created to enable concurrent execution of N pipelined threads.
 | intelfpga::simple_dual_port      | Specifies that the memory implementing the variable or array should have no port that services both reads and writes.
 | intelfpga::merge("`key`", "`type`")  | Merge two or more variables or arrays in the same scope width-wise or depth-wise. All variables with the same `key` string are merged into the same memory system. The string `type` can be either `width` or `depth`. 
 
 
 ### Example: Applying Memory Attributes to Private Arrays
 ```c++
-deviceQueue.submit([&](handler &cgh) {
-  cgh.single_task<class kernelCompute>([=]() {
+device_queue.submit([&](handler &cgh) {
+  cgh.single_task<class KernelCompute>([=]() {
     // create a kernel memory 8 bytes wide (2 integers per memory word)
     // and split the contents into 2 banks (each bank will contain 32
     // integers in 16 memory words). 
@@ -63,10 +63,10 @@ deviceQueue.submit([&](handler &cgh) {
     // registers. 
     [[intelfpga::register]] int b[64];
 
-    // merge 'memA' and 'memB' width-wise so that they are mapped
+    // merge 'mem_A' and 'mem_B' width-wise so that they are mapped
     // to the same kernel memory system
-    [[intelfpga::merge("mem", "width")]] unsigned short memA[64];
-    [[intelfpga::merge("mem", "width")]] unsigned short memB[64];
+    [[intelfpga::merge("mem", "width")]] unsigned short mem_A[64];
+    [[intelfpga::merge("mem", "width")]] unsigned short mem_B[64];
     // ...
   });
 });
@@ -82,8 +82,8 @@ struct State {
   [[intelfpga::register]] int reg[8];
 };
 
-deviceQueue.submit([&](handler &cgh) {
-  cgh.single_task<class kernelCompute>([=]() {
+device_queue.submit([&](handler &cgh) {
+  cgh.single_task<class KernelCompute>([=]() {
     // The compiler will create two memory systems from S1:
     //  - S1.mem[64] implemented in kernel memory that has 2 banks
     //  - S1.reg[8] implemented in registers 
@@ -111,21 +111,21 @@ let's look at the tutorial design.
 In this tutorial, we will show the trade-off between choosing a single-pumped
 and double-pumped memory system for your kernel. We will apply the
 attributes `[[intelfpga::singlepump]]` and `[[intelfpga::doublepump]]`, one at
-a time, to a two dimensional array named `DictOffset` (dimensions `ROWS x
-VEC`). Array `DictOffset` has the following accesses:
+a time, to a two dimensional array named `dict_offset` (dimensions `kRows x
+kVec`). Array `dict_offset` has the following accesses:
 
- - It is initialized by copying the contents of global memory `DictOffsetInit`
-   using VEC writes.
+ - It is initialized by copying the contents of global memory `dict_offset_init`
+   using kVec writes.
  - It is dynamically read (i.e. the locations being read from are not known at
-   compile time) VEC\*VEC times.
- - There are VEC dynamic writes updating the values at some indices.
+   compile time) kVec\*kVec times.
+ - There are kVec dynamic writes updating the values at some indices.
 
-Overall, there are 2\*VEC writes and VEC\*VEC reads for `DictOffset`. Note
+Overall, there are 2\*kVec writes and kVec\*kVec reads for `dict_offset`. Note
 that for both single-pumped and double-pumped versions, we apply memory
-attributes to request the compiler to implement `DicOffset` in MLABs (as the
-size of the array is small) using VEC banks, with each bank having no more
-than VEC replicates (see the explanation at the end of the document to know
-why VEC banks are requested).
+attributes to request the compiler to implement `dict_offset` in MLABs (as the
+size of the array is small) using kVec banks, with each bank having no more
+than kVec replicates (see the explanation at the end of the document to know
+why kVec banks are requested).
 
 ## Build And Verify
 
@@ -157,7 +157,7 @@ development flow:
 
   - Generate HTML performance reports. This target generates HTML reports for
     two variants of the tutorial: one variant uses a single-pumped memory system
-    for  `DictOffset` and the other uses a double-pumped memory system. Find the
+    for  `dict_offset` and the other uses a double-pumped memory system. Find the
     reports, respectively, in `memory_attributes_singlepump.prj/reports/` and
     `memory_attributes_doublepump.prj/reports/`. You can use the reports to
     verify that the compiler respected the attributes. For more information, see
@@ -168,7 +168,7 @@ development flow:
 
   - Compile and run on an FPGA hardware (longer compile time, targets FPGA
     device). This step also produces two variants, one variant uses a
-    single-pumped memory system for  `DictOffset` and the other uses a
+    single-pumped memory system for  `dict_offset` and the other uses a
     double-pumped memory system.
     ```
     make fpga 
@@ -213,7 +213,7 @@ development flow:
 
   - Generate HTML performance reports. This target generates HTML reports for
     two variants of the tutorial: one variant uses a single-pumped memory system
-    for  `DictOffset` and the other uses a double-pumped memory system. Find the
+    for  `dict_offset` and the other uses a double-pumped memory system. Find the
     reports, respectively, in `singlepump_report.prj/reports/` and `singlepump_report.prj/reports/`. You can use the reports to verify that the compiler respected the attributes. For more information, see the section 'Using Reports to Verify the Design' below.
     ```
     ninja report
@@ -235,14 +235,14 @@ You can compile and run this tutorial in the Eclipse* IDE (in Linux*) and the Vi
 ### Using Reports to Verify the Design
 
 Open the reports and go to the Kernel Memory Viewer (System Viewers > Kernel
-Memory Viewer). In the Kernel Memory List pane, click `DictOffset` under
+Memory Viewer). In the Kernel Memory List pane, click `dict_offset` under
 function `KernelCompute`. 
 
-For both single-pumped and double-pumped versions, the compiler generates VEC
+For both single-pumped and double-pumped versions, the compiler generates kVec
 banks and implements the memory in MLABs, as was requested using attributes.
 The difference between both the memory systems becomes clear once you look
 into the number of replicates within each bank. To see the number of
-replicates per bank, click any bank label (say Bank 0) under `DictOffset`. You
+replicates per bank, click any bank label (say Bank 0) under `dict_offset`. You
 can see that for the single-pumped memory system, the compiler created 4
 replicates per bank, whereas for the double-pumped memory system, the compiler
 created 2 replicates per bank. This happens because a single-pumped replicate
@@ -255,7 +255,7 @@ This also means that different amount of hardware resources were used to
 generate the stall-free memory systems. Open the reports, go to Area Analysis
 of System (Area Analysis > Area Analysis of System) and click "Expand All".
 For the single-pumped version, you can see that the compiler used 32 MLABs to
-implement the memory system for `DictOffset`, whereas for the double-pumped
+implement the memory system for `dict_offset`, whereas for the double-pumped
 version, the compiler used 16 MLABs. For the double-pumped version, the
 compiler uses ALUTs and FFs to implement the logic required to double-pump a
 memory. No ALUTs or FFs were used in single-pumped version.
@@ -269,7 +269,7 @@ Fmax of 307.9 MHz, whereas the double-pumped version has a Fmax of 200.0
 MHz.
 
 The table that follows summarizes the Fmax (in MHz) and the number of MLABs used
-in generating a stall-free memory system for `DictOffset` on
+in generating a stall-free memory system for `dict_offset` on
 Intel® Programmable Acceleration Card with Intel® Arria® 10 GX FPGA.
 
 Variant  | Fmax (MHz) | \# MLABs used 
@@ -313,35 +313,35 @@ Finally, feel free to experiment with the tutorial code. You can:
    `[[intelfpga::memory("BLOCK_RAM")]]`) or registers (using
    `[[intelfpga::register]]`) to see how it affects the area and Fmax of the
    tutorial design.
- - vary ROWS and/or VEC (both in powers of 2) to see how it effects the
+ - vary kRows and/or kVec (both in powers of 2) to see how it effects the
    trade-off between single-pumped and double-pumped memories.
 
-## Aside: Why do we create VEC banks with a maximum of VEC replicates per bank?
+## Aside: Why do we create kVec banks with a maximum of kVec replicates per bank?
 
-If you list the accesses to `DictOffset` in the code, you will get the
+If you list the accesses to `dict_offset` in the code, you will get the
 following:
 
- - VEC writes to `DictOffset[i][k]`, with k=0,..,VEC-1
- - VEC reads from `DictOffset[Hash[0]][k]`, with k=0,..,VEC-1
- - VEC reads from `DictOffset[Hash[1]][k]`, with k=0,..,VEC-1
- - VEC reads from `DictOffset[Hash[2]][k]`, with k=0,..,VEC-1
- - VEC reads from `DictOffset[Hash[3]][k]`, with k=0,..,VEC-1
- - VEC writes to `DictOffset[Hash[k]][k]`, with k=0,..,VEC-1
+ - kVec writes to `dict_offset[i][k]`, with k=0,..,kVec-1
+ - kVec reads from `dict_offset[hash[0]][k]`, with k=0,..,kVec-1
+ - kVec reads from `dict_offset[hash[1]][k]`, with k=0,..,kVec-1
+ - kVec reads from `dict_offset[hash[2]][k]`, with k=0,..,kVec-1
+ - kVec reads from `dict_offset[hash[3]][k]`, with k=0,..,kVec-1
+ - kVec writes to `dict_offset[hash[k]][k]`, with k=0,..,kVec-1
 
-Note that whenever `DictOffset` is accessed, the second dimension is always
+Note that whenever `dict_offset` is accessed, the second dimension is always
 known at compile time. Hence, if we choose a memory system such that array
-elements `DictOffset[:][0]` (`:` denotes all indices in range) are contained
-in Bank 0, `DictOffset[:][1]` are contained in Bank 1 and so on, each access
+elements `dict_offset[:][0]` (`:` denotes all indices in range) are contained
+in Bank 0, `dict_offset[:][1]` are contained in Bank 1 and so on, each access
 (read or write) needs to go to only one bank. This is achieved by requesting
-the compiler to generate VEC banks.
+the compiler to generate kVec banks.
 
-Also, from the access pattern, it is clear that there are VEC reads from each
-bank. To make these reads stall-free, we request VEC replicates per bank so that
+Also, from the access pattern, it is clear that there are kVec reads from each
+bank. To make these reads stall-free, we request kVec replicates per bank so that
 (if needed) each read can happen simultaneously from a separate replicate. Note
 that since all replicates in a bank should contain identical data at all times,
 a write to a bank has to go to all replicates. For single-pumped memories, each
 replicate has 2 physical ports. In the tutorial code, one of these ports is used
-for writing. Hence, the compiler generates VEC replicates per bank to create
-stall-free accesses for VEC reads. For double-pumped memories, each replicate
+for writing. Hence, the compiler generates kVec replicates per bank to create
+stall-free accesses for kVec reads. For double-pumped memories, each replicate
 effectively has 4 ports, three of which are available for reads. Hence, the
 compiler needs fewer replicates per bank to create stall-free reads.

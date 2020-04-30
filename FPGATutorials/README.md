@@ -10,7 +10,7 @@ Tutorials for oneAPI FPGA developers.
 |---------------------------------------|---------------------------------------------------------------------------------------------|
 | [Compile Flow](./Compilation/compile_flow)  | Introduction to most commonly used compilation commands targeting Intel FPGA devices.       |
 | [Device Link](./Compilation/device_link)   | Demonstrates how to use device link mechanism to separate device and host part compilation. |
-| [Use Library](./Compilation/use_library)   | Demonstrates usage of device side library.                                               |
+
 
 
 ### FPGA extensions

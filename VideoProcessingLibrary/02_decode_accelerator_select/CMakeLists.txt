@@ -3,6 +3,7 @@ project(decode_accelerator_select)
 
 set(TARGET decode_accelerator_select)
 set(SRCS src/decode_accelerator_select.cpp)
+set(CMAKE_MSVCIDE_RUN_PATH $ENV{PATH})
 set(RUNARGS $ENV{VPL_DIR}/samples/content/cars_1280x720.h264)
 
 # Set default build type to RelWithDebInfo if not specified

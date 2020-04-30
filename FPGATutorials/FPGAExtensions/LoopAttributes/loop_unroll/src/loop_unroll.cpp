@@ -15,24 +15,26 @@ constexpr access::mode sycl_write = access::mode::write;
 template <int N>
 class SimpleVadd;
 
-auto exception_handler = [](cl::sycl::exception_list exceptions) {
+auto exception_handler = [](exception_list exceptions) {
   for (std::exception_ptr const& e : exceptions) {
     try {
       std::rethrow_exception(e);
-    } catch (cl::sycl::exception const& e) {
-      std::cout << "Caught asynchronous SYCL exception:\n"
-                << e.what() << std::endl;
+    } catch (exception const& e) {
+      std::cout << "Caught asynchronous SYCL exception:\n";
       std::terminate();
     }
   }
 };
 
-template <int UNROLL_FACTOR>
-void vec_add(const std::vector<float>& VA, const std::vector<float>& VB,
-             std::vector<float>& VC, int n) {
-  auto property_list =
-      cl::sycl::property_list{cl::sycl::property::queue::enable_profiling()};
-  event queue_event;
+// This function instantiates the VecAdd kernel, which contains a loop that adds
+// up the two summand arrays, and stores the result into sum This loop will be
+// unrolled by the specified UnrollFactor macro
+template <int UnrollFactor>
+void VecAdd(const std::vector<float>& summands1,
+            const std::vector<float>& summands2, std::vector<float>& sum,
+            int array_size) {
+  auto prop_list = property_list{property::queue::enable_profiling()};
+  event e;
   try {
 // Initialize queue with device selector and enabling profiling
 #if defined(FPGA_EMULATOR)
@@ -43,60 +45,55 @@ void vec_add(const std::vector<float>& VA, const std::vector<float>& VB,
     intel::fpga_selector device_selector;
 #endif
 
-    std::unique_ptr<queue> deviceQueue;
+    std::unique_ptr<queue> q;
 
     try {
-      deviceQueue.reset(
-          new queue(device_selector, exception_handler, property_list));
-    } catch (cl::sycl::exception const& e) {
-      std::cout << "Caught a synchronous SYCL exception:" << std::endl
-                << e.what() << std::endl;
+      q.reset(new queue(device_selector, exception_handler, prop_list));
+    } catch (exception const& e) {
+      std::cout << "Caught a synchronous SYCL exception:\n" << e.what() << "\n";
       std::cout << "If you are targeting an FPGA hardware, please "
                    "ensure that your system is plugged to an FPGA board that "
-                   "is set up correctly."
-                << std::endl;
+                   "is set up correctly.\n";
       std::cout << "If you are targeting the FPGA emulator, compile with "
-                   "-DFPGA_EMULATOR."
-                << std::endl;
-      std::cout
-          << "If you are targeting a CPU host device, compile with -DCPU_HOST."
-          << std::endl;
+                   "-DFPGA_EMULATOR.\n";
+      std::cout << "If you are targeting a CPU host device, compile with "
+                   "-DCPU_HOST.\n";
       return;
     }
 
-    buffer<float, 1> bufferA(VA.data(), n);
-    buffer<float, 1> bufferB(VB.data(), n);
-    buffer<float, 1> bufferC(VC.data(), n);
+    buffer<float, 1> buffer_summands1(summands1.data(), array_size);
+    buffer<float, 1> buffer_summands2(summands2.data(), array_size);
+    buffer<float, 1> buffer_sum(sum.data(), array_size);
 
-    queue_event = deviceQueue->submit([&](handler& cgh) {
-      auto accessorA = bufferA.get_access<sycl_read>(cgh);
-      auto accessorB = bufferB.get_access<sycl_read>(cgh);
-      auto accessorC = bufferC.get_access<sycl_write>(cgh);
-      auto n_items = n;
-      cgh.single_task<SimpleVadd<UNROLL_FACTOR> >([=]() {
-#pragma unroll UNROLL_FACTOR
-        for (int k = 0; k < n_items; k++) {
-          accessorC[k] = accessorA[k] + accessorB[k];
+    e = q->submit([&](handler& h) {
+      auto acc_summands1 = buffer_summands1.get_access<sycl_read>(h);
+      auto acc_summands2 = buffer_summands2.get_access<sycl_read>(h);
+      auto acc_sum = buffer_sum.get_access<sycl_write>(h);
+      auto size = array_size;
+      h.single_task<SimpleVadd<UnrollFactor> >([=
+      ]() [[intel::kernel_args_restrict]] {
+#pragma unroll UnrollFactor
+        for (int k = 0; k < size; k++) {
+          acc_sum[k] = acc_summands1[k] + acc_summands2[k];
         }
       });
     });
 
-    deviceQueue->wait_and_throw();
-    cl_ulong startk = queue_event.template get_profiling_info<
-        cl::sycl::info::event_profiling::command_start>();
-    cl_ulong endk = queue_event.template get_profiling_info<
-        cl::sycl::info::event_profiling::command_end>();
+    q->wait_and_throw();
+    cl_ulong startk =
+        e.get_profiling_info<info::event_profiling::command_start>();
+    cl_ulong endk = e.get_profiling_info<info::event_profiling::command_end>();
     // unit of startk and endk is nano second, convert to ms
     double kernel_time = (double)(endk - startk) * 1e-6f;
 
-    std::cout << "UNROLL_FACTOR " << UNROLL_FACTOR
-              << "kernel time : " << kernel_time << " ms\n";
-    std::cout << "Throughput for kernel with UNROLL_FACTOR " << UNROLL_FACTOR
+    std::cout << "UnrollFactor " << UnrollFactor
+              << " kernel time : " << kernel_time << " ms\n";
+    std::cout << "Throughput for kernel with UnrollFactor " << UnrollFactor
               << ": ";
     std::cout << std::fixed << std::setprecision(3)
-              << ((double)n / kernel_time) / 1e6f << " GFlops\n";
-  } catch (cl::sycl::exception const& e) {
-    std::cout << "Caught synchronous SYCL exception:\n" << e.what() << std::endl;
+              << ((double)array_size / kernel_time) / 1e6f << " GFlops\n";
+  } catch (exception const& e) {
+    std::cout << "Caught synchronous SYCL exception:\n";
     std::terminate();
   }
 }
@@ -108,45 +105,53 @@ int main(int argc, char* argv[]) {
     std::string option(argv[1]);
     if (option == "-h" || option == "--help") {
       std::cout << "Usage: \n";
-      std::cout << "<executable> <data size>\n";
-      std::cout << "\n";
+      std::cout << "<executable> <data size>\n\n";
       return 0;
     } else {
       array_size = std::stoi(option);
     }
   }
 
-  std::vector<float> A(array_size);
-  std::vector<float> B(array_size);
+  std::vector<float> summands1(array_size);
+  std::vector<float> summands2(array_size);
 
-  std::vector<float> C1(array_size);
-  std::vector<float> C2(array_size);
-  std::vector<float> C3(array_size);
-  std::vector<float> C4(array_size);
-  std::vector<float> C5(array_size);
+  std::vector<float> sum_unrollx1(array_size);
+  std::vector<float> sum_unrollx2(array_size);
+  std::vector<float> sum_unrollx4(array_size);
+  std::vector<float> sum_unrollx8(array_size);
+  std::vector<float> sum_unrollx16(array_size);
 
+  // Initialize the two summand arrays (arrays to be added to each other) to
+  // 1:N and N:1, so that the sum of all elements is N + 1
   for (int i = 0; i < array_size; i++) {
-    A[i] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-    B[i] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+    summands1[i] = static_cast<float>(i + 1);
+    summands2[i] = static_cast<float>(array_size - i);
   }
 
   std::cout << "Input Array Size:  " << array_size << "\n";
 
-  // Instantiate kernel logic with unroll factor 1, 2, 4, 8
-  vec_add<1>(A, B, C1, array_size);
-  vec_add<2>(A, B, C2, array_size);
-  vec_add<4>(A, B, C3, array_size);
-  vec_add<8>(A, B, C4, array_size);
-  vec_add<16>(A, B, C5, array_size);
+  // Instantiate VecAdd kernel with different unroll factors: 1, 2, 4, 8, 16
+  // The VecAdd kernel contains a loop that adds up the two summand arrays
+  // This loop will be unrolled by the specified unroll factor
+  // The sum array is expected to be identical, regardless of the unroll factor
+  VecAdd<1>(summands1, summands2, sum_unrollx1, array_size);
+  VecAdd<2>(summands1, summands2, sum_unrollx2, array_size);
+  VecAdd<4>(summands1, summands2, sum_unrollx4, array_size);
+  VecAdd<8>(summands1, summands2, sum_unrollx8, array_size);
+  VecAdd<16>(summands1, summands2, sum_unrollx16, array_size);
 
-  // Verify result
+  // Verify that each sum array is identical to each other, for every unroll
+  // factor
   for (unsigned int i = 0; i < array_size; i++) {
-    if (C1[i] != A[i] + B[i] || C1[i] != C2[i] || C1[i] != C3[i] ||
-        C1[i] != C4[i] || C1[i] != C5[i]) {
-      std::cout << "FAILED: The results are incorrect" << std::endl;
+    if (sum_unrollx1[i] != summands1[i] + summands2[i] ||
+        sum_unrollx1[i] != sum_unrollx2[i] ||
+        sum_unrollx1[i] != sum_unrollx4[i] ||
+        sum_unrollx1[i] != sum_unrollx8[i] ||
+        sum_unrollx1[i] != sum_unrollx16[i]) {
+      std::cout << "FAILED: The results are incorrect\n";
       return 1;
     }
   }
-  std::cout << "PASSED: The results are correct" << std::endl;
+  std::cout << "PASSED: The results are correct\n";
   return 0;
 }

@@ -1,5 +1,5 @@
 set(DEVICE_SOURCE_FILE kernel.cpp)
-set(KERNEL_HEADER_FILE kernel.h)
+set(KERNEL_HEADER_FILE kernel.hpp)
 set(HOST_SOURCE_FILE main.cpp)
 set(TARGET_NAME device_link)
 

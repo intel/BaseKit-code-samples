@@ -53,14 +53,14 @@ else()
     add_custom_target(report DEPENDS ${DEVICE_OBJ_FILE})
 
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE_FILE} ${SOURCE_FILE} COPYONLY)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pipe_array.h pipe_array.h COPYONLY)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unroller.h unroller.h COPYONLY)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pipe_array_internal.h pipe_array_internal.h COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pipe_array.hpp pipe_array.hpp COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unroller.hpp unroller.hpp COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pipe_array_internal.hpp pipe_array_internal.hpp COPYONLY)
 
     separate_arguments(HARDWARE_LINK_FLAGS_LIST UNIX_COMMAND "${HARDWARE_LINK_FLAGS}")
     add_custom_command(OUTPUT ${DEVICE_OBJ_FILE} 
                        COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS} ${HARDWARE_LINK_FLAGS_LIST} -std=c++14 -fsycl-link ${SOURCE_FILE} -o ${CMAKE_BINARY_DIR}/${DEVICE_OBJ_FILE}
-                       DEPENDS ${SOURCE_FILE} pipe_array.h unroller.h pipe_array_internal.h)
+                       DEPENDS ${SOURCE_FILE} pipe_array.hpp unroller.hpp pipe_array_internal.hpp)
 endif()
 
 # run

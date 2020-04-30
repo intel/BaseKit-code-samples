@@ -3,22 +3,12 @@ device_header_file = gzipkernel.h
 host_source_file = gzip.cpp crc32.cpp WriteGzip.cpp CompareGzip.cpp
 target_name = gzip
 
-emulator_target = ${target_name}.fpga_emu.exe
-cpu_host_target = ${target_name}.cpu_host.exe
 report_target = ${target_name}.a
 
-hardware_flags = -fintelfpga -Xshardware -Xsno-accessor-aliasing -Xsfmax=280 -Xsparallel=2 -Xsseed=1
-emulator_flags = -fintelfpga -DFPGA_EMULATOR
-
-rule build_fpga_emu
-  command = dpcpp-cl /GX ${emulator_flags} ${device_source_file} ${host_source_file} -o $out
+hardware_flags = -fintelfpga -Xshardware -Xsclock=280MHz -Xsparallel=2 -Xsseed=1
 
 rule gen_report
   command = dpcpp-cl /GX ${hardware_flags} ${device_source_file} ${host_source_file} -fsycl-link -o $out
-
-# FPGA emulator
-build fpga_emu: phony ${emulator_target}
-build ${emulator_target}: build_fpga_emu 
 
 # report
 build report: phony ${report_target}

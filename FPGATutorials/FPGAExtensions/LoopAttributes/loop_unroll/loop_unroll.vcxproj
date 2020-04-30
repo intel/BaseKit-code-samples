@@ -13,6 +13,9 @@
   <ItemGroup>
     <ClCompile Include="src\loop_unroll.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{565eaa85-f49c-43fe-b951-3fd2187cc3fe}</ProjectGuid>

@@ -13,6 +13,9 @@
   <ItemGroup>
     <ClCompile Include="src\n_way_buffering.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{49e7063b-56da-4acf-b153-5b56a98645be}</ProjectGuid>

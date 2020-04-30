@@ -33,7 +33,7 @@
 #include <chrono>
 #include <list>
 
-#include "qrd.h"
+#include "qrd.hpp"
 
 #define RANDOM_SEED 1138
 #define RANDOM_MIN 1
@@ -41,43 +41,42 @@
 
 using namespace std;
 using namespace std::chrono;
+using namespace cl::sycl;
 
-auto exception_handler = [](cl::sycl::exception_list exceptions) {
-  for (std::exception_ptr const &e : exceptions) {
+auto exception_handler = [](exception_list exceptions) {
+  for (exception_ptr const &e : exceptions) {
     try {
-      std::rethrow_exception(e);
+      rethrow_exception(e);
     } catch (cl::sycl::exception const &e) {
-      std::cout << "Caught asynchronous SYCL exception:\n"
-                << e.what() << std::endl;
-      std::terminate();
+      cout << "Caught asynchronous SYCL exception:\n" << e.what() << "\n";
+      terminate();
     }
   }
 };
 
-void sycl_device(vector<float> &in_matrix, vector<float> &out_matrix,
-                 cl::sycl::queue &queue, int matrices, int reps);
+void SyclDevice(vector<float> &in_matrix, vector<float> &out_matrix, queue &q,
+                int matrices, int reps);
 
 int main(int argc, char *argv[]) {
   int matrices = argc > 1 ? atoi(argv[1]) : 1;
   if (matrices < 1) {
-    std::cout << "Must run at least 1 matrix" << std::endl;
+    cout << "Must run at least 1 matrix"
+         << "\n";
     return 1;
   }
   try {
 #if defined(FPGA_EMULATOR)
-    cl::sycl::intel::fpga_emulator_selector device_selector;
+    intel::fpga_emulator_selector device_selector;
 #elif defined(CPU_HOST)
-    cl::sycl::host_selector device_selector;
+    host_selector device_selector;
 #else
-    cl::sycl::intel::fpga_selector device_selector;
+    intel::fpga_selector device_selector;
 #endif
 
-    cl::sycl::queue deviceQueue =
-        cl::sycl::queue(device_selector, exception_handler);
-    cl::sycl::device device = deviceQueue.get_device();
-    std::cout << "Device name: "
-              << device.get_info<cl::sycl::info::device::name>().c_str()
-              << std::endl;
+    queue q = queue(device_selector, exception_handler);
+    device device = q.get_device();
+    cout << "Device name: " << device.get_info<info::device::name>().c_str()
+         << "\n";
 
     vector<float> a_matrix;
     vector<float> qr_matrix;
@@ -88,27 +87,27 @@ int main(int argc, char *argv[]) {
     // For output-postprocessing
     float q_matrix[ROWS_COMPONENT][COLS_COMPONENT][2];
     float r_matrix[R_COMPONENT][R_COMPONENT][2];
-    std::cout << "Generating " << matrices << " random matri"
-              << ((matrices == 1) ? "x " : "ces ") << std::endl;
+    cout << "Generating " << matrices << " random matri"
+         << ((matrices == 1) ? "x " : "ces ") << "\n";
     srand(RANDOM_SEED);
     for (int i = 0; i < matrices; i++) {
       for (int row = 0; row < ROWS_COMPONENT; row++) {
         for (int col = 0; col < COLS_COMPONENT; col++) {
-          int randomVal = rand();
-          float randomDouble =
-              randomVal % (RANDOM_MAX - RANDOM_MIN) + RANDOM_MIN;
+          int random_val = rand();
+          float random_double =
+              random_val % (RANDOM_MAX - RANDOM_MIN) + RANDOM_MIN;
           a_matrix[i * ROWS_COMPONENT * COLS_COMPONENT * 2 +
-                   col * ROWS_COMPONENT * 2 + row * 2] = randomDouble;
-          int randomVal_imag = rand();
-          randomDouble =
-              randomVal_imag % (RANDOM_MAX - RANDOM_MIN) + RANDOM_MIN;
+                   col * ROWS_COMPONENT * 2 + row * 2] = random_double;
+          int random_val_imag = rand();
+          random_double =
+              random_val_imag % (RANDOM_MAX - RANDOM_MIN) + RANDOM_MIN;
           a_matrix[i * ROWS_COMPONENT * COLS_COMPONENT * 2 +
-                   col * ROWS_COMPONENT * 2 + row * 2 + 1] = randomDouble;
+                   col * ROWS_COMPONENT * 2 + row * 2 + 1] = random_double;
         }
       }
     }
 
-    sycl_device(a_matrix, qr_matrix, deviceQueue, 1, 1);  // Accelerator warmup
+    SyclDevice(a_matrix, qr_matrix, q, 1, 1);  // Accelerator warmup
 
 #if defined(FPGA_EMULATOR) || defined(CPU_HOST)
     int reps = 2;
@@ -117,28 +116,30 @@ int main(int argc, char *argv[]) {
 #endif
     cout << "Running QR decomposition of " << matrices << " matri"
          << ((matrices == 1) ? "x " : "ces ")
-         << ((reps > 1) ? "repeatedly" : "") << endl;
+         << ((reps > 1) ? "repeatedly" : "") << "\n";
 
     high_resolution_clock::time_point start_time = high_resolution_clock::now();
-    sycl_device(a_matrix, qr_matrix, deviceQueue, matrices, reps);
+    SyclDevice(a_matrix, qr_matrix, q, matrices, reps);
     high_resolution_clock::time_point end_time = high_resolution_clock::now();
-    std::chrono::duration<double> diff = end_time - start_time;
-    deviceQueue.throw_asynchronous();
+    duration<double> diff = end_time - start_time;
+    q.throw_asynchronous();
 
-    cout << "   Total duration:   " << diff.count() << " s" << endl;
+    cout << "   Total duration:   " << diff.count() << " s"
+         << "\n";
     cout << "Throughput: " << reps * matrices / diff.count() / 1000
-         << "k matrices/s" << endl;
+         << "k matrices/s"
+         << "\n";
 
-    std::list<int> toCheck;
+    list<int> to_check;
     // We will check at least matrix 0
-    toCheck.push_back(0);
+    to_check.push_back(0);
     // Spot check the last and the middle one
-    if (matrices > 2) toCheck.push_back(matrices / 2);
-    if (matrices > 1) toCheck.push_back(matrices - 1);
+    if (matrices > 2) to_check.push_back(matrices / 2);
+    if (matrices > 1) to_check.push_back(matrices - 1);
 
     cout << "Verifying results on matrix";
 
-    for (int matrix : toCheck) {
+    for (int matrix : to_check) {
       cout << " " << matrix;
       int idx = 0;
       for (int i = 0; i < R_COMPONENT; i++) {
@@ -189,7 +190,7 @@ int main(int argc, char *argv[]) {
       int count = 0;
       for (int row = 0; row < ROWS_COMPONENT; row++) {
         for (int col = 0; col < COLS_COMPONENT; col++) {
-          if (isnan(v_matrix[row][col][0]) || isnan(v_matrix[row][col][1])) {
+          if (std::isnan(v_matrix[row][col][0]) || std::isnan(v_matrix[row][col][1])) {
             count++;
           }
           float real = v_matrix[row][col][0] -
@@ -206,26 +207,27 @@ int main(int argc, char *argv[]) {
       }
 
       if (count > 0) {
-        cout << endl
+        cout << "\n"
              << "!!!!!!!!!!!!!! Error = " << error << " in " << count << " / "
-             << ROWS_COMPONENT * COLS_COMPONENT << endl;
+             << ROWS_COMPONENT * COLS_COMPONENT << "\n";
         return 1;
       }
     }
-    cout << endl << "PASSED" << endl;
+    cout << "\n"
+         << "PASSED"
+         << "\n";
+    return 0;
   } catch (cl::sycl::exception const &e) {
-    std::cout << "Caught a synchronous SYCL exception: " << e.what()
-              << std::endl;
-    std::cout << "   If you are targeting an FPGA hardware, "
-                 "ensure that your system is plugged to an FPGA board that is "
-                 "set up correctly"
-              << std::endl;
-    std::cout << "   If you are targeting the FPGA emulator, compile with "
-                 "-DFPGA_EMULATOR"
-              << std::endl;
-    std::cout
-        << "   If you are targeting a CPU host device, compile with -DCPU_HOST"
-        << std::endl;
-    std::terminate();
+    cout << "Caught a synchronous SYCL exception: " << e.what() << "\n";
+    cout << "   If you are targeting an FPGA hardware, "
+            "ensure that your system is plugged to an FPGA board that is "
+            "set up correctly"
+         << "\n";
+    cout << "   If you are targeting the FPGA emulator, compile with "
+            "-DFPGA_EMULATOR"
+         << "\n";
+    cout << "   If you are targeting a CPU host device, compile with -DCPU_HOST"
+         << "\n";
+    terminate();
   }
 }

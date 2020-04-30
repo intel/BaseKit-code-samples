@@ -27,7 +27,7 @@
 // California and by the laws of the United States of America.
 
 #define _CRT_SECURE_NO_WARNINGS
-#include "WriteGzip.h"
+#include "WriteGzip.hpp"
 
 #include <fcntl.h>
 #include <memory.h>
@@ -41,15 +41,15 @@
 #include <chrono>
 #include <string>
 
-#define DEFLATED 8
+constexpr int kDeflated = 8;
 #define GZIP_MAGIC "\037\213"  // Magic header for gzip files, 1F 8B
 
 #define ORIG_NAME 0x08
 #define OS_CODE 0x03  // Unix OS_CODE
 
-typedef struct _gzip_header {
+typedef struct GzipHeader {
   unsigned char magic[2];         // 0x1f, 0x8b
-  unsigned char compress_method;  // 0-7 reserved, 8=deflate -- DEFLATED
+  unsigned char compress_method;  // 0-7 reserved, 8=deflate -- kDeflated
   unsigned char flags;            // b0: file probably ascii
                                   // b1: header crc-16 present
                                   // b2: extra field present
@@ -70,7 +70,7 @@ typedef struct _gzip_header {
 
 } gzip_header, *pgzip_header;
 
-inline static void put_ulong(uint8_t *pc, unsigned long l) {
+inline static void PutUlong(uint8_t *pc, unsigned long l) {
   pc[0] = l & 0xff;
   pc[1] = (l >> 8) & 0xff;
   pc[2] = (l >> 16) & 0xff;
@@ -78,13 +78,13 @@ inline static void put_ulong(uint8_t *pc, unsigned long l) {
 }
 
 // returns 0 on success, otherwise failure
-int write_block_gzip(std::string original_filename,  // Original file name
-                                                     // that's being compressed
-                     std::string out_filename,       // gzip filename
-                     char *obuf,          // pointer to compressed data block
-                     size_t blen,         // length of compressed data block
-                     size_t ilen,         // original block length
-                     uint32_t buffercrc)  // the block's crc
+int WriteBlockGzip(std::string &original_filename,  // Original file name
+                                                   // that's being compressed
+                   std::string &out_filename,       // gzip filename
+                   char *obuf,           // pointer to compressed data block
+                   size_t blen,          // length of compressed data block
+                   size_t ilen,          // original block length
+                   uint32_t buffer_crc)  // the block's crc
 {
   //------------------------------------------------------------------
   // Setup the gzip output file header.
@@ -100,13 +100,13 @@ int write_block_gzip(std::string original_filename,  // Original file name
   unsigned char *pgziphdr =
       (unsigned char *)malloc(sizeof(gzip_header) + max_filename_sz);
   if (!pgziphdr) {
-    std::cout << "pgzip header cannot be allocated" << std::endl;
+    std::cout << "pgzip header cannot be allocated\n";
     return 1;
   }
 
   pgziphdr[0] = GZIP_MAGIC[0];
   pgziphdr[1] = GZIP_MAGIC[1];
-  pgziphdr[2] = DEFLATED;
+  pgziphdr[2] = kDeflated;
   pgziphdr[3] = ORIG_NAME;
 
   // Set time in header to 0, this is ignored by gunzip.
@@ -132,12 +132,12 @@ int write_block_gzip(std::string original_filename,  // Original file name
 
   unsigned char prolog[8];
 
-  put_ulong(((unsigned char *)prolog), buffercrc);
-  put_ulong(((unsigned char *)&prolog[4]), ilen);
+  PutUlong(((unsigned char *)prolog), buffer_crc);
+  PutUlong(((unsigned char *)&prolog[4]), ilen);
 
   FILE *fo = fopen(out_filename.c_str(), "w+");
   if (ferror(fo)) {
-    std::cout << "Cannot open file for output: " << out_filename << std::endl;
+    std::cout << "Cannot open file for output: " << out_filename << "\n";
     free(pgziphdr);
     return 1;
   }
@@ -147,7 +147,7 @@ int write_block_gzip(std::string original_filename,  // Original file name
   fwrite(prolog, 1, 8, fo);
 
   if (ferror(fo)) {
-    std::cout << "gzip output file write failure. " << std::endl;
+    std::cout << "gzip output file write failure.\n";
     free(pgziphdr);
     return 1;
   }

@@ -10,7 +10,7 @@
 
 using namespace cl::sycl;
 using namespace std;
-static const int NumElements = 100;
+static const int num_elements = 100;
 
 // Defining the number of slices on X as 1000
 static const int number_of_slices = 1000;
@@ -25,9 +25,9 @@ float CalculateYValue(float x) {
 // Polynomial function
 void DpcppParallel(queue& q, float* l_bound, float* u_bound, float* out_area) {
   // Setup buffers for input and output vectors
-  buffer<float, 1> buf_l_bound(l_bound, range<1>(NumElements));
-  buffer<float, 1> buf_u_bound(u_bound, range<1>(NumElements));
-  buffer<float, 1> buf_out_area(out_area, range<1>(NumElements));
+  buffer<float, 1> buf_l_bound(l_bound, range<1>(num_elements));
+  buffer<float, 1> buf_u_bound(u_bound, range<1>(num_elements));
+  buffer<float, 1> buf_out_area(out_area, range<1>(num_elements));
 
   std::cout << "Target Device: "
             << q.get_device().get_info<info::device::name>() << "\n";
@@ -37,7 +37,7 @@ void DpcppParallel(queue& q, float* l_bound, float* u_bound, float* out_area) {
     auto B = buf_u_bound.get_access<access::mode::read>(h);
     auto C = buf_out_area.get_access<access::mode::write>(h);
 
-    h.parallel_for(range<1>(NumElements), [=](id<1> i) {
+    h.parallel_for(range<1>(num_elements), [=](id<1> i) {
       float x_val = (float)((A[i] - B[i]) / number_of_slices);
       float area_int = 0;
 
@@ -54,13 +54,13 @@ void DpcppParallel(queue& q, float* l_bound, float* u_bound, float* out_area) {
 }
 
 int main() {
-  float lower_bound[NumElements], upper_bound[NumElements],
-      i_area[NumElements];
+  float lower_bound[num_elements], upper_bound[num_elements],
+      i_area[num_elements];
 
   // Initialize the lower bound and upper bound of the x axis arrays. Below we
   // are initializing such that upper bound is always greater than the lower
   // bound.
-  for (int i = 0; i < NumElements; i++) {
+  for (int i = 0; i < num_elements; i++) {
     lower_bound[i] = i + 40 + 10;
     upper_bound[i] = (i + 1) * 40 + 70;
     i_area[i] = 0;
@@ -90,9 +90,9 @@ int main() {
   cout << "****************************************Calculating Integral area "
           "in Parallel********************************************************"
        << std::endl;
-  for (int i = 0; i < NumElements; i++) {
+  for (int i = 0; i < num_elements; i++) {
     cout << "Area: " << i_area[i] << ' ';
-    if (i == NumElements - 1) {
+    if (i == num_elements - 1) {
       cout << "\n\n";
     }
   }

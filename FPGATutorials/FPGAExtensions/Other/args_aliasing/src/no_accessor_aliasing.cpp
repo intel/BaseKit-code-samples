@@ -14,8 +14,8 @@
 #endif
 
 using namespace cl::sycl;
-constexpr access::mode sycl_read = access::mode::read;
-constexpr access::mode sycl_write = access::mode::write;
+constexpr access::mode kSyclRead = access::mode::read;
+constexpr access::mode kSyclWrite = access::mode::write;
 
 class SimpleVadd;
 
@@ -24,15 +24,14 @@ auto exception_handler = [](cl::sycl::exception_list exceptions) {
     try {
       std::rethrow_exception(e);
     } catch (cl::sycl::exception const &e) {
-      std::cout << "Caught asynchronous SYCL exception:\n"
-                << e.what() << std::endl;
+      std::cout << "Caught asynchronous SYCL exception:\n" << e.what() << "\n";
       std::terminate();
     }
   }
 };
 
-void vec_add(const std::vector<float> &VA, const std::vector<float> &VB,
-             std::vector<float> &VC, int n) {
+void VecAdd(const std::vector<float> &V_A, const std::vector<float> &V_B,
+            std::vector<float> &V_C, int n) {
   auto property_list =
       cl::sycl::property_list{cl::sycl::property::queue::enable_profiling()};
   event queue_event;
@@ -48,20 +47,20 @@ void vec_add(const std::vector<float> &VA, const std::vector<float> &VB,
 
   queue deviceQueue(device_selector, exception_handler, property_list);
 
-  buffer<float, 1> bufferA(VA.data(), n);
-  buffer<float, 1> bufferB(VB.data(), n);
-  buffer<float, 1> bufferC(VC.data(), n);
+  buffer<float, 1> buffer_A(V_A.data(), n);
+  buffer<float, 1> buffer_B(V_B.data(), n);
+  buffer<float, 1> buffer_C(V_C.data(), n);
   queue_event = deviceQueue.submit([&](handler &cgh) {
-    auto accessorA = bufferA.get_access<sycl_read>(cgh);
-    auto accessorB = bufferB.get_access<sycl_read>(cgh);
-    auto accessorC = bufferC.get_access<sycl_write>(cgh);
+    auto accessor_A = buffer_A.get_access<kSyclRead>(cgh);
+    auto accessor_B = buffer_B.get_access<kSyclRead>(cgh);
+    auto accessor_C = buffer_C.get_access<kSyclWrite>(cgh);
     auto n_items = n;
     cgh.single_task<SimpleVadd>([=]() {
       for (int i = 0; i < n_items; i += 4) {
-        accessorC[i] = accessorA[i] + accessorB[i];
-        accessorC[i + 1] = accessorA[i + 1] + accessorB[i + 1];
-        accessorC[i + 2] = accessorA[i + 2] + accessorB[i + 2];
-        accessorC[i + 3] = accessorA[i + 3] + accessorB[i + 3];
+        accessor_C[i] = accessor_A[i] + accessor_B[i];
+        accessor_C[i + 1] = accessor_A[i + 1] + accessor_B[i + 1];
+        accessor_C[i + 2] = accessor_A[i + 2] + accessor_B[i + 2];
+        accessor_C[i + 3] = accessor_A[i + 3] + accessor_B[i + 3];
       }
     });
   });
@@ -98,42 +97,38 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  std::vector<float> InputA(array_size);
-  std::vector<float> InputB(array_size);
-  std::vector<float> Output(array_size);
+  std::vector<float> input_A(array_size);
+  std::vector<float> input_B(array_size);
+  std::vector<float> output(array_size);
 
   for (int i = 0; i < array_size; i++) {
-    InputA[i] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-    InputB[i] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+    input_A[i] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+    input_B[i] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
   }
 
   std::cout << "Input Array Size:  " << array_size << "\n";
 
   try {
-    vec_add(InputA, InputB, Output, array_size);
+    VecAdd(input_A, input_B, output, array_size);
   } catch (cl::sycl::exception const &e) {
-    std::cout << "Caught a synchronous SYCL exception: " << e.what()
-              << std::endl;
+    std::cout << "Caught a synchronous SYCL exception: " << e.what() << "\n";
     std::cout << "   If you are targeting an FPGA hardware, "
                  "ensure that your system is plugged to an FPGA board that is "
-                 "set up correctly"
-              << std::endl;
+                 "set up correctly\n";
     std::cout << "   If you are targeting the FPGA emulator, compile with "
-                 "-DFPGA_EMULATOR"
-              << std::endl;
-    std::cout
-        << "   If you are targeting a CPU host device, compile with -DCPU_HOST"
-        << std::endl;
+                 "-DFPGA_EMULATOR\n";
+    std::cout << "   If you are targeting a CPU host device, compile with "
+                 "-DCPU_HOST\n";
     return 1;
   }
 
   // Verify result
   for (unsigned int i = 0; i < array_size; i++) {
-    if (Output[i] != InputA[i] + InputB[i]) {
-      std::cout << "FAILED: The results are incorrect" << std::endl;
+    if (output[i] != input_A[i] + input_B[i]) {
+      std::cout << "FAILED: The results are incorrect\n";
       return 1;
     }
   }
-  std::cout << "PASSED: The results are correct" << std::endl;
+  std::cout << "PASSED: The results are correct\n";
   return 0;
 }

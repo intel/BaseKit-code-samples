@@ -1,0 +1,10 @@
+{
+  "name": "FPGA tutorial: Kernel Args Restrict",
+  "categories": ["Toolkit/Intel® oneAPI Base Toolkit/FPGA/Tutorials"],
+  "description": "Tutorial design to demonstrate the usage and effect of [[intel::kernel_args_restrict]] attributes",
+  "toolchain": ["dpcpp"],
+  "os": ["linux", "windows"],
+  "targetDevice": ["FPGA"],
+  "builder": ["ide", "cmake"],
+  "languages": [{"cpp":{}}]
+}

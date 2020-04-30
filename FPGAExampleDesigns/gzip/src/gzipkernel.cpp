@@ -32,30 +32,31 @@
  */
 
 #include <CL/sycl.hpp>
-#include "kernels.h"
-#include "gzipkernel.h"
+#include "kernels.hpp"
+#include "gzipkernel.hpp"
 
-using acc_dist_channel = cl::sycl::pipe<class some_pipe, struct _dist_len_t>;
-using acc_dist_channel_last =
-    cl::sycl::pipe<class some_pipe2, struct _dist_len_t>;
+using namespace cl::sycl;
+
+using acc_dist_channel = cl::sycl::intel::pipe<class some_pipe, struct DistLen>;
+using acc_dist_channel_last = cl::sycl::intel::pipe<class some_pipe2, struct DistLen>;
 
 template <int Begin, int End>
-struct unroller {
+struct Unroller {
   template <typename Action>
   static void step(const Action &action) {
     action(Begin);
-    unroller<Begin + 1, End>::step(action);
+    Unroller<Begin + 1, End>::step(action);
   }
 };
 
 template <int End>
-struct unroller<End, End> {
+struct Unroller<End, End> {
   template <typename Action>
   static void step(const Action &action) {}
 };
 
-int get_huff_literal_bits(unsigned char ch) {
-  ct_data static_ltree[L_CODES + 2] = {
+int GetHuffLiteralBits(unsigned char ch) {
+  CtData static_ltree[kLCodes + 2] = {
       {12, 8},  {140, 8}, {76, 8},  {204, 8}, {44, 8},  {172, 8}, {108, 8},
       {236, 8}, {28, 8},  {156, 8}, {92, 8},  {220, 8}, {60, 8},  {188, 8},
       {124, 8}, {252, 8}, {2, 8},   {130, 8}, {66, 8},  {194, 8}, {34, 8},
@@ -102,8 +103,8 @@ int get_huff_literal_bits(unsigned char ch) {
   return static_ltree[ch].code;
 }
 
-int get_huff_literal_len(unsigned char ch) {
-  ct_data static_ltree[L_CODES + 2] = {
+int GetHuffLiteralLen(unsigned char ch) {
+  CtData static_ltree[kLCodes + 2] = {
       {12, 8},  {140, 8}, {76, 8},  {204, 8}, {44, 8},  {172, 8}, {108, 8},
       {236, 8}, {28, 8},  {156, 8}, {92, 8},  {220, 8}, {60, 8},  {188, 8},
       {124, 8}, {252, 8}, {2, 8},   {130, 8}, {66, 8},  {194, 8}, {34, 8},
@@ -150,7 +151,7 @@ int get_huff_literal_len(unsigned char ch) {
   return static_ltree[ch].len;
 }
 
-int get_huff_run_len(int _len, int _dist) {
+int GetHuffRunLen(int _len, int _dist) {
   int lc;
   unsigned code;
   int extra;
@@ -160,16 +161,16 @@ int get_huff_run_len(int _len, int _dist) {
   local_lbits = 0;
   local_llen = 0;
 
-  int base_length[LENGTH_CODES] = {
+  int base_length[kLengthCodes] = {
       0,  1,  2,  3,  4,  5,  6,  7,  8,   10,  12,  14,  16,  20, 24,
       28, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 0,
   };
 
-  int extra_lbits[LENGTH_CODES]  // extra bits for each length code
+  int extra_lbits[kLengthCodes]  // extra bits for each length code
       = {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2,
          2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0};
 
-  ct_data static_ltree[L_CODES + 2] = {
+  CtData static_ltree[kLCodes + 2] = {
       {12, 8},  {140, 8}, {76, 8},  {204, 8}, {44, 8},  {172, 8}, {108, 8},
       {236, 8}, {28, 8},  {156, 8}, {92, 8},  {220, 8}, {60, 8},  {188, 8},
       {124, 8}, {252, 8}, {2, 8},   {130, 8}, {66, 8},  {194, 8}, {34, 8},
@@ -248,8 +249,8 @@ int get_huff_run_len(int _len, int _dist) {
       29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
       29, 29, 29, 29, 29, 29, 29, 29,
   };
-  // length code for each normalized match length (0 == MIN_MATCH)
-  unsigned char length_code[MAX_MATCH - MIN_MATCH + 1] = {
+  // length code for each normalized match length (0 == kMinMatch)
+  unsigned char length_code[kMaxMatch - kMinMatch + 1] = {
       0,  1,  2,  3,  4,  5,  6,  7,  8,  8,  9,  9,  10, 10, 11, 11, 12, 12,
       12, 12, 13, 13, 13, 13, 14, 14, 14, 14, 15, 15, 15, 15, 16, 16, 16, 16,
       16, 16, 16, 16, 17, 17, 17, 17, 17, 17, 17, 17, 18, 18, 18, 18, 18, 18,
@@ -267,28 +268,28 @@ int get_huff_run_len(int _len, int _dist) {
       27, 27, 27, 28,
   };
 
-  int extra_dbits[D_CODES]  // extra bits for each distance code
+  int extra_dbits[kDCodes]  // extra bits for each distance code
       = {0, 0, 0, 0, 1, 1, 2, 2,  3,  3,  4,  4,  5,  5,  6,
          6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13};
 
-  int base_dist[D_CODES] = {
+  int base_dist[kDCodes] = {
       0,    1,    2,    3,    4,    6,    8,    12,    16,    24,
       32,   48,   64,   96,   128,  192,  256,  384,   512,   768,
       1024, 1536, 2048, 3072, 4096, 6144, 8192, 12288, 16384, 24576,
   };
 
-  ct_data static_dtree[D_CODES] = {
+  CtData static_dtree[kDCodes] = {
       {0, 5}, {16, 5}, {8, 5},  {24, 5}, {4, 5}, {20, 5}, {12, 5}, {28, 5},
       {2, 5}, {18, 5}, {10, 5}, {26, 5}, {6, 5}, {22, 5}, {14, 5}, {30, 5},
       {1, 5}, {17, 5}, {9, 5},  {25, 5}, {5, 5}, {21, 5}, {13, 5}, {29, 5},
       {3, 5}, {19, 5}, {11, 5}, {27, 5}, {7, 5}, {23, 5},
   };
 
-  lc = _len - MIN_MATCH;
+  lc = _len - kMinMatch;
   code = length_code[lc];
 
-  local_lbits = static_ltree[code + LITERALS + 1].code;
-  local_llen = static_ltree[code + LITERALS + 1].len;
+  local_lbits = static_ltree[code + kLiterals + 1].code;
+  local_llen = static_ltree[code + kLiterals + 1].len;
   extra = extra_lbits[code];
   if (extra) {
     lc -= base_length[code];
@@ -314,7 +315,7 @@ int get_huff_run_len(int _len, int _dist) {
   return local_llen;
 }
 
-int get_huff_run_bits(int _len, int _dist) {
+int GetHuffRunBits(int _len, int _dist) {
   int lc;
   unsigned code;
   int extra;
@@ -324,16 +325,16 @@ int get_huff_run_bits(int _len, int _dist) {
   local_lbits = 0;
   local_llen = 0;
 
-  int base_length[LENGTH_CODES] = {
+  int base_length[kLengthCodes] = {
       0,  1,  2,  3,  4,  5,  6,  7,  8,   10,  12,  14,  16,  20, 24,
       28, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 0,
   };
 
-  int extra_lbits[LENGTH_CODES]  // extra bits for each length code
+  int extra_lbits[kLengthCodes]  // extra bits for each length code
       = {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2,
          2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0};
 
-  ct_data static_ltree[L_CODES + 2] = {
+  CtData static_ltree[kLCodes + 2] = {
       {12, 8},  {140, 8}, {76, 8},  {204, 8}, {44, 8},  {172, 8}, {108, 8},
       {236, 8}, {28, 8},  {156, 8}, {92, 8},  {220, 8}, {60, 8},  {188, 8},
       {124, 8}, {252, 8}, {2, 8},   {130, 8}, {66, 8},  {194, 8}, {34, 8},
@@ -412,8 +413,8 @@ int get_huff_run_bits(int _len, int _dist) {
       29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
       29, 29, 29, 29, 29, 29, 29, 29,
   };
-  // length code for each normalized match length (0 == MIN_MATCH)
-  unsigned char length_code[MAX_MATCH - MIN_MATCH + 1] = {
+  // length code for each normalized match length (0 == kMinMatch)
+  unsigned char length_code[kMaxMatch - kMinMatch + 1] = {
       0,  1,  2,  3,  4,  5,  6,  7,  8,  8,  9,  9,  10, 10, 11, 11, 12, 12,
       12, 12, 13, 13, 13, 13, 14, 14, 14, 14, 15, 15, 15, 15, 16, 16, 16, 16,
       16, 16, 16, 16, 17, 17, 17, 17, 17, 17, 17, 17, 18, 18, 18, 18, 18, 18,
@@ -431,28 +432,28 @@ int get_huff_run_bits(int _len, int _dist) {
       27, 27, 27, 28,
   };
 
-  int extra_dbits[D_CODES]  // extra bits for each distance code
+  int extra_dbits[kDCodes]  // extra bits for each distance code
       = {0, 0, 0, 0, 1, 1, 2, 2,  3,  3,  4,  4,  5,  5,  6,
          6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13};
 
-  int base_dist[D_CODES] = {
+  int base_dist[kDCodes] = {
       0,    1,    2,    3,    4,    6,    8,    12,    16,    24,
       32,   48,   64,   96,   128,  192,  256,  384,   512,   768,
       1024, 1536, 2048, 3072, 4096, 6144, 8192, 12288, 16384, 24576,
   };
 
-  ct_data static_dtree[D_CODES] = {
+  CtData static_dtree[kDCodes] = {
       {0, 5}, {16, 5}, {8, 5},  {24, 5}, {4, 5}, {20, 5}, {12, 5}, {28, 5},
       {2, 5}, {18, 5}, {10, 5}, {26, 5}, {6, 5}, {22, 5}, {14, 5}, {30, 5},
       {1, 5}, {17, 5}, {9, 5},  {25, 5}, {5, 5}, {21, 5}, {13, 5}, {29, 5},
       {3, 5}, {19, 5}, {11, 5}, {27, 5}, {7, 5}, {23, 5},
   };
 
-  lc = _len - MIN_MATCH;
+  lc = _len - kMinMatch;
   code = length_code[lc];
 
-  local_lbits = static_ltree[code + LITERALS + 1].code;
-  local_llen = static_ltree[code + LITERALS + 1].len;
+  local_lbits = static_ltree[code + kLiterals + 1].code;
+  local_llen = static_ltree[code + kLiterals + 1].len;
   extra = extra_lbits[code];
   if (extra) {
     lc -= base_length[code];
@@ -478,10 +479,10 @@ int get_huff_run_bits(int _len, int _dist) {
   return local_lbits;
 }
 
-int get_huff_len(int len, int dist, unsigned char ch) {
+int GetHuffLen(int len, int dist, unsigned char ch) {
   int returned_len;
 
-  ct_data static_ltree[L_CODES + 2] = {
+  CtData static_ltree[kLCodes + 2] = {
       {12, 8},  {140, 8}, {76, 8},  {204, 8}, {44, 8},  {172, 8}, {108, 8},
       {236, 8}, {28, 8},  {156, 8}, {92, 8},  {220, 8}, {60, 8},  {188, 8},
       {124, 8}, {252, 8}, {2, 8},   {130, 8}, {66, 8},  {194, 8}, {34, 8},
@@ -527,7 +528,7 @@ int get_huff_len(int len, int dist, unsigned char ch) {
   };
   switch (len) {
     case -3:
-      returned_len = static_ltree[END_BLOCK].len;
+      returned_len = static_ltree[kEndBlock].len;
       break;
     case -2:
       returned_len = 3;
@@ -536,16 +537,16 @@ int get_huff_len(int len, int dist, unsigned char ch) {
       returned_len = 0;
       break;
     case 0:
-      returned_len = get_huff_literal_len(ch);
+      returned_len = GetHuffLiteralLen(ch);
       break;
     default:
-      returned_len = get_huff_run_len(len, dist);
+      returned_len = GetHuffRunLen(len, dist);
       break;
   }
   return returned_len;
 }
 
-int isvalid(int len, int dist, unsigned char ch) {
+int IsValid(int len, int dist, unsigned char ch) {
   switch (len) {
     case -3:
       return 1;
@@ -560,9 +561,9 @@ int isvalid(int len, int dist, unsigned char ch) {
   }
 }
 
-int get_huff_bits(int len, int dist, unsigned char ch) {
+int GetHuffBits(int len, int dist, unsigned char ch) {
   int bits;
-  ct_data static_ltree[L_CODES + 2] = {
+  CtData static_ltree[kLCodes + 2] = {
       {12, 8},  {140, 8}, {76, 8},  {204, 8}, {44, 8},  {172, 8}, {108, 8},
       {236, 8}, {28, 8},  {156, 8}, {92, 8},  {220, 8}, {60, 8},  {188, 8},
       {124, 8}, {252, 8}, {2, 8},   {130, 8}, {66, 8},  {194, 8}, {34, 8},
@@ -608,7 +609,7 @@ int get_huff_bits(int len, int dist, unsigned char ch) {
   };
   switch (len) {
     case -3:
-      bits = static_ltree[END_BLOCK].code;
+      bits = static_ltree[kEndBlock].code;
       break;
     case -2:
       bits = ch;
@@ -617,44 +618,44 @@ int get_huff_bits(int len, int dist, unsigned char ch) {
       bits = 0;
       break;
     case 0:
-      bits = get_huff_literal_bits(ch);
+      bits = GetHuffLiteralBits(ch);
       break;
     default:
-      bits = get_huff_run_bits(len, dist);
+      bits = GetHuffRunBits(len, dist);
       break;
   }
   return bits;
 }
 
-// assembles up to VECX2 unsigned char values based on given huffman encoding
-// writes up to MAX_HUFFCODE_BITS * VECX2 bits to memory
-bool hufenc(char *len, short *dist, unsigned char *data, unsigned int *outdata,
+// assembles up to kVecX2 unsigned char values based on given huffman encoding
+// writes up to kMaxHuffcodeBits * kVecX2 bits to memory
+bool HufEnc(char *len, short *dist, unsigned char *data, unsigned int *outdata,
             unsigned int *leftover, unsigned short *leftover_size) {
   // array that contains the bit position of each symbol
-  unsigned short bitpos[VEC + 1];
+  unsigned short bitpos[kVec + 1];
   bitpos[0] = 0;
 
-  unroller<0, VEC>::step([&](int i) {
-    bitpos[i + 1] = bitpos[i] + (isvalid(len[i], dist[i], data[i])
-                                     ? get_huff_len(len[i], dist[i], data[i])
+  Unroller<0, kVec>::step([&](int i) {
+    bitpos[i + 1] = bitpos[i] + (IsValid(len[i], dist[i], data[i])
+                                     ? GetHuffLen(len[i], dist[i], data[i])
                                      : 0);
   });
 
   // leftover is an array that carries huffman encoded data not yet written to
   // memory adjust leftover_size with the number of bits to write this time
   unsigned short prev_cycle_offset = *leftover_size;
-  *leftover_size += (bitpos[VEC] & 0x3fff);
+  *leftover_size += (bitpos[kVec] & 0x3fff);
 
-  // we'll write this cycle if we have collected enough data (VEC shorts or
+  // we'll write this cycle if we have collected enough data (kVec shorts or
   // more)
-  bool write = *leftover_size & (VEC * (MAX_HUFFCODE_BITS * 2));
+  bool write = *leftover_size & (kVec * (kMaxHuffcodeBits * 2));
 
-  // subtract VEC shorts from leftover size (if it's bigger
-  // than VEC) because we'll write those out this cycle
-  *leftover_size &= ~(VEC * (MAX_HUFFCODE_BITS * 2));
+  // subtract kVec shorts from leftover size (if it's bigger
+  // than kVec) because we'll write those out this cycle
+  *leftover_size &= ~(kVec * (kMaxHuffcodeBits * 2));
 
   // Adjust bitpos based on leftover offset from previous cycle
-  unroller<0, VEC>::step(
+  Unroller<0, kVec>::step(
       [&](int i) { bitpos[i] += (prev_cycle_offset & 0x3fff); });
 
   // Huffman codes have any bit alignement, so they can spill
@@ -662,22 +663,22 @@ bool hufenc(char *len, short *dist, unsigned char *data, unsigned int *outdata,
   // use ushort2 to keep each part of the code separate
   // Iterate over all codes and construct ushort2 containing
   // the code properly aligned
-  struct uint2 code[VEC];
-  unroller<0, VEC>::step([&](int i) {
+  struct Uint2Gzip code[kVec];
+  Unroller<0, kVec>::step([&](int i) {
     code[i].x = 0;
     code[i].y = 0;
   });
 
-  unroller<0, VEC>::step([&](int i) {
+  Unroller<0, kVec>::step([&](int i) {
     // Codes can be more than 16 bits, so use uint32
-    unsigned int curr_code = get_huff_bits(len[i], dist[i], data[i]);
+    unsigned int curr_code = GetHuffBits(len[i], dist[i], data[i]);
     unsigned char bitpos_in_short = bitpos[i] & 0x01F;
 
     unsigned long long temp = (unsigned long long)curr_code << bitpos_in_short;
     unsigned int temp1 = (unsigned int)temp;
     unsigned int temp2 = temp >> 32ULL;
 
-    if (isvalid(len[i], dist[i], data[i])) {
+    if (IsValid(len[i], dist[i], data[i])) {
       code[i].x = temp1;
       code[i].y = temp2;
     } else {
@@ -687,24 +688,24 @@ bool hufenc(char *len, short *dist, unsigned char *data, unsigned int *outdata,
   });
 
   // Iterate over all destination locations and gather the required data
-  unsigned int new_leftover[VEC];
-  unroller<0, VEC>::step([&](int i) {
+  unsigned int new_leftover[kVec];
+  Unroller<0, kVec>::step([&](int i) {
     new_leftover[i] = 0;
     outdata[i] = 0;
-    unroller<0, VEC>::step([&](int j) {
+    Unroller<0, kVec>::step([&](int j) {
       // figure out whether code[j] goes into bucket[i]
-      bool match_first = ((bitpos[j] >> 5) & (VEC - 1)) == i;
+      bool match_first = ((bitpos[j] >> 5) & (kVec - 1)) == i;
       bool match_second =
-          ((bitpos[j] >> 5) & (VEC - 1)) == ((i - 1) & (VEC - 1));
+          ((bitpos[j] >> 5) & (kVec - 1)) == ((i - 1) & (kVec - 1));
 
       // if code[j] maps onto current bucket then OR its code, else OR with 0
       unsigned int component =
           match_first ? code[j].x : (match_second ? code[j].y : 0);
 
-      // overflow from VEC shorts, need to move onto new_leftover
+      // overflow from kVec shorts, need to move onto new_leftover
       bool use_later =
-          (bitpos[j] & (VEC * (MAX_HUFFCODE_BITS * 2))) ||
-          (match_second && (((bitpos[j] >> 5) & (VEC - 1)) == VEC - 1));
+          (bitpos[j] & (kVec * (kMaxHuffcodeBits * 2))) ||
+          (match_second && (((bitpos[j] >> 5) & (kVec - 1)) == kVec - 1));
 
       // write to output
       outdata[i] |= use_later ? 0 : component;
@@ -714,13 +715,13 @@ bool hufenc(char *len, short *dist, unsigned char *data, unsigned int *outdata,
 
   // Apply previous leftover on the outdata
   // Also, if didn't write, apply prev leftover onto newleftover
-  unroller<0, VEC>::step([&](int i) {
+  Unroller<0, kVec>::step([&](int i) {
     outdata[i] |= leftover[i];
     leftover[i] = outdata[i];
   });
   // HACK: split unroll into two unrolls to avoid compiler crash
   if (write) {
-    unroller<0, VEC>::step([&](int i) { leftover[i] = new_leftover[i]; });
+    Unroller<0, kVec>::step([&](int i) { leftover[i] = new_leftover[i]; });
   }
 
   return write;
@@ -730,18 +731,16 @@ class CRC;
 class LZReduction;
 class StaticHuffman;
 
-void submit_gzip_tasks(
-    cl::sycl::queue &sycl_device,
-    size_t block_size,  // size of block to compress.
-    cl::sycl::buffer<char, 1> *pibuf, cl::sycl::buffer<char, 1> *pobuf,
-    cl::sycl::buffer<struct gzip_out_info_t, 1> *gzip_out_buf,
-    cl::sycl::buffer<unsigned, 1> *result_crc, bool bLastBlock) {
-  sycl_device.submit([&](cl::sycl::handler &cgh) {
+void SubmitGzipTasks(queue &q,
+                     size_t block_size,  // size of block to compress.
+                     buffer<char, 1> *pibuf, buffer<char, 1> *pobuf,
+                     buffer<struct GzipOutInfo, 1> *gzip_out_buf,
+                     buffer<unsigned, 1> *result_crc, bool last_block) {
+  q.submit([&](handler &h) {
     auto accessor_isz = block_size;
-    auto acc_pibuf = pibuf->get_access<cl::sycl::access::mode::read>(cgh);
-    auto accresult_crc =
-        result_crc->get_access<cl::sycl::access::mode::discard_write>(cgh);
-    cgh.single_task<CRC>([=]() {
+    auto acc_pibuf = pibuf->get_access<access::mode::read>(h);
+    auto accresult_crc = result_crc->get_access<access::mode::discard_write>(h);
+    h.single_task<CRC>([=]() [[intel::kernel_args_restrict]] {
       const unsigned int table64[64][16] = {
           {
               0x0,
@@ -1959,9 +1958,9 @@ void submit_gzip_tasks(
               0xbdbdf21c,
           },
       };
-      const int NUM_NIBBLES_PARALLEL = 64;
+      const int num_nibbles_parallel = 64;
       // this section of code should be on the hardware accelerator
-      const int num_sections = accessor_isz / (NUM_NIBBLES_PARALLEL /
+      const int num_sections = accessor_isz / (num_nibbles_parallel /
                                                2);  // how many loop iterations
       unsigned int result = ~0;
 
@@ -1971,9 +1970,9 @@ void submit_gzip_tasks(
 // which 4 bit chunk within the section -- this loop can be unrolled, the
 // total update for the crc is the xor of the updates from the nibbles
 #pragma unroll
-        for (int nib = 0; nib < NUM_NIBBLES_PARALLEL; nib++) {
+        for (int nib = 0; nib < num_nibbles_parallel; nib++) {
           unsigned char this_input_nibble =
-              (acc_pibuf[(i * NUM_NIBBLES_PARALLEL + nib) / 2] >>
+              (acc_pibuf[(i * num_nibbles_parallel + nib) / 2] >>
                (4 * (nib % 2)));
           unsigned char this_result_nibble =
               (nib < 8) ? (result >> (4 * nib)) : 0;
@@ -1991,112 +1990,112 @@ void submit_gzip_tasks(
       accresult_crc[0] = ~result;
     });
   });
-  sycl_device.submit([&](cl::sycl::handler &cgh) {
+  q.submit([&](handler &h) {
     auto accessor_isz = block_size;
-    auto acc_pibuf = pibuf->get_access<cl::sycl::access::mode::read>(cgh);
-    cgh.single_task<LZReduction>([=]() {
+    auto acc_pibuf = pibuf->get_access<access::mode::read>(h);
+    h.single_task<LZReduction>([=]() [[intel::kernel_args_restrict]] {
       //-------------------------------------
       //   Hash Table(s)
       //-------------------------------------
 
-      [[intelfpga::singlepump]] [[intelfpga::numbanks(VEC)]] [
-          [intelfpga::max_replicates(VEC)]] struct {
-        unsigned char s[LEN];
-      } dictionary[DEPTH][VEC];
+      [[intelfpga::singlepump]] [[intelfpga::numbanks(kVec)]] [
+          [intelfpga::max_replicates(kVec)]] struct {
+        unsigned char s[kLen];
+      } dictionary[kDepth][kVec];
 
-      [[intelfpga::singlepump]] [[intelfpga::numbanks(VEC)]] [
+      [[intelfpga::singlepump]] [[intelfpga::numbanks(kVec)]] [
           [intelfpga::max_replicates(
-              VEC)]] unsigned int dict_offset[DEPTH][VEC];
+              kVec)]] unsigned int dict_offset[kDepth][kVec];
 
       // Initialize history to empty.
-      for (int i = 0; i < DEPTH; i++) {
-        unroller<0, VEC>::step([&](int k) { dict_offset[i][k] = 0; });
+      for (int i = 0; i < kDepth; i++) {
+        Unroller<0, kVec>::step([&](int k) { dict_offset[i][k] = 0; });
       }
 
       // This is the window of data on which we look for matches
-      // We fetch twice our data size because we have VEC offsets
+      // We fetch twice our data size because we have kVec offsets
 
-      unsigned char current_window[VECX2];
+      unsigned char current_window[kVecX2];
 
       // This is the window of data on which we look for matches
-      // We fetch twice our data size because we have VEC offsets
+      // We fetch twice our data size because we have kVec offsets
 
-      unsigned char compare_window[LEN][VEC][VEC];
-      // VEC bytes per dict----------|    |   |
-      // VEC dictionaries-----------------|   |
+      unsigned char compare_window[kLen][kVec][kVec];
+      // kVec bytes per dict----------|    |   |
+      // kVec dictionaries-----------------|   |
       // one for each curr win offset---------|
 
       // load offset into these arrays
-      unsigned int compare_offset[VEC][VEC];
-      // one per VEC bytes----------|     |
+      unsigned int compare_offset[kVec][kVec];
+      // one per kVec bytes----------|     |
       // one for each compwin-------------|
 
       // Initialize input stream position
-      unsigned int inposMinusVecDiv16 = 0;
-      // this is ceiling of (insize-VEC)/16, original comparison was
-      // inpos < insize, now inpos is carried as (inpos-VEC)/16 so this is what
+      unsigned int inpos_minus_vec_div_16 = 0;
+      // this is ceiling of (insize-kVec)/16, original comparison was
+      // inpos < insize, now inpos is carried as (inpos-kVec)/16 so this is what
       // we compare to
-      unsigned int insizeCompare = (accessor_isz) / VEC;
+      unsigned int insize_compare = (accessor_isz) / kVec;
 
-      int ctr = insizeCompare = insizeCompare - 1;
+      int ctr = insize_compare = insize_compare - 1;
 
       char first_valid_pos = 0;
 
-      struct _dist_len_t dist_offs_data;
+      struct DistLen dist_offs_data;
 
       int distchan_ndx = 0;
       size_t inpos = 0;
 
       // load in new data
-      struct lz_input_t in;
-      unroller<0, VEC>::step([&](int i) { in.data[i] = acc_pibuf[inpos++]; });
+      struct LzInput in;
+      Unroller<0, kVec>::step([&](int i) { in.data[i] = acc_pibuf[inpos++]; });
 
-      unroller<0, VEC>::step(
-          [&](int i) { current_window[i + VEC] = in.data[i]; });
+      Unroller<0, kVec>::step(
+          [&](int i) { current_window[i + kVec] = in.data[i]; });
       do {
         //-----------------------------
         // Prepare current window
         //-----------------------------
 
         // shift current window
-        unroller<0, VEC>::step(
-            [&](int i) { current_window[i] = current_window[i + VEC]; });
+        Unroller<0, kVec>::step(
+            [&](int i) { current_window[i] = current_window[i + kVec]; });
 
         // load in new data
-        unroller<0, VEC>::step([&](int i) { in.data[i] = acc_pibuf[inpos++]; });
+        Unroller<0, kVec>::step([&](int i) { in.data[i] = acc_pibuf[inpos++]; });
 
-        unroller<0, VEC>::step(
-            [&](int i) { current_window[VEC + i] = in.data[i]; });
+        Unroller<0, kVec>::step(
+            [&](int i) { current_window[kVec + i] = in.data[i]; });
 
         //-----------------------------
         // Compute hash
         //-----------------------------
 
-        unsigned short hash[VEC];
+        unsigned short hash[kVec];
 
-        unroller<0, VEC>::step([&](int i) {
+        Unroller<0, kVec>::step([&](int i) {
           hash[i] = (current_window[i] ^ (current_window[i + 1] << 6) ^
                      (current_window[i + 2] << 2) ^ current_window[i + 3]) &
-                    HASH_MASK;
+                    kHashMask;
         });
 
         //-----------------------------
         // Dictionary look-up
         //-----------------------------
 
-        // loop over VEC compare windows, each has a different hash
-        unroller<0, VEC>::step([&](int i) {
-          // loop over all VEC bytes
-          unroller<0, LEN>::step([&](int j) {
-            unroller<0, VEC>::step([&](int k) {
+        // loop over kVec compare windows, each has a different hash
+        Unroller<0, kVec>::step([&](int i) {
+          // loop over all kVec bytes
+          Unroller<0, kLen>::step([&](int j) {
+            Unroller<0, kVec>::step([&](int k) {
               compare_window[k][j][i] = dictionary[hash[i]][j].s[k];
             });
           });
         });
 
         // loop over compare windows
-        unroller<0, VEC>::step([&](int i) {
-          unroller<0, LEN>::step([&](int j) {
+        Unroller<0, kVec>::step([&](int i) {
+          Unroller<0, kLen>::step([&](int j) {
             // loop over frames in this compare window (they come from different
             // dictionaries)
             compare_offset[j][i] = dict_offset[hash[i]][j];
@@ -2109,19 +2108,19 @@ void submit_gzip_tasks(
 
         // loop over different dictionaries to store different frames
         // store one frame per dictionary
-        // loop over VEC bytes to store
-        unroller<0, LEN>::step([&](int i) {
-          unroller<0, VEC>::step([&](int j) {
+        // loop over kVec bytes to store
+        Unroller<0, kLen>::step([&](int i) {
+          Unroller<0, kVec>::step([&](int j) {
             // store actual bytes
             dictionary[hash[i]][i].s[j] = current_window[i + j];
           });
         });
 
-        unroller<0, VEC>::step([&](int i) {
-          // loop over VEC different dictionaries and write one word to each
+        Unroller<0, kVec>::step([&](int i) {
+          // loop over kVec different dictionaries and write one word to each
           dict_offset[hash[i]][i] =
-              (inposMinusVecDiv16 << 4) |
-              i;  // inpos - VEC + 0, we know that inpos - VEC has 0 as the 4
+              (inpos_minus_vec_div_16 << 4) |
+              i;  // inpos - kVec + 0, we know that inpos - kVec has 0 as the 4
                   // lower bits so really just concatenate
         });
 
@@ -2130,31 +2129,31 @@ void submit_gzip_tasks(
         //-----------------------------
 
         // arrays to store length, best length etc..
-        unsigned char length[VEC];
-        bool done[VEC];
-        char bestlength[VEC];
-        unsigned int bestoffset[VEC];
+        unsigned char length[kVec];
+        bool done[kVec];
+        char best_length[kVec];
+        unsigned int best_offset[kVec];
 
-        // initialize bestlength
-        unroller<0, VEC>::step([&](int i) {
-          bestlength[i] = 0;
-          bestoffset[i] = 0;
+        // initialize best_length
+        Unroller<0, kVec>::step([&](int i) {
+          best_length[i] = 0;
+          best_offset[i] = 0;
         });
 
         // loop over each comparison window frame
         // one comes from each dictionary
-        unroller<0, VEC>::step([&](int i) {
+        Unroller<0, kVec>::step([&](int i) {
           // initialize length and done
-          unroller<0, VEC>::step([&](int l) {
+          Unroller<0, kVec>::step([&](int l) {
             length[l] = 0;
             done[l] = 0;
           });
 
           // loop over each current window
-          unroller<0, VEC>::step([&](int j) {
+          Unroller<0, kVec>::step([&](int j) {
             // loop over each char in the current window
             // and corresponding char in comparison window
-            unroller<0, LEN>::step([&](int k) {
+            Unroller<0, kLen>::step([&](int k) {
               bool comp =
                   current_window[k + j] == compare_window[k][i][j] && !done[j];
               length[j] += comp;
@@ -2163,25 +2162,26 @@ void submit_gzip_tasks(
           });
 
           // Check if this the best length
-          unroller<0, VEC>::step([&](int m) {
-            bool updateBest =
-                (length[m] > bestlength[m]) && (compare_offset[i][m] != 0) &&
-                (((inposMinusVecDiv16 << VECPOW) | (i & (VEC - 1))) -
+          Unroller<0, kVec>::step([&](int m) {
+            bool update_best =
+                (length[m] > best_length[m]) && (compare_offset[i][m] != 0) &&
+                (((inpos_minus_vec_div_16 << kVecPow) | (i & (kVec - 1))) -
                      (compare_offset[i][m]) <
-                 MAX_DISTANCE);
+                 kMaxDistance);
             unsigned int new_offset =
-                (((inposMinusVecDiv16 << VECPOW) | (m & (VEC - 1))) & 0x7ffff) -
+                (((inpos_minus_vec_div_16 << kVecPow) | (m & (kVec - 1))) &
+                 0x7ffff) -
                 ((compare_offset[i][m] & 0x7ffff));
             // Reconsider if new_offset is bigger than current offset, might
             // take more bytes to encode
-            updateBest = updateBest && (length[m] == bestlength[m]) &&
-                                 (new_offset > bestoffset[m])
+            update_best = update_best && (length[m] == best_length[m]) &&
+                                 (new_offset > best_offset[m])
                              ? false
-                             : updateBest;
-            bestoffset[m] = (updateBest ? new_offset : bestoffset[m]) &
-                            0x7ffff;  // 19 bits is sufficient
-            bestlength[m] = (updateBest ? length[m] : bestlength[m]) &
-                            0x1f;  // 5 bits is sufficient
+                             : update_best;
+            best_offset[m] = (update_best ? new_offset : best_offset[m]) &
+                             0x7ffff;  // 19 bits is sufficient
+            best_length[m] = (update_best ? length[m] : best_length[m]) &
+                             0x1f;  // 5 bits is sufficient
           });
         });
 
@@ -2192,23 +2192,23 @@ void submit_gzip_tasks(
         // remove matches with offsets that are <= 0: this means they're
         // self-matching or didn't match and keep only the matches that, when
         // encoded, take fewer bytes than the actual match length
-        unroller<0, VEC>::step([&](int i) {
-          bestlength[i] =
-              (((bestlength[i] & 0x1f) >= 3) && ((bestoffset[i]) < MAX_DISTANCE)
-                   ? bestlength[i]
-                   : 0) &
-              0x1f;  // 5 bits is sufficient
+        Unroller<0, kVec>::step([&](int i) {
+          best_length[i] = (((best_length[i] & 0x1f) >= 3) &&
+                                    ((best_offset[i]) < kMaxDistance)
+                                ? best_length[i]
+                                : 0) &
+                           0x1f;  // 5 bits is sufficient
 
           // Second level filter - remove matches with len 3, greater than
-          // TOO_FAR
-          bestlength[i] =
-              (((bestlength[i] & 0x1f) == 3) && ((bestoffset[i]) > TOO_FAR)
+          // kTooFar
+          best_length[i] =
+              (((best_length[i] & 0x1f) == 3) && ((best_offset[i]) > kTooFar)
                    ? 0
-                   : bestlength[i]) &
+                   : best_length[i]) &
               0x1f;  // 5 bits is sufficient
                      // don't emmit matches for last iteration as some of the
                      // second part of the window might be undefined
-          if (ctr == 0) bestlength[i] = 0;
+          if (ctr == 0) best_length[i] = 0;
         });
 
         //-----------------------------
@@ -2218,32 +2218,32 @@ void submit_gzip_tasks(
         // first_valid_pos is loop-carried, and tricky to compute.  So first
         // compute it speculatively in parallel for every possible value of the
         // previous first_valid_pos.
-        char first_valid_pos_speculative[VEC];
+        char first_valid_pos_speculative[kVec];
 
-        unroller<0, VEC>::step([&](int guess) {
+        Unroller<0, kVec>::step([&](int guess) {
           unsigned char next_match_search = guess;
-          unroller<0, VEC>::step([&](int i) {
-            unsigned int len = bestlength[i];
+          Unroller<0, kVec>::step([&](int i) {
+            unsigned int len = best_length[i];
             // Skip to the next match
             next_match_search =
                 i >= next_match_search && len > 0 ? i + len : next_match_search;
           });
 
           first_valid_pos_speculative[guess] =
-              next_match_search - VEC > 0 ? next_match_search - VEC : 0;
+              next_match_search - kVec > 0 ? next_match_search - kVec : 0;
         });
 
-        // For VEC=16 (the largest currently supported), this should be a 16:1
-        // mux, which is 2 6LUTs deep.  For larger VEC, it will be worse.
+        // For kVec=16 (the largest currently supported), this should be a 16:1
+        // mux, which is 2 6LUTs deep.  For larger kVec, it will be worse.
         unsigned char current_valid_pos = first_valid_pos;
         first_valid_pos =
-            first_valid_pos_speculative[first_valid_pos & (VEC - 1)] &
-            (VEC - 1);  // first_valid_pos only needs 4 bits, make this explicit
+            first_valid_pos_speculative[first_valid_pos & (kVec - 1)] &
+            (kVec - 1);  // first_valid_pos only needs 4 bits, make this explicit
 
         // greedy match selection
-        unroller<0, (VEC)>::step([&](int i) {
-          unsigned int len = bestlength[i];
-          bestlength[i] = i < current_valid_pos ? -1 : bestlength[i];
+        Unroller<0, (kVec)>::step([&](int i) {
+          unsigned int len = best_length[i];
+          best_length[i] = i < current_valid_pos ? -1 : best_length[i];
           // Skip to the next match
           current_valid_pos =
               i >= current_valid_pos && len > 0 ? i + len : current_valid_pos;
@@ -2253,38 +2253,38 @@ void submit_gzip_tasks(
         // Setup LZ dist/len pairs to push to Huffman encode kernel
         //-----------------------------
 
-        unroller<0, VEC>::step([&](int i) {
+        Unroller<0, kVec>::step([&](int i) {
           dist_offs_data.data[i] = 0;
           dist_offs_data.len[i] = -1;
           dist_offs_data.dist[i] = -1;
-          if (bestlength[i] >= 0) {
+          if (best_length[i] >= 0) {
             dist_offs_data.data[i] = current_window[i];
-            dist_offs_data.len[i] = bestlength[i];
-            dist_offs_data.dist[i] = bestoffset[i];
+            dist_offs_data.len[i] = best_length[i];
+            dist_offs_data.dist[i] = best_offset[i];
           }
         });
 
         acc_dist_channel::write(dist_offs_data);
 
         // increment input position
-        inposMinusVecDiv16++;
+        inpos_minus_vec_div_16++;
         distchan_ndx += 1;
         ctr--;
 
       } while (ctr >= 0);
 
-      const char lasti = accessor_isz - (accessor_isz & ~(VEC - 1));
+      const char lasti = accessor_isz - (accessor_isz & ~(kVec - 1));
       const char firstpos = first_valid_pos;
-      unroller<0, VEC>::step([&](unsigned char i) {
+      Unroller<0, kVec>::step([&](unsigned char i) {
         dist_offs_data.data[i] = 0;
         dist_offs_data.len[i] = -1;
         dist_offs_data.dist[i] = -1;
       });
 
-      unroller<0, VEC>::step([&](unsigned char i) {
+      Unroller<0, kVec>::step([&](unsigned char i) {
         bool pred =
             ((i - firstpos) < (lasti - firstpos)) && ((i - firstpos) >= 0);
-        dist_offs_data.data[i] = pred ? current_window[i + VEC] : 0;
+        dist_offs_data.data[i] = pred ? current_window[i + kVec] : 0;
         dist_offs_data.len[i] = pred ? 0 : -1;
       });
 
@@ -2292,32 +2292,31 @@ void submit_gzip_tasks(
     });
   });
 
-  sycl_device.submit([&](cl::sycl::handler &cgh) {
+  q.submit([&](handler &h) {
     auto accessor_isz = block_size;
     auto acc_gzip_out =
-        gzip_out_buf->get_access<cl::sycl::access::mode::discard_write>(cgh);
-    auto accessor_output =
-        pobuf->get_access<cl::sycl::access::mode::discard_write>(cgh);
-    auto acc_eof = bLastBlock ? 1 : 0;
-    cgh.single_task<StaticHuffman>([=]() {
-      unsigned int leftover[VEC] = {0};
-      unroller<0, VEC>::step([&](int i) { leftover[i] = 0; });
+        gzip_out_buf->get_access<access::mode::discard_write>(h);
+    auto accessor_output = pobuf->get_access<access::mode::discard_write>(h);
+    auto acc_eof = last_block ? 1 : 0;
+    h.single_task<StaticHuffman>([=]() [[intel::kernel_args_restrict]] {
+      unsigned int leftover[kVec] = {0};
+      Unroller<0, kVec>::step([&](int i) { leftover[i] = 0; });
 
       unsigned short leftover_size = 0;
 
       unsigned int outpos_huffman = 0;
 
-      int ctr = ((accessor_isz) / VEC) + 2;
+      int ctr = ((accessor_isz) / kVec) + 2;
       int odx = 0;
 
       // Add the gzip start block marker. Assumes static huffman trees.
       leftover_size = 3;
-      leftover[0] = ((STATIC_TREES << 1) + (acc_eof));
+      leftover[0] = ((kStaticTrees << 1) + (acc_eof));
       do {
-        struct _dist_len_t in;
+        struct DistLen in;
         // init the input structure for the gzip end block marker.
         // this is the very last data block to be encoded and written.
-        unroller<0, VEC>::step([&](int i) {
+        Unroller<0, kVec>::step([&](int i) {
           in.len[i] = -1;
           in.dist[i] = -1;
           in.data[i] = 0;
@@ -2328,13 +2327,13 @@ void submit_gzip_tasks(
         in = ctr > 2 ? acc_dist_channel::read()
                      : (ctr == 2 ? acc_dist_channel_last::read() : in);
 
-        struct huffman_output_t outdata;
-        outdata.write = hufenc(in.len, in.dist, in.data, outdata.data, leftover,
+        struct HuffmanOutput outdata;
+        outdata.write = HufEnc(in.len, in.dist, in.data, outdata.data, leftover,
                                &leftover_size);
 
         // prevent out of bounds write
         if (((ctr == 0) || outdata.write) && (odx < accessor_isz)) {
-          unroller<0, VEC * sizeof(unsigned int)>::step([&](int i) {
+          Unroller<0, kVec * sizeof(unsigned int)>::step([&](int i) {
             accessor_output[odx + i] =
                 (ctr == 0) ? (unsigned char)(leftover[(i >> 2) & 0xf] >>
                                              ((i & 3) << 3))
@@ -2344,13 +2343,13 @@ void submit_gzip_tasks(
         }
 
         outpos_huffman = outdata.write ? outpos_huffman + 1 : outpos_huffman;
-        odx += outdata.write ? (sizeof(unsigned int) << VECPOW) : 0;
+        odx += outdata.write ? (sizeof(unsigned int) << kVecPow) : 0;
 
       } while (ctr--);
 
       // Store summary values from lz and huffman
       acc_gzip_out[0].compression_sz =
-          (outpos_huffman * sizeof(unsigned int) * VEC) +
+          (outpos_huffman * sizeof(unsigned int) * kVec) +
           (leftover_size + 7) / 8;
     });
   });

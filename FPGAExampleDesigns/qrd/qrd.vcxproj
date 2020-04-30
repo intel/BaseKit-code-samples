@@ -17,6 +17,9 @@
   <ItemGroup>
     <ClInclude Include="src\qrd.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{acde6b7a-6f9a-428e-b040-cedc5b1e2c79}</ProjectGuid>
@@ -104,7 +107,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <EnableFPGACompilationAhead>true</EnableFPGACompilationAhead>
-      <AdditionalOptions>-DFPGA_EMULATOR %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-DFPGA_EMULATOR -DFIXED_ITERATIONS=64 %(AdditionalOptions)</AdditionalOptions>
       <ObjectFileName>
       </ObjectFileName>
     </ClCompile>
@@ -142,7 +145,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <EnableFPGACompilationAhead>true</EnableFPGACompilationAhead>
-      <AdditionalOptions>-DFPGA_EMULATOR %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-DFPGA_EMULATOR -DFIXED_ITERATIONS=64 %(AdditionalOptions)</AdditionalOptions>
       <ObjectFileName>
       </ObjectFileName>
     </ClCompile>

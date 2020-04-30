@@ -3,6 +3,7 @@ project(encode_simple)
 
 set(TARGET encode_simple)
 set(SRCS src/encode_simple.cpp)
+set(CMAKE_MSVCIDE_RUN_PATH $ENV{PATH})
 set(RUNARGS $ENV{VPL_DIR}/samples/content/cars_1280x720.nv12 1280 720)
 
 # Set default build type to RelWithDebInfo if not specified

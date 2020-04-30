@@ -9,6 +9,12 @@ This oneDNN CNN FP32 Inference sample is implemented using C++ . By using DPC++ 
 | What you will learn               | run a simple CNN on both Intel CPU and GPU with sample C++ codes.
 | Time to complete                  | 15 minutes
 
+oneDNN_CPU2GPU_Porting.ipynb is also included.
+This Jupyter Notebook demonstrates how to port a oneDNN sample from CPU-only version to CPU&GPU version by using DPC++ on the Intel oneAPI DevCloud (check below Notice)
+>  Notice : Please use Intel oneAPI DevCloud as the environment for jupyter notebook samples. \
+Users can refer to [DevCloud Getting Started](https://devcloud.intel.com/oneapi/get-started/) for using DevCloud \
+Users can use JupyterLab from DevCloud via "One-click Login in", and download samples via "git clone" or the "oneapi-cli" tool \
+Once users are in the JupyterLab with downloaded jupyter notebook samples, they can start following the steps without further installion needed.
 
 ## License  
 This code sample is licensed under MIT license 
@@ -203,7 +209,13 @@ or
 ```
     ./out/cnn-inference-f32-cpp gpu  
 ```
-
+>  NOTE: Zero Level runtime is enabled by default. Please make sure proper installation of zero level driver \
+including level-zero-devel package following installation guide. \
+If users still encounter runtime issue such as "could not create a primitive", \
+Please apply workaround to set SYCL_BE=PI_OPENCL before running a DPC++ program \
+ \
+For applying the workaround in this sample, users can add `export SYCL_BE=PI_OPENCL` in CMakeLists.txt. \
+After applying the worklaround, sample use OpenCL runtime instead.\
 
 ## Result Validation 
 

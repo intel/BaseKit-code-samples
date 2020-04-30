@@ -13,6 +13,9 @@
   <ItemGroup>
     <ClCompile Include="src\triangular_loop.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{b9324a38-dd67-4220-9ec3-42a8acbdc4f5}</ProjectGuid>

@@ -1,7 +1,7 @@
 {
-  "name": "Boostrapping",
+  "name": "boostrapping",
   "categories": [ "Toolkit/Intel® oneAPI Base Toolkit/oneAPI DPC++ Compiler/CPU and GPU" ],
-  "description": "Program that serves as a hello-world for developers not familiar with DPC++ and compiler.",
+  "description": "Simple program for developers not familiar with DPC++ and compiler.",
   "toolchain": [ "dpcpp" ],
   "languages": [ { "cpp": { "properties": { "projectOptions": [ { "projectType": "makefile" } ] } } } ],
   "targetDevice": [ "CPU", "GPU" ],

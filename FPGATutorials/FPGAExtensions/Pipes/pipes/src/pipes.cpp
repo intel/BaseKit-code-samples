@@ -9,13 +9,13 @@
 #include <iostream>
 #include <vector>
 using namespace cl::sycl;
-constexpr access::mode sycl_read = access::mode::read;
-constexpr access::mode sycl_write = access::mode::write;
+constexpr access::mode kSyclRead = access::mode::read;
+constexpr access::mode kSyclWrite = access::mode::write;
 
-using ProducerToConsumerPipe = pipe<  // Defined in the SYCL headers.
-    class ProducerConsumerPipe,       // An identifier for the pipe.
-    int,                              // The type of data in the pipe.
-    4>;                               // The capacity of the pipe.
+using ProducerToConsumerPipe = intel::pipe<  // Defined in the SYCL headers.
+    class ProducerConsumerPipe,              // An identifier for the pipe.
+    int,                                     // The type of data in the pipe.
+    4>;                                      // The capacity of the pipe.
 
 class ProducerTutorial;
 
@@ -24,19 +24,18 @@ auto exception_handler = [](cl::sycl::exception_list exceptions) {
     try {
       std::rethrow_exception(e);
     } catch (cl::sycl::exception const &e) {
-      std::cout << "Caught asynchronous SYCL exception:\n"
-                << e.what() << std::endl;
+      std::cout << "Caught asynchronous SYCL exception:\n" << e.what() << "\n";
       std::terminate();
     }
   }
 };
 
-void producer(queue &deviceQueue, buffer<int, 1> &input_buffer) {
+void Producer(queue &device_queue, buffer<int, 1> &input_buffer) {
   std::cout << "Enqueuing producer...\n";
 
   event queue_event;
-  queue_event = deviceQueue.submit([&](handler &cgh) {
-    auto input_accessor = input_buffer.get_access<sycl_read>(cgh);
+  queue_event = device_queue.submit([&](handler &cgh) {
+    auto input_accessor = input_buffer.get_access<kSyclRead>(cgh);
     auto num_elements = input_buffer.get_count();
 
     cgh.single_task<ProducerTutorial>([=]() {
@@ -47,21 +46,21 @@ void producer(queue &deviceQueue, buffer<int, 1> &input_buffer) {
   });
 }
 
-int consumer_work(int i) { return i * i; }
+int ConsumerWork(int i) { return i * i; }
 
 class ConsumerTutorial;
-void consumer(queue &deviceQueue, buffer<int, 1> &output_buffer) {
+void Consumer(queue &device_queue, buffer<int, 1> &output_buffer) {
   std::cout << "Enqueuing consumer...\n";
 
   event queue_event;
-  queue_event = deviceQueue.submit([&](handler &cgh) {
-    auto output_accessor = output_buffer.get_access<sycl_write>(cgh);
+  queue_event = device_queue.submit([&](handler &cgh) {
+    auto output_accessor = output_buffer.get_access<kSyclWrite>(cgh);
     auto num_elements = output_buffer.get_count();
 
     cgh.single_task<ConsumerTutorial>([=]() {
       for (int i = 0; i < num_elements; ++i) {
         auto input = ProducerToConsumerPipe::read();
-        auto answer = consumer_work(input);
+        auto answer = ConsumerWork(input);
         output_accessor[i] = answer;
       }
     });
@@ -100,35 +99,32 @@ int main(int argc, char *argv[]) {
     intel::fpga_selector device_selector;
 #endif
 
-    queue deviceQueue(device_selector, exception_handler);
+    queue device_queue(device_selector, exception_handler);
 
-    producer(deviceQueue, producer_buffer);
-    consumer(deviceQueue, consumer_buffer);
-    deviceQueue.wait_and_throw();
+    Producer(device_queue, producer_buffer);
+    Consumer(device_queue, consumer_buffer);
+    device_queue.wait_and_throw();
   } catch (cl::sycl::exception const &e) {
-    std::cout << "Caught a synchronous SYCL exception: " << e.what()
-              << std::endl;
+    std::cout << "Caught a synchronous SYCL exception: " << e.what() << "\n";
     std::cout << "   If you are targeting an FPGA hardware, "
                  "ensure that your system is plugged to an FPGA board that is "
-                 "set up correctly"
-              << std::endl;
+                 "set up correctly\n";
     std::cout << "   If you are targeting the FPGA emulator, compile with "
-                 "-DFPGA_EMULATOR"
-              << std::endl;
-    std::cout << "   This design is not supported on CPU targets." << std::endl;
+                 "-DFPGA_EMULATOR\n";
+    std::cout << "   This design is not supported on CPU targets.\n";
     return 1;
   }
 
   // Verify result
   for (unsigned int i = 0; i < array_size; i++) {
-    if (consumer_output[i] != consumer_work(producer_input[i])) {
+    if (consumer_output[i] != ConsumerWork(producer_input[i])) {
       std::cout << "input = " << producer_input[i]
-                << " expected: " << consumer_work(producer_input[i])
+                << " expected: " << ConsumerWork(producer_input[i])
                 << " got: " << consumer_output[i] << "\n";
-      std::cout << "FAILED: The results are incorrect" << std::endl;
+      std::cout << "FAILED: The results are incorrect\n";
       return 1;
     }
   }
-  std::cout << "PASSED: The results are correct" << std::endl;
+  std::cout << "PASSED: The results are correct\n";
   return 0;
 }

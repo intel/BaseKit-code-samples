@@ -13,6 +13,9 @@
   <ItemGroup>
     <ClCompile Include="src\local_memory_cache.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{66a01391-21d2-46bb-a37a-6b8670bee1fc}</ProjectGuid>
