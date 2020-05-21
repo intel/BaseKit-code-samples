@@ -1,8 +1,8 @@
 CXX = dpcpp-cl
 CXXFLAGS = -O2 -EHsc -Zi
 LDFLAGS = 
-EXE_NAME = vector-add.exe
-SOURCES = src/vector-add.cpp
+EXE_NAME = vector-add-usm.exe
+SOURCES = src/vector-add-usm.cpp
 
 all: main
 

@@ -1,8 +1,7 @@
 CXX = dpcpp-cl
 CXXFLAGS = -O2 -EHsc -Zi
-LDFLAGS = 
-SOURCES = src/vector-add-usm.cpp
-EXE_NAME_FPGA_EMU = vector-add-usm.fpga_emu.exe
+SOURCES = src/simple-add-usm.cpp
+EXE_NAME_FPGA_EMU = simple-add-usm.fpga_emu.exe
 
 all: fpga_emu
 

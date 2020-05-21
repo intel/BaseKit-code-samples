@@ -1,16 +1,25 @@
 CXX = dpcpp
-CXXFLAGS = -O2 -g
-LDFLAGS = -lOpenCL -lsycl
-EXE_NAME = vector-add
-SOURCES = src/vector-add.cpp
+CXXFLAGS = -O2 -g -std=c++17
 
-all: main
+BUFFER_EXE_NAME = vector-add-buffers
+BUFFER_SOURCES = src/vector-add-buffers.cpp
 
-main:
-	$(CXX) $(CXXFLAGS) -o $(EXE_NAME) $(SOURCES) $(LDFLAGS)
+USM_EXE_NAME = vector-add-usm
+USM_SOURCES = src/vector-add-usm.cpp
+
+all: build_buffers
+
+build_buffers:
+	$(CXX) $(CXXFLAGS) -o $(BUFFER_EXE_NAME) $(BUFFER_SOURCES)
+
+build_usm:
+	$(CXX) $(CXXFLAGS) -o $(USM_EXE_NAME) $(USM_SOURCES)
 
 run: 
-	./$(EXE_NAME)
+	./$(BUFFER_EXE_NAME)
+
+run_usm: 
+	./$(USM_EXE_NAME)
 
 clean: 
-	rm -rf $(EXE_NAME)
+	rm -rf $(BUFFER_EXE_NAME) $(USM_EXE_NAME)
