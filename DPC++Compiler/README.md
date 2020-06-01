@@ -3,6 +3,7 @@
 | Code sample name                          | Supported Intel(r) Architecture(s) | Description
 |:---                                       |:---                                |:---
 | DPC++Compiler/Vector-add                  | FPGA, GPU, CPU                     | Simple vector-add program
+| DPC++Compiler/Simple-add                  | FPGA, GPU, CPU                     | Simple addition program
 | DPC++Compiler/sepia-filter                | GPU, CPU                     | Color image conversion using 1D range
 | DPC++Compiler/bootstrapping                | GPU, CPU                     | a simple data transfer program using DPC++
 | DPC++Compiler/complex_mult                | GPU, CPU                     | Complex number Multiplication
