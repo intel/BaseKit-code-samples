@@ -53,7 +53,7 @@ The compilation is a 3-step process:
 2. Compile host part (seconds) using:
    
    ``` 
-   dpcpp -fintelfpga main.cpp -c host.o
+   dpcpp -fintelfpga main.cpp -c -o host.o
    ```
    For generic program, input files should include all source files that only contain host code.
 
