@@ -17,6 +17,15 @@ constexpr cl::sycl::access::mode sycl_read = cl::sycl::access::mode::read;
 constexpr cl::sycl::access::mode sycl_write = cl::sycl::access::mode::write;
 constexpr cl::sycl::access::mode sycl_read_write = cl::sycl::access::mode::read_write;
 
+template <typename T>
+class Matrix1;
+
+template <typename T>
+class Matrix1_1;
+
+template <typename T>
+class Matrix1_2;
+
 // Basic matrix multiply
 void multiply1(int msize, int tidx, int numt, TYPE a[][NUM], TYPE b[][NUM],
                TYPE c[][NUM], TYPE t[][NUM]) {
@@ -43,7 +52,7 @@ void multiply1(int msize, int tidx, int numt, TYPE a[][NUM], TYPE b[][NUM],
 
     // Execute matrix multiply in parallel over our matrix_range
     // ind is an index into this range
-	h.parallel_for(matrix_range,[=](cl::sycl::id<2> ind) {
+	h.parallel_for<class Matrix1<TYPE> >(matrix_range,[=](cl::sycl::id<2> ind) {
 		int k;
 		for (k = 0; k < NUM; k++) {
 		// Perform computation ind[0] is row, ind[1] is col
@@ -81,7 +90,7 @@ void multiply1_1(int msize, int tidx, int numt, TYPE a[][NUM], TYPE b[][NUM],TYP
 
     // Execute matrix multiply in parallel over our matrix_range
     // ind is an index into this range
-    h.parallel_for(matrix_range,[=](cl::sycl::id<2> ind) {
+    h.parallel_for<class Matrix1_1<TYPE>>(matrix_range,[=](cl::sycl::id<2> ind) {
       int k;
       TYPE acc = 0.0;
       for (k = 0; k < NUM; k++) {
@@ -125,7 +134,7 @@ void multiply1_2(int msize, int tidx, int numt, TYPE a[][NUM], TYPE b[][NUM],
     accessor<TYPE, 2, cl::sycl::access::mode::read_write, cl::sycl::access::target::local> bTile(cl::sycl::range<2>(MATRIXTILESIZE, MATRIXTILESIZE), h);
     // Execute matrix multiply in parallel over our matrix_range
     // ind is an index into this range
-    h.parallel_for(cl::sycl::nd_range<2>(matrix_range,tile_range),[=](cl::sycl::nd_item<2> it) {
+    h.parallel_for<class Matrix1_2<TYPE>>(cl::sycl::nd_range<2>(matrix_range,tile_range),[=](cl::sycl::nd_item<2> it) {
       int k;
       const int numTiles = NUM / MATRIXTILESIZE;
       const int row = it.get_local_id(0);

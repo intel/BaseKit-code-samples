@@ -12,8 +12,8 @@ learn the following:
 | Optimized for   | Description
 ---               |---
 | OS              | Linux Ubuntu 18.04; Windows* 10 or Windows* Server 2016
-| Hardware        | Intel(R) Programmable Acceleration Card (PAC) with Intel(R) Arria(R) 10 GX FPGA
-| Software        | Intel(R) oneAPI DPC++ Compiler (Beta) 
+| Hardware        | Intel® Programmable Acceleration Card (PAC) with Intel Arria® 10 GX FPGA
+| Software        | Intel® oneAPI DPC++ Compiler (Beta) 
 
 _Notice: Limited support in Windows*, Compiling for FPGA hardware is not supported in Windows*_
 
@@ -48,7 +48,7 @@ declarations. The compiler supports the following memory attributes:
 | intelfpga::private_copies(N)     | Specifies that a maximum of N private copies should be created to enable concurrent execution of N pipelined threads.
 | intelfpga::simple_dual_port      | Specifies that the memory implementing the variable or array should have no port that services both reads and writes.
 | intelfpga::merge("`key`", "`type`")  | Merge two or more variables or arrays in the same scope width-wise or depth-wise. All variables with the same `key` string are merged into the same memory system. The string `type` can be either `width` or `depth`. 
-
+| intelfpga::bank_bits(b<sub>0</sub>,b<sub>1</sub>,...,b<sub>n</sub>)  | Specifies that the local memory addresses should use bits (b<sub>0</sub>,b<sub>1</sub>,...,b<sub>n</sub>) for bank-selection, where (b<sub>0</sub>,b<sub>1</sub>,...,b<sub>n</sub>) are indicated in terms of word-addressing. The bits of the local memory address not included in (b<sub>0</sub>,b<sub>1</sub>,...,b<sub>n</sub>) will be used for word-selection in each bank. 
 
 ### Example: Applying Memory Attributes to Private Arrays
 ```c++
@@ -134,11 +134,22 @@ why kVec banks are requested).
 Install the tutorial into `build` directory from the design directory by running
 `cmake`:
 
-```
-mkdir build
-cd build
-cmake ..
-```
+  ```
+  mkdir build
+  cd build
+  ```
+
+  If you are compiling for the Intel® PAC with Intel Arria® 10 GX FPGA, run `cmake` using the command:
+
+  ```
+  cmake ..
+  ```
+
+  If instead you are compiling for the Intel® PAC with Intel Stratix® 10 SX FPGA, run `cmake` using the command:
+
+  ```
+  cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
+  ```
 
 This will generate a `Makefile`. Compile the tutorial using the generated
 `Makefile`. The following four targets are provided, matching the recommended
@@ -158,8 +169,8 @@ development flow:
   - Generate HTML performance reports. This target generates HTML reports for
     two variants of the tutorial: one variant uses a single-pumped memory system
     for  `dict_offset` and the other uses a double-pumped memory system. Find the
-    reports, respectively, in `memory_attributes_singlepump.prj/reports/` and
-    `memory_attributes_doublepump.prj/reports/`. You can use the reports to
+    reports, respectively, in `singlepump_report.prj/reports/` and
+    `doublepump_report.prj/reports/`. You can use the reports to
     verify that the compiler respected the attributes. For more information, see
     the section 'Using Reports to Verify the Design' below.
     ```
@@ -185,7 +196,6 @@ development flow:
     make cpu_host
     ./memory_attributes.cpu_host 
     ```
-  - Download the design, compiled for FPGA hardware, from this location: [download page](https://www.intel.com/content/www/us/en/programmable/products/design-software/high-level-design/one-api-for-fpga-support.html)
 
 ### Building the Tutorial (Windows)
 
@@ -214,10 +224,16 @@ development flow:
   - Generate HTML performance reports. This target generates HTML reports for
     two variants of the tutorial: one variant uses a single-pumped memory system
     for  `dict_offset` and the other uses a double-pumped memory system. Find the
-    reports, respectively, in `singlepump_report.prj/reports/` and `singlepump_report.prj/reports/`. You can use the reports to verify that the compiler respected the attributes. For more information, see the section 'Using Reports to Verify the Design' below.
+    reports, respectively, in `singlepump_report.prj/reports/` and `doublepump_report.prj/reports/`. You can use the reports to verify that the compiler respected the attributes. For more information, see the section 'Using Reports to Verify the Design' below.
     ```
     ninja report
     ``` 
+
+    If you are targeting the Intel® PAC with Intel Stratix® 10 SX FPGA, please use the following target and find the reports in `../src/singlepump_s10_pac_report.prj/reports/report.html` and `../src/doublepump_s10_pac_report.prj/reports/report.html`.
+
+    ```
+    ninja report_s10_pac
+    ```
 
 
   - **Not supported yet:** Compile and run on an FPGA hardware
@@ -230,7 +246,7 @@ development flow:
 
 ## Building the Tutorial in Third-Party Integrated Development Environments (IDEs)
 
-You can compile and run this tutorial in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel(R) oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)
+You can compile and run this tutorial in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel® oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)
 
 ### Using Reports to Verify the Design
 

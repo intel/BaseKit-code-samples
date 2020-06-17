@@ -3,8 +3,8 @@
 | Optimized for                     | Description
 ---                                 |---
 | OS                                | Linux* Ubuntu* 18.04; Windows* 10 or Windows* Server 2016
-| Hardware                          | Intel(R); Programmable Acceleration Card (PAC) with Intel(R); Arria(R); 10 GX FPGA
-| Software                          | Intel(R) oneAPI DPC++ Compiler (Beta) 
+| Hardware                          | Intel® Programmable Acceleration Card (PAC) with Intel Arria®; 10 GX FPGA
+| Software                          | Intel® oneAPI DPC++ Compiler (Beta) 
 
 _Notice: Limited support in Windows*, Compiling for FPGA hardware is not supported in Windows*_
 
@@ -19,11 +19,23 @@ This tutorial helps you learn the following concepts:
 ## Building the `fpga_register` Design (Linux)
 
 1. Install the design in `build` directory from the design directory by running `cmake`:
-    ```
-    $mkdir build
-    $cd build
-    $cmake ..
-    ```
+
+  ```
+  mkdir build
+  cd build
+  ```
+
+  If you are compiling for the Intel® PAC with Intel Arria® 10 GX FPGA, run `cmake` using the command:
+
+  ```
+  cmake ..
+  ```
+
+  If instead you are compiling for the Intel® PAC with Intel Stratix® 10 SX FPGA, run `cmake` using the command:
+
+  ```
+  cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
+  ```
 
 2. Compile the design using the generated `Makefile`. The following four build targets are provided that match the recommended development flow:
 
@@ -51,14 +63,13 @@ This tutorial helps you learn the following concepts:
      ./fpga_reg.fpga
      ./fpga_reg_registered.fpga
      ```
-     >**NOTE**: Only the FPGA hardware flow illustrates the performance difference of using the fpga_reg extension. This will be easily evident with the differences in the fmax of the two designs. The fmax can be found in `fpga_reg.prj/reports/report.html` and `fpga_reg_registered.prj/reports/report.html`.
+     >**NOTE**: Only the FPGA hardware flow illustrates the performance difference of using the fpga_reg extension. This will be easily evident with the differences in the fmax of the two designs. The fmax can be found in `fpga_reg_report.prj/reports/report.html` and `fpga_reg_registered_report.prj/reports/report.html`.
 
    * Compile and run on CPU hardware (not optimized) using: 
      ```
      make cpu_host
      ./fpga_reg.cpu_host
      ```
-3. Download the design, compiled for FPGA hardware, from this location: [download page](https://www.intel.com/content/www/us/en/programmable/products/design-software/high-level-design/one-api-for-fpga-support.html)
 
 ## Building the `fpga_register` Design (Windows)
 
@@ -90,6 +101,12 @@ cd src
      You can notice that in the report from 1., the viewer shows a much more shallow graph as compared to the one in 2.
      This is because the operations are performed much closer to one another in 1. as compared to 2. and in doing so, the compiler sacrificed fmax to be able to schedule the operations within a single cycle.
 
+     If you are targeting the Intel® PAC with Intel Stratix® 10 SX FPGA, please use the following target and find the reports in `../src/fpga_reg_s10_pac_report.prj/reports/report.html` and `../src/fpga_reg_registered_s10_pac_report.prj/reports/report.html`.
+
+     ```
+     ninja report_s10_pac
+     ```
+
    * **Not supported yet:** Compile and run on FPGA hardware.
 
    * Compile and run on CPU hardware (not optimized) using: 
@@ -100,4 +117,4 @@ cd src
 
 ## Building the `fpga_register` Design in Third-Party Integrated Development Environments (IDEs)
 
-You can compile and run this tutorial in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel(R) oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)
+You can compile and run this tutorial in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel® oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)

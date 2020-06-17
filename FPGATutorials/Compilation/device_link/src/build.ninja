@@ -4,7 +4,6 @@ target_name = device_link
 
 emulator_target = ${target_name}.fpga_emu.exe
 cpu_host_target = ${target_name}.cpu_host.exe
-report_target = ${target_name}.a
 
 hardware_flags = -fintelfpga -Xshardware
 emulator_flags = -fintelfpga -DFPGA_EMULATOR

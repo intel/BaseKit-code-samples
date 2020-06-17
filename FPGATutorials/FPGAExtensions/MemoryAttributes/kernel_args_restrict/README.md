@@ -48,11 +48,22 @@ In this tutorial, we will show how to use the `kernel_args_restrict` attribute f
 Install the tutorial into `build` directory from the design directory by running
 `cmake`:
 
-```
-mkdir build
-cd build
-cmake ..
-```
+  ```
+  mkdir build
+  cd build
+  ```
+
+  If you are compiling for the Intel(R) PAC with Intel Arria(R) 10 GX FPGA, run `cmake` using the command:
+
+  ```
+  cmake ..
+  ```
+
+  If instead you are compiling for the Intel(R) PAC with Intel Stratix(R) 10 SX FPGA, run `cmake` using the command:
+
+  ```
+  cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
+  ```
 
 This will generate a `Makefile`. Compile the tutorial using the generated `Makefile`. The following four targets are provided, matching the recommended development flow:
 
@@ -68,7 +79,7 @@ This will generate a `Makefile`. Compile the tutorial using the generated `Makef
     PASSED
     ```
 
-  - Generate HTML performance reports. This target generates HTML reports for the tutorial design. Find the reports in `kernel_args_restrict.prj/reports/`. You can use the reports to verify that the compiler respected the attributes. For more information, see the section 'Using Reports to Verify the Design' below.
+  - Generate HTML performance reports. This target generates HTML reports for the tutorial design. Find the reports in `kernel_args_restrict_report.prj/reports/`. You can use the reports to verify that the compiler respected the attributes. For more information, see the section 'Using Reports to Verify the Design' below.
     ```
     make report
     ``` 
@@ -117,9 +128,15 @@ development flow:
     PASSED
     ```
 
-  - Generate HTML performance reports. This target generates HTML reports for the tutorial design. Find the reports in `kernel_args_restrict.prj/reports/`. You can use the reports to verify that the compiler respected the attributes. For more information, see the section 'Using Reports to Verify the Design' below.
+  - Generate HTML performance reports. This target generates HTML reports for the tutorial design. Find the reports in `kernel_args_restrict_report.prj/reports/`. You can use the reports to verify that the compiler respected the attributes. For more information, see the section 'Using Reports to Verify the Design' below.
+
     ```
     ninja report
+    ```
+    If you are targeting the Intel(R) PAC with Intel Stratix(R) 10 SX FPGA, please use the following target and find the report in `../src/kernel_args_restrict_s10_pac_report.prj/reports/report.html`.
+
+    ```
+    ninja report_s10_pac
     ```
 
   - **Not supported yet:** Compile and run on an FPGA hardware
@@ -136,7 +153,7 @@ You can compile and run this tutorial in the Eclipse* IDE (in Linux*) and the Vi
 
 ## Using Reports to Verify the Design
 
-Open the HTML report (`kernel_args_restrict.prj/reports/report.html`) and go to the *Loop Analysis* (*Throughput Analysis* > *Loop Analysis*). In the *Loop List pane* on the left you should see two kernels: one is the kernel without the attribute applied (*KernelArgsNoRestrict* in the kernel name) and the other with the attribute applied (*KernelArgsRestrict* in the kernel name). The kernels each have a single for-loop, so the *Loop List* pane should show exactly one loop. Click on the loop under each kernel to see its attributes.
+Open the HTML report (`kernel_args_restrict_report.prj/reports/report.html`) and go to the *Loop Analysis* (*Throughput Analysis* > *Loop Analysis*). In the *Loop List pane* on the left you should see two kernels: one is the kernel without the attribute applied (*KernelArgsNoRestrict* in the kernel name) and the other with the attribute applied (*KernelArgsRestrict* in the kernel name). The kernels each have a single for-loop, so the *Loop List* pane should show exactly one loop. Click on the loop under each kernel to see its attributes.
 
 Compare the loop II between the two kernels. Notice that the loop in the *KernelArgsNoRestrict* kernel has an II much larger than 1 (~187), while the loop in the *KernelArgsRestrict* kernel has an II of ~1. Why is this? For the *KernelArgsNoRestrict* kernel, since we didn't tell the compiler that the kernel arguments can't alias, it must be conservative about its scheduling of operations. Since the compiler cannot guarantee that `out[i]` and `in[i+1]` won't alias, it cannot overlap the iteration of the loop performing `out[i] = in[i]` with the next iteration of the loop performing `out[i+1] = in[i+1]` (and likewise for iterations `in[i+2]`, `in[i+3]`, ...). This results in an II equal to the latency of reading `in[i]` plus the latency of writing to `out[i]` plus one to ensure the operation is finished.
 

@@ -3,8 +3,8 @@
 | Optimized for                     | Description
 ---                                 |---
 | OS                                | Linux* Ubuntu* 18.04; Windows* 10 or Windows* Server 2016
-| Hardware                          | Intel(R); Programmable Acceleration Card (PAC) with Intel(R); Arria(R); 10 GX FPGA
-| Software                          | Intel(R) oneAPI DPC++ Compiler (Beta) 
+| Hardware                          | Intel® Programmable Acceleration Card (PAC) with Intel Arria®; 10 GX FPGA
+| Software                          | Intel® oneAPI DPC++ Compiler (Beta) 
 
 _Notice: Limited support in Windows*, Compiling for FPGA hardware is not supported in Windows*_
 
@@ -22,11 +22,22 @@ This tutorial helps you learn the following concepts:
 
 1. Install the design in `build` directory from the design directory by running `cmake`:
 
-    ```
-    mkdir build
-    cd build
-    cmake ..
-    ```
+  ```
+  mkdir build
+  cd build
+  ```
+
+  If you are compiling for the Intel® PAC with Intel Arria® 10 GX FPGA, run `cmake` using the command:
+
+  ```
+  cmake ..
+  ```
+
+  If instead you are compiling for the Intel® PAC with Intel Stratix® 10 SX FPGA, run `cmake` using the command:
+
+  ```
+  cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
+  ```
 
 2. Compile the design using the generated `Makefile`. The following four build targets are provided that match the recommended development flow:
 
@@ -59,10 +70,8 @@ This tutorial helps you learn the following concepts:
      make cpu_host
      ./loop_unroll.cpu_host
      ```
-3. Download the design, compiled for FPGA hardware, from this location: [download page](https://www.intel.com/content/www/us/en/programmable/products/design-software/high-level-design/one-api-for-fpga-support.html)
 
-
-
+(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/loop-unroll.fpga" download>here</a>.
 
 ## Building the `loop_unroll` Design (Windows)
 
@@ -88,8 +97,14 @@ cd src
      ```
      ninja report
      ```
-     Locate the report the `../src/loop_unroll.prj/reports/report.html` directory.
-   
+     Locate the report the `../src/loop_unroll_report.prj/reports/report.html` directory.
+
+     If you are targeting the Intel® PAC with Intel Stratix® 10 SX FPGA, please use the following target and find the report in `../src/loop_unroll_s10_pac_report.prj/reports/report.html`.
+
+     ```
+     ninja report_s10_pac
+     ```
+
    * **Not supported yet:** Compile and run on FPGA hardware.
      
    * Compile and run on CPU hardware (not optimized) using: 
@@ -101,7 +116,7 @@ cd src
 
 ## Building the `loop_unroll` Design in Third-Party Integrated Development Environments (IDEs)
 
-You can compile and run this tutorial in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel(R) oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)
+You can compile and run this tutorial in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel® oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)
 
 ## Basics of Loop Unrolling
 Use the loop unrolling mechanism to increase program parallelism by duplicating the compute logic within a loop. The number of times the loop logic duplicates is referred as the *unroll factor*. Depending on whether the *unroll factor* is equal to the number of loop iterations or not, loop unroll methods can be categorized as *full-loop unrolling* and *partial-loop unrolling*.
@@ -145,7 +160,7 @@ for(i = 0 ; i < 5; i++){
 
 You can observe that a full unroll is a special case where the unroll factor is equal to the number of loop iterations.
 
-In the partial unroll example, each loop iteration in second one is equivalent to four iterations in the first. The Intel(R) oneAPI DPC++ Compiler (Beta) instantiates four adders instead of one adder. Because there is no data dependency between iterations in the loop (which is true in this case), the compiler executes four adds in parallel.
+In the partial unroll example, each loop iteration in second one is equivalent to four iterations in the first. The Intel® oneAPI DPC++ Compiler (Beta) instantiates four adders instead of one adder. Because there is no data dependency between iterations in the loop (which is true in this case), the compiler executes four adds in parallel.
 
 In an FPGA design, unrolling loops is a common strategy to trade on-chip resources for throughput. This tutorial demonstrates this trade-off with a simple vector add example.
 

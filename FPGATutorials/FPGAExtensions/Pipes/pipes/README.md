@@ -3,8 +3,8 @@
 | Optimized for                     | Description
 ---                                 |---
 | OS                                | Linux* Ubuntu* 18.04; Windows* 10 or Windows* Server 2016
-| Hardware                          | Intel(R) Programmable Acceleration Card (PAC) with Intel(R) Arria(R) 10 GX FPGA
-| Software                          | Intel(R) oneAPI DPC++ Compiler (Beta) 
+| Hardware                          | Intel® Programmable Acceleration Card (PAC) with Intel®Arria® 10 GX FPGA
+| Software                          | Intel® oneAPI DPC++ Compiler (Beta) 
 
 _Notice: Limited support in Windows*, Compiling for FPGA hardware is not supported in Windows*_
 
@@ -166,13 +166,25 @@ void Consumer(std::vector<int> &output) {
 
 1. Generate the `Makefile`.
 
-```
-mkdir build
-cd build
-cmake ..
-```
+  ```
+  mkdir build
+  cd build
+  ```
+
+  If you are compiling for the Intel® PAC with Intel Arria® 10 GX FPGA, run `cmake` using the command:
+
+  ```
+  cmake ..
+  ```
+
+  If instead you are compiling for the Intel® PAC with Intel Stratix® 10 SX FPGA, run `cmake` using the command:
+
+  ```
+  cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
+  ```
 
 2. Compile the design through the generated `Makefile`. The following three build targets are provided that matches the recommended development flow:
+
    * Compile and run on the FPGA emulator using:
 
       ```
@@ -201,9 +213,8 @@ cmake ..
      If nothing goes wrong, you are expected to see the following output in the console:
      > `PASSED: The results are correct`
 
-3. Download the design, compiled for FPGA hardware, from this location: [download page](https://www.intel.com/content/www/us/en/programmable/products/design-software/high-level-design/one-api-for-fpga-support.html)
 
-
+(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/pipes.fpga" download>here</a>.
 
 ## Building the Example (Windows)
 
@@ -232,11 +243,16 @@ cd src
      ninja report
      ```
 
-     The reports are  available in the `../src/pipes.prj/reports/report.html` directory.
+     The reports are  available in the `../src/pipes_report.prj/reports/report.html` directory.
 
+     If you are targeting the Intel® PAC with Intel Stratix® 10 SX FPGA, please use the following target and find the report in `../src/pipes_s10_pac_report.prj/reports/report.html`.
+
+     ```
+     ninja report_s10_pac
+     ```
 
    * **Not supported yet:** Compile and run on the FPGA hardware.
 
 ## Building the Example in Third-Party Integrated Development Environments (IDEs)
 
-You can compile and run this tutorial in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel(R) oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)
+You can compile and run this tutorial in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel® oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)

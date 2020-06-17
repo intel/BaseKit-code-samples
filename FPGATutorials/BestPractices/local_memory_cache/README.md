@@ -54,11 +54,22 @@ When caching is used, performance notably increases. As previously mentioned, th
 
 1. Install the design in `build` directory from the design directory by running `cmake`:
  
-```
-mkdir build
-cd build
-cmake ..
-```
+  ```
+  mkdir build
+  cd build
+  ```
+
+  If you are compiling for the Intel(R) PAC with Intel Arria(R) 10 GX FPGA, run `cmake` using the command:
+
+  ```
+  cmake ..
+  ```
+
+  If instead you are compiling for the Intel(R) PAC with Intel Stratix(R) 10 SX FPGA, run `cmake` using the command:
+
+  ```
+  cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
+  ```
 
 2. Compile the design through the generated `Makefile`. The following four build targets are provided that matches the recommended development flow:
 
@@ -116,8 +127,14 @@ cd src
      ```
      ninja report
      ```
-     Locate the report under the `../src/local_memory_cache.prj/reports/report.html` directory.
-     
+     Locate the report under the `../src/local_memory_cache_report.prj/reports/report.html` directory.
+
+     If you are targeting the Intel(R) PAC with Intel Stratix(R) 10 SX FPGA, please use the following target and find the report in `../src/local_memory_cache_s10_pac_report.prj/reports/report.html`.
+
+     ```
+     ninja report_s10_pac
+     ```
+
    * **Not supported yet:** Compile and run on FPGA hardware (longer compile time, targets FPGA device) using: 
 
    * Compile and run on CPU hardware (not optimized) using: 

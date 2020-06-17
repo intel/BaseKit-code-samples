@@ -34,8 +34,12 @@ $ make
 To run the program:
 
 ```
-$ make run
+$ make run-cpu
 ```
+
+This will execute the program by offloading to the CPU device.
+Use the `run-gpu` and `run-fpga` targets of `make` to run the kernel
+on the GPU and FPGA emulation devices, respectively.
 
 To start a debugging session:
 

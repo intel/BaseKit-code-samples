@@ -3,8 +3,8 @@
 | Optimized for                     | Description
 ---                                 |---
 | OS                                | Linux* Ubuntu* 18.04; Windows* 10 or Windows* Server 2016
-| Hardware                          | Intel(R) Programmable Acceleration Card (PAC) with Intel(R) Arria(R) 10 GX FPGA
-| Software                          | Intel(R) oneAPI DPC++ Compiler (Beta) 
+| Hardware                          | Intel® Programmable Acceleration Card (PAC) with Intel Arria® 10 GX FPGA
+| Software                          | Intel® oneAPI DPC++ Compiler (Beta) 
 
 _Notice: Limited support in Windows*, Compiling for FPGA hardware / Generating HTML Optimization Report is not supported in Windows*_
 
@@ -13,7 +13,7 @@ This tutorial demonstrates how to use device link in your FPGA compilation flow 
 
 ## Device Link
 
-Intel(R) oneAPI DPC++ Compiler (Beta) only supports ahead-of-time compilation for FPGA, which means that an FPGA device image is generated at compile time. FPGA device image generation processes can take hours to complete. If you want to recompile your host code only, the process is time-consuming.
+Intel® oneAPI DPC++ Compiler (Beta) only supports ahead-of-time compilation for FPGA, which means that an FPGA device image is generated at compile time. FPGA device image generation processes can take hours to complete. If you want to recompile your host code only, the process is time-consuming.
 
 The device link mechanism allows you to separate device compilation and host compilation. When the code change only applies to host-only files, an FPGA device image is not regenerated. 
 
@@ -81,7 +81,18 @@ Perform the following steps:
    ```
    mkdir build
    cd build
+   ```
+
+   If you are compiling for the Intel® PAC with Intel Arria® 10 GX FPGA, run `cmake` using the command:
+
+   ```
    cmake ..
+   ```
+
+   If instead you are compiling for the Intel® PAC with Intel Stratix® 10 SX FPGA, run `cmake` using the command:
+
+   ```
+   cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
    ```
 
 2. Compile the design through the generated `Makefile`. The following three build targets are provided, matching the recommended development flow:
@@ -108,14 +119,14 @@ Perform the following steps:
      make cpu_host
      ./device_link.cpu_host
      ```
-3. Download the design, compiled for FPGA hardware, from this location: [download page](https://www.intel.com/content/www/us/en/programmable/products/design-software/high-level-design/one-api-for-fpga-support.html)
 
+(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/device-link.fpga" download>here</a>.
 
 
 ## Building the `device_link` Example (Windows)
 
 Note: `cmake` is not yet supported on Windows, a build.ninja file is provided instead. 
-Note: Ensure that Microsoft Visual Studio* (2019 Version 16.4 or newer) with "Desktop development with C++" workload is installed on your system.
+Note: Ensure that Microsoft Visual Studio* (2017, or 2019 Version 16.4 or newer) with "Desktop development with C++" workload is installed on your system.
 
 Perform the following steps:
 
@@ -147,4 +158,4 @@ cd src
 
 ## Building the `device_link` Example in Third-Party Integrated Development Environments (IDEs)
 
-You can compile and run this tutorial in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel(R) oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)
+You can compile and run this tutorial in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel® oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)

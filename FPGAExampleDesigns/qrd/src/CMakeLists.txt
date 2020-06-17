@@ -16,47 +16,35 @@ set(S10_PAC_BOARD_NAME "intel_s10sx_pac:pac_s10")
 set(FIXED_ITERATIONS_A10 64)
 set(FIXED_ITERATIONS_S10 85)
 set(SEED_A10 2)
-set(SEED_S10 4)
+set(SEED_S10 5)
 
-# set FPGA_BOARD value for the example design
+# Set parameter values assuming target is Intel(R) PAC with Intel Arria(R) 10 GX FPGA 
+SET(_FPGA_BOARD ${A10_PAC_BOARD_NAME})
+SET(FIXED_ITERATIONS ${FIXED_ITERATIONS_A10})
+SET(SEED ${SEED_A10})
+
+# Check if target is the Intel(R) PAC with Intel Stratix(R) 10 SX FPGA
 IF (NOT DEFINED FPGA_BOARD)
-    MESSAGE(STATUS "\tFPGA_BOARD was not specified, defaulting to using the ${A10_PAC_BOARD_NAME} (A10 PAC) board. Please refer to the README for more information on how to run the design on the S10 PAC board.")
-    MESSAGE(STATUS "\tSetting the value of the constant FIXED_ITERATIONS to ${FIXED_ITERATIONS_A10}.")
-
-    SET(FPGA_BOARD ${A10_PAC_BOARD_NAME})
-    SET(FIXED_ITERATIONS ${FIXED_ITERATIONS_A10})
-    SET(SEED ${SEED_A10})
+    MESSAGE(STATUS "\tFPGA_BOARD was not specified. Configuring the design to run on the Intel(R) Programmable Acceleration Card (PAC) with Intel Arria(R) 10 GX FPGA. Please refer to the README for more information on how to run the design on the Intel(R) PAC with Intel Stratix(R) 10 SX FPGA.")
 
 ELSEIF(FPGA_BOARD STREQUAL ${A10_PAC_BOARD_NAME})
-    MESSAGE(STATUS "\tConfiguring the design to run on the ${A10_PAC_BOARD_NAME} (A10 PAC) board.")
-    MESSAGE(STATUS "\tSetting the value of the constant FIXED_ITERATIONS to ${FIXED_ITERATIONS_A10}.")
-
-    SET(FPGA_BOARD ${A10_PAC_BOARD_NAME})
-    SET(FIXED_ITERATIONS ${FIXED_ITERATIONS_A10})
-    SET(SEED ${SEED_A10})
+    MESSAGE(STATUS "\tConfiguring the design to run on the Intel(R) Programmable Acceleration Card (PAC) with Intel Arria(R) 10 GX FPGA.")
 
 ELSEIF(FPGA_BOARD STREQUAL ${S10_PAC_BOARD_NAME})
-    MESSAGE(STATUS "\tConfiguring the design to run on the ${S10_PAC_BOARD_NAME} (S10 PAC) board.")
-    MESSAGE(STATUS "\tSetting the value of the constant FIXED_ITERATIONS to ${FIXED_ITERATIONS_S10}.")
-
-    SET(FPGA_BOARD ${S10_PAC_BOARD_NAME})
+    MESSAGE(STATUS "\tConfiguring the design to run on the Intel(R) Programmable Acceleration Card (PAC) with Intel Stratix(R) 10 SX FPGA.")
+    SET(_FPGA_BOARD ${S10_PAC_BOARD_NAME})
     SET(FIXED_ITERATIONS ${FIXED_ITERATIONS_S10})
     SET(SEED ${SEED_S10})
 
 ELSE()
-    MESSAGE(STATUS "\tAn invalid board name was passed in using the FPGA_BOARD flag. The default ${A10_PAC_BOARD_NAME} (A10 PAC) board will be used. Please refer to the README for the list of valid board names.")
-    MESSAGE(STATUS "\tSetting the value of the constant FIXED_ITERATIONS to ${FIXED_ITERATIONS_A10}.")
-
-    SET(FPGA_BOARD ${A10_PAC_BOARD_NAME})
-    SET(FIXED_ITERATIONS ${FIXED_ITERATIONS_A10})
-    SET(SEED ${SEED_A10})
+    MESSAGE(STATUS "\tAn invalid board name was passed in using the FPGA_BOARD flag. Configuring the design to run on the Intel(R) Programmable Acceleration Card (PAC) with Intel Arria(R) 10 GX FPGA. Please refer to the README for the list of valid board names.")
 ENDIF()
 
 set(HARDWARE_COMPILE_FLAGS -fintelfpga -c -DFIXED_ITERATIONS=${FIXED_ITERATIONS})
 
 # use cmake -D USER_HARDWARE_FLAGS=<flags> to set extra flags for FPGA backend compilation
 separate_arguments(USER_HARDWARE_FLAGS)
-set(HARDWARE_LINK_FLAGS -fintelfpga -Xshardware -Xsno-accessor-aliasing -Xsclock=300MHz -Xsfp-relaxed -Xsparallel=2 -Xsseed=${SEED} -Xsboard=${FPGA_BOARD} ${USER_HARDWARE_FLAGS} -DFIXED_ITERATIONS=${FIXED_ITERATIONS})
+set(HARDWARE_LINK_FLAGS -fintelfpga -Xshardware -Xsno-accessor-aliasing -Xsclock=330MHz -Xsfp-relaxed -Xsparallel=2 -Xsseed=${SEED} -Xsboard=${_FPGA_BOARD} ${USER_HARDWARE_FLAGS} -DFIXED_ITERATIONS=${FIXED_ITERATIONS})
 set(FINAL_LINK_FLAGS -fintelfpga -DFIXED_ITERATIONS=${FIXED_ITERATIONS})
 
 set(EMULATOR_COMPILE_FLAGS "-fintelfpga -DFPGA_EMULATOR -DFIXED_ITERATIONS=${FIXED_ITERATIONS}")

@@ -3,8 +3,8 @@
 | Optimized for                     | Description
 ---                                 |---
 | OS                                | Linux* Ubuntu* 18.04; Windows* 10 or Windows* Server 2016
-| Hardware                          | Intel(R) Programmable Acceleration Card (PAC) with Intel(R) Arria(R) 10 GX FPGA
-| Software                          | Intel(R) oneAPI DPC++ Compiler (Beta) 
+| Hardware                          | Intel® Programmable Acceleration Card (PAC) with Intel Arria® 10 GX FPGA
+| Software                          | Intel® oneAPI DPC++ Compiler (Beta) 
 
 _Notice: Limited support in Windows*, Compiling for FPGA hardware is not supported in Windows*_
 
@@ -76,11 +76,22 @@ throughput is observed.
 
 1. Generate the `Makefile`.
 
-```
-mkdir build
-cd build
-cmake ..
-```
+  ```
+  mkdir build
+  cd build
+  ```
+
+  If you are compiling for the Intel® PAC with Intel Arria® 10 GX FPGA, run `cmake` using the command:
+
+  ```
+  cmake ..
+  ```
+
+  If instead you are compiling for the Intel® PAC with Intel Stratix® 10 SX FPGA, run `cmake` using the command:
+
+  ```
+  cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
+  ```
 
 2. Test correctness with emulation.
 
@@ -121,7 +132,6 @@ You are expected to see the following output in the console for each executable:
 
 > `RESULT: The results are correct`
 
-5. Download the design, compiled for FPGA hardware, from this location: [download page](https://www.intel.com/content/www/us/en/programmable/products/design-software/high-level-design/one-api-for-fpga-support.html)
 
 
 The following table summarizes the execution time (in ms) and throughput (in
@@ -172,8 +182,14 @@ The reports are available in the `args_aliasing_alias_report.prj/` and
 `args_aliasing_noalias_report.prj/` directories. You can compare how the two designs
 differ in various optimization metrics.
 
+If you are targeting the Intel® PAC with Intel Stratix® 10 SX FPGA, please use the following target and find the reports in `../src/args_aliasing_alias_restrict_s10_pac_report.prj/reports/report.html` and `../src/args_aliasing_noalias_restrict_s10_pac_report.prj/reports/report.html`.
+
+```
+ninja report_s10_pac
+```
+
 4. **Not supported yet:** Compile and run on FPGA hardware:
 
 ## Building the Tutorial in Third-Party Integrated Development Environments (IDEs)
 
-You can compile and run this tutorial in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel(R) oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)
+You can compile and run this tutorial in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel® oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)

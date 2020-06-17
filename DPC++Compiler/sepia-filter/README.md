@@ -28,10 +28,7 @@ This code sample is licensed under MIT license
     make VERBOSE=1  
 
    * Run the program  
-    make run  
-
-   * Clean the program  
-    make clean  
+    make run   
 
 ### On Windows
 

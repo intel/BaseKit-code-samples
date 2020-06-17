@@ -81,7 +81,7 @@ void simple_pow(std::unique_ptr<queue> &deviceQueue,
 
     queue_event = deviceQueue->submit([&](handler &cgh) {
       auto accessorB =
-          bufferB.template get_access<access::mode::discard_read_write>(cgh);
+          bufferB.template get_access<access::mode::read>(cgh);
 
       /*
         Explicitly instruct the SYCL runtime to copy the kernel's output buffer

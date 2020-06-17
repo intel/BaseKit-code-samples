@@ -3,8 +3,8 @@
 | Optimized for                     | Description
 ---                                 |---
 | OS                                | Linux* Ubuntu* 18.04; Windows* 10 or Windows* Server 2016
-| Hardware                          | Intel(R) Programmable Acceleration Card (PAC) with Intel(R) Arria(R) 10 GX FPGA; Intel(R) Xeon(R) CPU E5-1650 v2 @ 3.50GHz
-| Software                          | Intel(R) oneAPI DPC++ Compiler (Beta)
+| Hardware                          | Intel® Programmable Acceleration Card (PAC) with Intel Arria® 10 GX FPGA; Intel Xeon® CPU E5-1650 v2 @ 3.50GHz
+| Software                          | Intel® oneAPI DPC++ Compiler (Beta)
 
 _Notice: Limited support in Windows*, Compiling for FPGA hardware is not supported in Windows*_
 
@@ -12,7 +12,7 @@ Performance
 
 | QR decomposition                  | Performance data (see performance disclaimers section below)
 |:---                               |:---
-| SYCL                              | 27k matrices/s
+| SYCL                              | 25k matrices/s
 
 ## Description
 
@@ -25,22 +25,22 @@ This code sample is licensed under MIT license.
 
 1. Install the design into a directory `build` from the design directory by running `cmake`:
 
-```
-mkdir build
-cd build
-```
+   ```
+   mkdir build
+   cd build
+   ```
 
-If you are compiling for the A10 PAC board, run `cmake` using the command:
+   If you are compiling for the Intel® PAC with Intel Arria® 10 GX FPGA, run `cmake` using the command:
 
-```
-cmake .. 
-```
+   ```
+   cmake .. 
+   ```
 
-If instead you are compiling for the S10 PAC board, run `cmake` using the command:
+   If instead you are compiling for the Intel® PAC with Intel Stratix® 10 SX FPGA, run `cmake` using the command:
 
-```
-cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
-```
+   ```
+   cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
+   ```
 
 2. Compile the design through the generated `Makefile`. The following four targets are provided, matching the recommended development flow:
 
@@ -67,7 +67,7 @@ cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
        ./qrd.fpga 32768 
        ```
 
-       For the S10 PAC board, run on the hardware with the command:
+       for the Intel® PAC with Intel Stratix® 10 SX FPGA, run on the hardware with the command:
        ```
        ./qrd.fpga 40960 
        ```
@@ -78,12 +78,13 @@ cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
        make cpu_host
        ./qrd.cpu_host 
        ```
-3. Download the design, compiled for FPGA hardware, from this location: [download](https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/qrd.fpga)
+
+(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/qrd.fpga" download>here</a>.
 
 ## Building the Example Design (Windows)
 
 Note: `cmake` is not yet supported on Windows, a build.ninja file is provided instead. 
-Note: Ensure that Microsoft Visual Studio* (2019 Version 16.4 or newer) with "Desktop development with C++" workload is installed on your system.
+Note: Ensure that Microsoft Visual Studio* (2017, or 2019 Version 16.4 or newer) with "Desktop development with C++" workload is installed on your system.
 
 1. Enter source file directory.
 
@@ -93,13 +94,24 @@ cd src
 
 2. Compile the design. The following four targets are provided, matching the recommended development flow:
 
-    * Generate HTML performance report. Find the report in `../src/qrd.prj/reports/report.html`directory.
+    * Compile and run for emulation (fast compile time, targets emulated FPGA device). This step generates a random matrix and computes QR decomposition.
 
-       ```
-       ninja report
-       ``` 
+      ```
+      ninja fpga_emu
+      ./qrd.fpga_emu 
+      ```
 
-    * **Not supported:** Compile and run for emulation.
+    * Generate HTML performance report. Find the report in `../src/qrd_report.prj/reports/report.html`directory.
+
+      ```
+      ninja report
+      ``` 
+
+      If you are targeting the Intel® PAC with Intel Stratix® 10 SX FPGA, please use the following target and find the report in `../src/qrd_s10_pac_report.prj/reports/report.html`.
+
+      ```
+      ninja report_s10_pac
+      ```
 
     * **Not supported yet:** Compile and run on an FPGA hardware.
 
@@ -112,7 +124,7 @@ cd src
 
 ## Building the Example Design in Third-Party Integrated Development Environments (IDEs)
 
-You can compile and run this example design in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel(R) oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)
+You can compile and run this example design in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel® oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)
 
 ## Using the Example design
 You can apply QR decomposition to a number of matrices. Invoke it as shown in the following: 
@@ -124,11 +136,11 @@ You can apply QR decomposition to a number of matrices. Invoke it as shown in th
 ### Sample Output
 
 ```
-Device name: pac_a10 : Intel PAC Platform (pac_f400000)
+Device name: pac_a10 : Intel PAC Platform (pac_f000000)
 Generating 32768 random matrices
 Running QR decomposition of 32768 matrices repeatedly
-   Total duration:   39.5882 s
-Throughput: 27.1k matrices/s
+   Total duration:   41.3764 s
+Throughput: 25.3424k matrices/s
 Verifying results on matrix 0 16384 32767
 PASSED
 ```
@@ -144,7 +156,7 @@ PASSED
 | Flag | Description
 ---    |---
 `-Xshardware` | target FPGA hardware
-`-Xsclock=300MHz` | the FPGA backend attempts to achieve 300 MHz
+`-Xsclock=330MHz` | the FPGA backend attempts to achieve 330 MHz
 `-Xsfp-relaxed` | allows backend to relax the order of additions 
 `-Xsparallel=2` | uses 2 cores when compiling the bitstream through Quartus
 `-Xsseed=2` | uses seed 2 during Quartus, yields slightly higher fmax

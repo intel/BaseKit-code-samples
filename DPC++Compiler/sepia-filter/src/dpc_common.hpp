@@ -23,14 +23,13 @@ static auto exception_handler = [](cl::sycl::exception_list eList) {
   }
 };
 
-
-// The SampleTimer is a simple RAII class.    
+// The SampleTimer is a simple RAII class.
 // Construct the timer at the point you want to start timing.
 // Use the Elapsed() method to return time since construction.
 
 class SampleTimer {
  public:
-   SampleTimer() : start_(std::chrono::steady_clock::now()) {}
+  SampleTimer() : start_(std::chrono::steady_clock::now()) {}
 
   double Elapsed() {
     auto now = std::chrono::steady_clock::now();

@@ -10,36 +10,19 @@
 #include "device_selector.hpp"
 #include "dpc_common.hpp"
 
-
-constexpr auto IMG_WIDTH = 2048;
-constexpr auto IMG_HEIGHT = 2048;
-#define IMG_SIZE (IMG_WIDTH * IMG_HEIGHT)
-constexpr auto CHANNELS_PER_PIXEL = 4;
+#define STB_IMAGE_IMPLEMENTATION
+#include "../stb/stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../stb/stb_image_write.h"
 
 using namespace sycl;
 
-static void init(float *image, size_t len) {
-  for (size_t i = 0; i < len; i++) {
-    image[i] = i % 255;
-  }
-}
+// Few useful acronyms.
+constexpr auto sycl_read = access::mode::read;
+constexpr auto sycl_write = access::mode::write;
+constexpr auto sycl_global_buffer = access::target::global_buffer;
 
-static size_t verify(float *gold, float *test, size_t len) {
-  size_t error_cnt = 0;
-  for (size_t i = 0; i < len; i++) {
-    float g = gold[i];
-    float v = test[i];
-    if (fabs(v - g) > 0.0001f) {
-      if (++error_cnt < 10) {
-        std::cout << "ERROR AT [" << i << "]: " << v << " != " << g
-                  << " (expected)" << std::endl;
-      }
-    }
-  }
-  return error_cnt;
-}
-
-static void report_time(const std::string &msg, event e) {
+static void ReportTime(const std::string &msg, event e) {
   cl_ulong time_start =
       e.get_profiling_info<info::event_profiling::command_start>();
 
@@ -59,26 +42,21 @@ static void report_time(const std::string &msg, event e) {
 // - SYCL compiler will automatically deduce the address space for the two
 //   pointers; sycl::multi_ptr specialization for particular address space
 //   can used for more control
-__attribute__((always_inline)) static void sepia_impl(float *src_image,
-                                                      float *dst_image, int i) {
-  const float coeffs[] = {0.2f, 0.3f, 0.3f, 0.0f, 0.1f, 0.5f, 0.5f, 0.0f,
-                          0.3f, 0.1f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-
-  i *= CHANNELS_PER_PIXEL;
-
-  for (int j = 0; j < 4; ++j) {
-    float w = 0.0f;
-    for (int k = 0; k < 4; ++k) {
-      w += coeffs[4 * j + k] * src_image[i + k];
-    }
-    dst_image[i + j] = w;
-  }
+__attribute__((always_inline)) static void ApplyFilter(uint8_t *src_image,
+                                                       uint8_t *dst_image,
+                                                       int i) {
+  i *= 3;
+  float temp;
+  temp = (0.393f * src_image[i]) + (0.769f * src_image[i + 1]) +
+         (0.189f * src_image[i + 2]);
+  dst_image[i] = temp > 255 ? 255 : temp;
+  temp = (0.349f * src_image[i]) + (0.686f * src_image[i + 1]) +
+         (0.168f * src_image[i + 2]);
+  dst_image[i + 1] = temp > 255 ? 255 : temp;
+  temp = (0.272f * src_image[i]) + (0.534f * src_image[i + 1]) +
+         (0.131f * src_image[i + 2]);
+  dst_image[i + 2] = temp > 255 ? 255 : temp;
 }
-
-// Few useful acronyms.
-constexpr auto sycl_read = access::mode::read;
-constexpr auto sycl_write = access::mode::write;
-constexpr auto sycl_global_buffer = access::target::global_buffer;
 
 // This is alternative (to a lambda) representation of a SYCL kernel.
 // Internally, compiler transforms lambdas into instances of a very simlar
@@ -88,40 +66,53 @@ class SepiaFunctor {
  public:
   // Constructor captures needed data into fields
   SepiaFunctor(
-      accessor<float, 1, sycl_read, sycl_global_buffer> &image_acc_,
-      accessor<float, 1, sycl_write, sycl_global_buffer>
-          &image_exp_acc_)
+      accessor<uint8_t, 1, sycl_read, sycl_global_buffer> &image_acc_,
+      accessor<uint8_t, 1, sycl_write, sycl_global_buffer> &image_exp_acc_)
       : image_acc(image_acc_), image_exp_acc(image_exp_acc_) {}
 
   // The '()' operator is the actual kernel
   void operator()(id<1> i) {
-    sepia_impl(image_acc.get_pointer(), image_exp_acc.get_pointer(), i.get(0));
+    ApplyFilter(image_acc.get_pointer(), image_exp_acc.get_pointer(), i.get(0));
   }
 
  private:
   // Captured values:
-  accessor<float, 1, sycl_read, sycl_global_buffer> image_acc;
-  accessor<float, 1, sycl_write, sycl_global_buffer> image_exp_acc;
+  accessor<uint8_t, 1, sycl_read, sycl_global_buffer> image_acc;
+  accessor<uint8_t, 1, sycl_write, sycl_global_buffer> image_exp_acc;
 };
 
 int main(int argc, char **argv) {
-  // prepare data
-  size_t num_pixels = IMG_SIZE;
-  size_t img_len = num_pixels * CHANNELS_PER_PIXEL + CHANNELS_PER_PIXEL;
-  float *image = new float[img_len];
-  float *image_ref = new float[img_len];
-  float *image_exp1 = new float[img_len];
-  float *image_exp2 = new float[img_len];
+  if (argc < 2) {
+    std::cout << "Program usage is <executable> <inputfile>\n";
+    exit(1);
+  }
 
-  init(image, img_len);
+  // loading the input image
+  int img_width, img_height, channels;
+  uint8_t *image = stbi_load(argv[1], &img_width, &img_height, &channels, 0);
+  if (image == NULL) {
+    std::cout << "Error in loading the image\n";
+    exit(1);
+  }
+  std::cout << "Loaded image with a width of " << img_width << ", a height of "
+            << img_height << " and " << channels << " channels\n";
 
-  std::memset(image_ref, 0, img_len * sizeof(float));
-  std::memset(image_exp1, 0, img_len * sizeof(float));
-  std::memset(image_exp2, 0, img_len * sizeof(float));
-  img_len -= CHANNELS_PER_PIXEL;
+  size_t num_pixels = img_width * img_height;
+  size_t img_size = img_width * img_height * channels;
+
+  // allocating memory for output images
+  uint8_t *image_ref = new uint8_t[img_size];
+  uint8_t *image_exp1 = new uint8_t[img_size];
+  uint8_t *image_exp2 = new uint8_t[img_size];
+
+  std::memset(image_ref, 0, img_size * sizeof(uint8_t));
+  std::memset(image_exp1, 0, img_size * sizeof(uint8_t));
+  std::memset(image_exp2, 0, img_size * sizeof(uint8_t));
 
   // Create a device selector which rates available devices in the preferred
   // order for the runtime to select the highest rated device
+  // Note: This is only to illustrate the usage of a custom device selector.
+  // default_selector can be used if no customization is required.
   MyDeviceSelector sel;
 
   // Using these events to time command group execution
@@ -129,19 +120,15 @@ int main(int argc, char **argv) {
 
   // Wrap main SYCL API calls into a try/catch to diagnose potential errors
   try {
-    // Create a command queue using the device selector above, and request
-    // profiling
-    auto prop_list =
-        property_list{property::queue::enable_profiling()};
+    // Create a command queue using the device selector and request profiling
+    auto prop_list = property_list{property::queue::enable_profiling()};
     queue q(sel, dpc_common::exception_handler, prop_list);
 
     // See what device was actually selected for this queue.
-    std::cout << "Running on "
-              << q.get_device().get_info<info::device::name>()
+    std::cout << "Running on " << q.get_device().get_info<info::device::name>()
               << "\n";
 
     // Create SYCL buffer representing source data .
-    //
     // By default, this buffers will be created with global_buffer access
     // target, which means the buffer "projection" to the device (actual
     // device memory chunk allocated or mapped on the device to reflect
@@ -150,15 +137,15 @@ int main(int argc, char **argv) {
     // private, local and constant.
     // Notes:
     // - access type (read/write) is not specified when creating a buffer -
-    //   this is done when actuall accessor is created
-    // - there can be multiple accessors to the same buffer in multuple command
+    //   this is done when actual accessor is created
+    // - there can be multiple accessors to the same buffer in multiple command
     //   groups
-    // - 'image' pointer was passed to the constructor, so this host memory will
-    //   be used for "host projection", no allocation will happen on host
-    buffer<float, 1> image_buf(image, range<1>(img_len));
-    
+    // - 'image' pointer was passed to the constructor, so this host memory
+    //   will be used for "host projection", no allocation will happen on host
+    buffer image_buf(image, range(img_size));
+
     // This is the output buffer device writes to
-    buffer<float, 1> image_buf_exp1(image_exp1, range<1>(img_len));
+    buffer image_buf_exp1(image_exp1, range(img_size));
     std::cout << "submitting lambda kernel...\n";
 
     // Submit a command group for execution. Returns immediately, not waiting
@@ -174,23 +161,22 @@ int main(int argc, char **argv) {
       auto image_exp_acc = image_buf_exp1.get_access<sycl_write>(h);
 
       // This is the simplest form cl::sycl::handler::parallel_for -
-      // - it specifies "flat" 1D ND range (num_pixels), runtime will select
+      // - it specifies "flat" 1D ND range(num_pixels), runtime will select
       //   local size
       // - kernel lambda accepts single cl::sycl::id argument, which has very
       //   limited API; see the spec for more complex forms
-      // <class sepia> is the kernel name required by the spec, the lambda
-      // parameter of the parallel_for is the kernel, which actually executes
-      // on device
-      h.parallel_for(range<1>(IMG_SIZE), [=](id<1> i) {
-            sepia_impl(image_acc.get_pointer(), image_exp_acc.get_pointer(),
-                       i.get(0));
-          });
+      // the lambda parameter of the parallel_for is the kernel, which
+      // actually executes on device
+      h.parallel_for(range<1>(num_pixels), [=](id<1> i) {
+        ApplyFilter(image_acc.get_pointer(), image_exp_acc.get_pointer(),
+                    i.get(0));
+      });
     });
     q.wait_and_throw();
 
     std::cout << "submitting functor kernel...\n";
 
-    buffer<float, 1> image_buf_exp2(image_exp2, range<1>(img_len));
+    buffer image_buf_exp2(image_exp2, range(img_size));
 
     // Submit another command group. This time kernel is represented as a
     // functor object.
@@ -210,12 +196,11 @@ int main(int argc, char **argv) {
   } catch (exception e) {
     // This catches only synchronous exceptions that happened in current thread
     // during execution. The asynchronous exceptions caused by execution of the
-    // command group are caught by the asynchronous exception handler registered
-    // above. Synchronous exceptions are usually those which are thrown from the
-    // SYCL runtime code, such as on invalid constructor arguments. An example
-    // of asynchronous exceptions is error occurred during execution of a
-    // kernel.
-    // Make sure sycl::exception is caught, not std::exception.
+    // command group are caught by the asynchronous exception handler
+    // registered. Synchronous exceptions are usually those which are thrown
+    // from the SYCL runtime code, such as on invalid constructor arguments. An
+    // example of asynchronous exceptions is error occurred during execution of
+    // a kernel. Make sure sycl::exception is caught, not std::exception.
     std::cout << "SYCL exception caught: " << e.what() << "\n";
     return 1;
   }
@@ -223,25 +208,25 @@ int main(int argc, char **argv) {
   std::cout << "Execution completed\n";
 
   // report execution times:
-  report_time("lambda kernel time: ", e1);
-  report_time("functor kernel time: ", e2);
+  ReportTime("lambda kernel time: ", e1);
+  ReportTime("functor kernel time: ", e2);
 
   // get reference result
   for (size_t i = 0; i < num_pixels; i++) {
-    sepia_impl(image, image_ref, i);
+    ApplyFilter(image, image_ref, i);
   }
 
-  // verify
-  std::cout << "Verifying kernel...\n";
-  size_t error_cnt = verify(image_ref, image_exp1, img_len);
-  std::cout << "Verifying functor...\n";
-  error_cnt += verify(image_ref, image_exp2, img_len);
-  std::cout << (error_cnt ? "FAILED" : "passed") << "\n";
+  stbi_write_png("sepia_ref.png", img_width, img_height, channels, image_ref,
+                 img_width * channels);
+  stbi_write_png("sepia_lambda.png", img_width, img_height, channels,
+                 image_exp1, img_width * channels);
+  stbi_write_png("sepia_functor.png", img_width, img_height, channels,
+                 image_exp2, img_width * channels);
 
-  delete [] image;
-  delete [] image_ref;
-  delete [] image_exp1;
-  delete [] image_exp2;
+  stbi_image_free(image);
+  delete[] image_ref;
+  delete[] image_exp1;
+  delete[] image_exp2;
 
-  return error_cnt ? 1 : 0;
+  return 0;
 }

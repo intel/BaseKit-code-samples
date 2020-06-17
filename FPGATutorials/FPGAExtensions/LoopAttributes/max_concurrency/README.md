@@ -3,8 +3,8 @@
 | Optimized for                     | Description
 ---                                 |---
 | OS                                | Linux* Ubuntu* 18.04; Windows* 10 or Windows* Server 2016
-| Hardware                          | Intel(R) Programmable Acceleration Card (PAC) with Intel(R) Arria(R) 10 GX FPGA
-| Software                          | Intel(R) oneAPI DPC++ Compiler (Beta) 
+| Hardware                          | Intel® Programmable Acceleration Card (PAC) with Intel Arria® 10 GX FPGA
+| Software                          | Intel® oneAPI DPC++ Compiler (Beta) 
 
 _Notice: Limited support in Windows*, Compiling for FPGA hardware is not supported in Windows*_
 
@@ -52,11 +52,22 @@ The correct `max_concurrency` factor for a loop depends on the goals of your des
 ## Building the `max_concurrency` Example (Linux)
 1. Install the design into the `build` directory from the design directory by running `cmake`:
 
-```
-mkdir build
-cd build
-cmake ..
-```
+  ```
+  mkdir build
+  cd build
+  ```
+
+  If you are compiling for the Intel® PAC with Intel Arria® 10 GX FPGA, run `cmake` using the command:
+
+  ```
+  cmake ..
+  ```
+
+  If instead you are compiling for the Intel® PAC with Intel Stratix® 10 SX FPGA, run `cmake` using the command:
+
+  ```
+  cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
+  ```
 
 2. Compile the design through the generated `Makefile`. The following four build targets are provided, matching the recommended development flow:
 
@@ -71,7 +82,7 @@ cmake ..
      ```
      make report
      ``` 
-     Locate the report in the `max_concurrency.prj/reports/report.html` directory.
+     Locate the report in the `max_concurrency_report.prj/reports/report.html` directory.
 
      On the main report page, scroll down to the section titled "Estimated Resource Usage". Each kernel name ends in the max_concurrency attribute argument used for that kernel, e.g., kernelCompute1 uses a max_concurrency attribute value of 1. You can verify that the number of RAMs used for each kernel increases with the max_concurrency value used, with the exception of max_concurrency 0, which allows the compiler to choose a default value.
 
@@ -90,8 +101,6 @@ cmake ..
      make cpu_host
      ./max_concurrency.cpu_host 
      ```
-
-3. Download the design, compiled for FPGA hardware, from this location: [download page](https://www.intel.com/content/www/us/en/programmable/products/design-software/high-level-design/one-api-for-fpga-support.html)
 
 ## Building the `max_concurrency` Example (Windows)
 Note: `cmake` is not yet supported on Windows, a build.ninja file is provided instead. 
@@ -115,9 +124,15 @@ cd src
      ```
      ninja report
      ```
-     Locate the report the `../src/max_concurrency.prj/reports/report.html` directory.
+     Locate the report in `../src/max_concurrency_report.prj/reports/report.html`.
 
      On the main report page, scroll down to the section titled "Estimated Resource Usage". Each kernel name ends in the max_concurrency attribute argument used for that kernel, e.g., kernelCompute1 uses a max_concurrency attribute value of 1. You can verify that the number of RAMs used for each kernel increases with the max_concurrency value used, with the exception of max_concurrency 0, which allows the compiler to choose a default value.
+
+     If you are targeting the Intel® PAC with Intel Stratix® 10 SX FPGA, please use the following target and find the report in `../src/max_concurrency_s10_pac_report.prj/reports/report.html`.
+
+     ```
+     ninja report_s10_pac
+     ```
 
    * **Not supported yet:** Compile and run on an FPGA hardware.
 
@@ -130,4 +145,4 @@ cd src
 
 ## Building the `max_concurrency` Example in Third-Party Integrated Development Environments (IDEs)
 
-You can compile and run this tutorial in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel(R) oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)
+You can compile and run this tutorial in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel® oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)

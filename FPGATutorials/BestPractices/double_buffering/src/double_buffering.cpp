@@ -71,7 +71,7 @@ void SimplePow(std::unique_ptr<queue> &q, buffer<cl_float, 1> &buffer_a,
 
   event update_host_event;
   update_host_event = q->submit([&](handler &h) {
-    auto accessor_b = buffer_b.get_access<access::mode::discard_read_write>(h);
+    auto accessor_b = buffer_b.get_access<access::mode::read>(h);
 
     /*
       Explicitly instruct the SYCL runtime to copy the kernel's output buffer

@@ -94,14 +94,14 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdlib>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <fstream>
 #include <regex>
 #include <sstream>
 #include <string>
 
-#include "CRR_common.h"
+#include "CRR_common.hpp"
 
 using namespace std;
 using namespace std::chrono;
@@ -113,7 +113,7 @@ auto exception_handler = [](cl::sycl::exception_list exceptions) {
       std::rethrow_exception(e);
     } catch (cl::sycl::exception const &e) {
       std::cout << "Caught asynchronous SYCL exception:\n"
-                << e.what() << std::endl;
+                << e.what() << "\n";
       std::terminate();
     }
   }
@@ -167,7 +167,7 @@ void WriteOutputToFile(ofstream &outputFile, vector<crr_res> &outp) {
   }
 }
 
-#define MAX_STRING_LEN 40
+#define MAX_STRING_LEN 1024
 
 bool findGetArgString(std::string arg, const char *str, char *str_value,
                       size_t maxchars) {
@@ -262,9 +262,9 @@ crr_res postprocess_data(input_data &inp, crr_in_params &in_params,
 void test_correctness(int k, int n_crrs, bool &pass, input_data &inp,
                       crr_in_params &vals, crr_res &fpga_res) {
   if (k == 0) {
-    std::cout << std::endl
-              << "============= Correctness Test =============" << std::endl;
-    std::cout << "Running analytical correctness checks..." << std::endl;
+    std::cout << "\n"
+              << "============= Correctness Test =============" << "\n";
+    std::cout << "Running analytical correctness checks..." << "\n";
   }
 
   // threshold = control the machting decimal digits.
@@ -348,65 +348,65 @@ void test_correctness(int k, int n_crrs, bool &pass, input_data &inp,
   if (abs(cpu_res.value - fpga_res.value) > threshold) {
     pass = false;
     std::cout << "fpga_res.value " << k << " = " << std::fixed
-              << std::setprecision(20) << fpga_res.value << std::endl;
+              << std::setprecision(20) << fpga_res.value << "\n";
     std::cout << "cpu_res.value " << k << " = " << std::fixed
-              << std::setprecision(20) << cpu_res.value << std::endl;
-    std::cout << "Mismatch detected for value of crr " << k << std::endl;
+              << std::setprecision(20) << cpu_res.value << "\n";
+    std::cout << "Mismatch detected for value of crr " << k << "\n";
   }
   if (abs(cpu_res.delta - fpga_res.delta) > threshold) {
     pass = false;
     std::cout << "fpga_res.delta " << k << " = " << std::fixed
-              << std::setprecision(20) << fpga_res.delta << std::endl;
+              << std::setprecision(20) << fpga_res.delta << "\n";
     std::cout << "cpu_res.delta " << k << " = " << std::fixed
-              << std::setprecision(20) << cpu_res.delta << std::endl;
-    std::cout << "Mismatch detected for value of crr " << k << std::endl;
+              << std::setprecision(20) << cpu_res.delta << "\n";
+    std::cout << "Mismatch detected for value of crr " << k << "\n";
   }
   if (abs(cpu_res.gamma - fpga_res.gamma) > threshold) {
     pass = false;
     std::cout << "fpga_res.gamma " << k << " = " << std::fixed
-              << std::setprecision(20) << fpga_res.gamma << std::endl;
+              << std::setprecision(20) << fpga_res.gamma << "\n";
     std::cout << "cpu_res.gamma " << k << " = " << std::fixed
-              << std::setprecision(20) << cpu_res.gamma << std::endl;
-    std::cout << "Mismatch detected for value of crr " << k << std::endl;
+              << std::setprecision(20) << cpu_res.gamma << "\n";
+    std::cout << "Mismatch detected for value of crr " << k << "\n";
   }
   if (abs(cpu_res.vega - fpga_res.vega) > threshold) {
     pass = false;
     std::cout << "fpga_res.vega " << k << " = " << std::fixed
-              << std::setprecision(20) << fpga_res.vega << std::endl;
+              << std::setprecision(20) << fpga_res.vega << "\n";
     std::cout << "cpu_res.vega " << k << " = " << std::fixed
-              << std::setprecision(20) << cpu_res.vega << std::endl;
-    std::cout << "Mismatch detected for value of crr " << k << std::endl;
+              << std::setprecision(20) << cpu_res.vega << "\n";
+    std::cout << "Mismatch detected for value of crr " << k << "\n";
   }
   if (abs(cpu_res.theta - fpga_res.theta) > threshold) {
     pass = false;
     std::cout << "fpga_res.theta " << k << " = " << std::fixed
-              << std::setprecision(20) << fpga_res.theta << std::endl;
+              << std::setprecision(20) << fpga_res.theta << "\n";
     std::cout << "cpu_res.theta " << k << " = " << std::fixed
-              << std::setprecision(20) << cpu_res.theta << std::endl;
-    std::cout << "Mismatch detected for value of crr " << k << std::endl;
+              << std::setprecision(20) << cpu_res.theta << "\n";
+    std::cout << "Mismatch detected for value of crr " << k << "\n";
   }
   if (abs(cpu_res.rho - fpga_res.rho) > threshold) {
     pass = false;
     std::cout << "fpga_res.rho " << k << " = " << std::fixed
-              << std::setprecision(20) << fpga_res.rho << std::endl;
+              << std::setprecision(20) << fpga_res.rho << "\n";
     std::cout << "cpu_res.rho " << k << " = " << std::fixed
-              << std::setprecision(20) << cpu_res.rho << std::endl;
-    std::cout << "Mismatch detected for value of crr " << k << std::endl;
+              << std::setprecision(20) << cpu_res.rho << "\n";
+    std::cout << "Mismatch detected for value of crr " << k << "\n";
   }
 
   if (k == n_crrs - 1) {
     std::cout << "CPU-FPGA Equivalence: " << (pass ? "PASS" : "FAIL")
-              << std::endl;
+              << "\n";
   }
 }
 
 // Test throughput.
 void test_throughput(double &time, const int &n_crrs) {
-  std::cout << std::endl
-            << "============= Throughput Test =============" << std::endl;
+  std::cout << "\n"
+            << "============= Throughput Test =============" << "\n";
 
   std::cout << "   Avg throughput:   " << std::fixed << std::setprecision(1)
-            << (n_crrs / time) << " assets/s" << std::endl;
+            << (n_crrs / time) << " assets/s" << "\n";
 }
 
 // Tempate for loop unrolling.
@@ -613,14 +613,14 @@ int main(int argc, char *argv[]) {
               << deviceQueue.get_device()
                      .get_info<cl::sycl::info::device::name>()
                      .c_str()
-              << std::endl;
+              << "\n";
 
     cl::sycl::device device = deviceQueue.get_device();
     std::cout << "Device name: "
               << device.get_info<cl::sycl::info::device::name>().c_str()
-              << std::endl
-              << std::endl
-              << std::endl;
+              << "\n"
+              << "\n"
+              << "\n";
 
     vector<input_data> inp;
 
@@ -632,7 +632,7 @@ int main(int argc, char *argv[]) {
     ifstream inputFile(infilename);
 
     if (!inputFile.is_open()) {
-      std::cerr << "Input file doesn't exist " << std::endl;
+      std::cerr << "Input file doesn't exist " << "\n";
       return 1;
     }
 
@@ -640,7 +640,7 @@ int main(int argc, char *argv[]) {
     string filename = infilename;
     std::size_t found = filename.find_last_of(".");
     if (!(filename.substr(found + 1).compare("csv") == 0)) {
-      std::cerr << "Input file format only support .csv" << std::endl;
+      std::cerr << "Input file format only support .csv" << "\n";
       return 1;
     }
 
@@ -655,7 +655,7 @@ int main(int argc, char *argv[]) {
     filename = outfilename;
     found = filename.find_last_of(".");
     if (!(filename.substr(found + 1).compare("csv") == 0)) {
-      std::cerr << "Output file format only support .csv" << std::endl;
+      std::cerr << "Output file format only support .csv" << "\n";
       return 1;
     }
 
@@ -699,17 +699,17 @@ int main(int argc, char *argv[]) {
 
   } catch (cl::sycl::exception const &e) {
     std::cout << "Caught a synchronous SYCL exception: " << e.what()
-              << std::endl;
+              << "\n";
     std::cout << "   If you are targeting an FPGA hardware, "
                  "ensure that your system is plugged to an FPGA board that is "
                  "set up correctly"
-              << std::endl;
+              << "\n";
     std::cout << "   If you are targeting the FPGA emulator, compile with "
                  "-DFPGA_EMULATOR"
-              << std::endl;
+              << "\n";
     std::cout
         << "   If you are targeting a CPU host device, compile with -DCPU_HOST"
-        << std::endl;
+        << "\n";
     return 1;
   }
   return 0;

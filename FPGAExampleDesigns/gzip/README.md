@@ -3,8 +3,8 @@
 | Optimized for                     | Description
 ---                                 |---
 | OS                                | Linux* Ubuntu* 18.04; Windows* 10 or Windows* Server 2016
-| Hardware                          | Intel(R) Programmable Acceleration Card (PAC) with Intel(R) Arria(R) 10 GX FPGA; Intel(R) Xeon(R) CPU E5-1650 v2 @ 3.50GHz
-| Software                          | Intel(R) oneAPI DPC++ Compiler (Beta)
+| Hardware                          | Intel® Programmable Acceleration Card (PAC) with Intel Arria® 10 GX FPGA; Intel Xeon® CPU E5-1650 v2 @ 3.50GHz
+| Software                          | Intel® oneAPI DPC++ Compiler (Beta)
 
 _Notice: Limited support in Windows*, Compiling for FPGA hardware is not supported in Windows*_
 
@@ -29,22 +29,22 @@ This code sample is licensed under MIT license.
 
 1. Install the design into a directory `build` from the design directory by running `cmake`:
 
-```
-mkdir build
-cd build
-```
+   ```
+   mkdir build
+   cd build
+   ```
 
-If you are compiling for the A10 PAC board, run `cmake` using the command:
+   If you are compiling for the Intel® PAC with Intel Arria® 10 GX FPGA, run `cmake` using the command:
 
-```
-cmake ..
-```
+   ```
+   cmake ..
+   ```
 
-If instead you are compiling for the S10 PAC board, run `cmake` using the command:
+   If instead you are compiling for the Intel® PAC with Intel Stratix® 10 SX FPGA, run `cmake` using the command:
 
-```
-cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
-```
+   ```
+   cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
+   ```
 
 2. Compile the design through the generated `Makefile`. The following three build targets are provided, matching the recommended development flow:
 
@@ -69,7 +69,9 @@ cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
        make fpga
        ./gzip.fpga /usr/bin/snap -o=test.gz
        ``` 
-3. Download the design, compiled for FPGA hardware, from this location: [download](https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/gzip.fpga)
+
+
+(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/gzip.fpga" download>here</a>.
 
 ## Building the GZIP Design (Windows)
 
@@ -83,19 +85,30 @@ cd src
 
 2. Compile the design. The following three build targets are provided, matching the recommended development flow:
 
-    * Generate HTML optimization report. You can find the report in `../src/gzipkernel.prj/reports/report.html`.
+    * Compile and run for emulation (fast compile time, targets emulated FPGA device). Use a small file for emulation, for example, `<src/gzip.cpp>`.
 
-       ```
-       ninja report
-       ``` 
+      ```
+      ninja fpga_emu
+      gzip.fpga_emu.exe ../src/gzip.cpp -o=test.gz 
+      ```
 
-    * **Not supported:** Compile and run for emulation.
+    * Generate HTML optimization report. You can find the report in `../src/gzipkernel_report.prj/reports/report.html`.
+
+      ```
+      ninja report
+      ``` 
+
+      If you are targeting the Intel® PAC with Intel Stratix® 10 SX FPGA, please use the following target and find the report in `../src/gzipkernel_s10_pac_report.prj/reports/report.html`.
+
+      ```
+      ninja report_s10_pac
+      ```
 
     * **Not supported yet:** Compile and run on FPGA hardware.
 
 ## Building the GZIP Design in Third-Party Integrated Development Environments (IDEs)
 
-You can compile and run this example design in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel(R) oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)
+You can compile and run this example design in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel® oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)
 
 ## Running the Example Design
 GZIP is invoked as follows:

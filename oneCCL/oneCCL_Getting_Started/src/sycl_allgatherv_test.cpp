@@ -5,7 +5,6 @@ int main(int argc, char **argv)
 {
     int i = 0;
     int j = 0;
-    int retval = 0;
     size_t size = 0;
     size_t rank = 0;
     size_t* recv_counts;
@@ -14,6 +13,7 @@ int main(int argc, char **argv)
 
     ccl_request_t request;
     ccl_stream_t stream;
+    ccl_stream_type_t stream_type;
 
     ccl_init();
     ccl_get_comm_rank(NULL, &rank);
@@ -23,11 +23,11 @@ int main(int argc, char **argv)
     cl::sycl::buffer<int, 1> expected_buf(COUNT * size);
     cl::sycl::buffer<int, 1> recvbuf(size * COUNT);
 
-    if (create_sycl_queue(argc, argv, q) != 0) {
+    if (create_sycl_queue(argc, argv, q, stream_type) != 0) {
         return -1;
     }
     /* create SYCL stream */
-    ccl_stream_create(ccl_stream_sycl, &q, &stream);
+    ccl_stream_create(stream_type, &q, &stream);
 
     recv_counts = static_cast<size_t*>(malloc(size * sizeof(size_t)));
 
@@ -60,13 +60,8 @@ int main(int argc, char **argv)
             dev_acc_sbuf[id] += 1;
        });
     });
-    /* exception handling */
-    try {
-        q.wait_and_throw();
-    } catch (cl::sycl::exception const& e) {
-        std::cout << "Caught synchronous SYCL exception:\n"
-          << e.what() << std::endl;
-    }
+
+    handle_exception(q);
 
     /* invoke ccl_allgatherv on the CPU side */
     ccl_allgatherv(&sendbuf,
@@ -91,13 +86,8 @@ int main(int argc, char **argv)
             }
         });
     });
-    /* exception handling */
-    try {
-        q.wait_and_throw();
-    } catch (cl::sycl::exception const& e) {
-        std::cout << "Caught synchronous SYCL exception:\n"
-          << e.what() << std::endl;
-    }
+
+    handle_exception(q);
 
     /* print out the result of the test on the CPU side */
     if (rank == COLL_ROOT) {
@@ -105,7 +95,6 @@ int main(int argc, char **argv)
         for (i = 0; i < size * COUNT; i++) {
             if (host_acc_rbuf_new[i] == -1) {
                 cout << "FAILED" << std::endl;
-		retval = -1;
                 break;
             }
         }
@@ -116,7 +105,9 @@ int main(int argc, char **argv)
 
     ccl_stream_free(stream);
 
+    free(recv_counts);
+
     ccl_finalize();
 
-    return retval;
+    return 0;
 }

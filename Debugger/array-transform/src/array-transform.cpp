@@ -12,49 +12,54 @@
 
 #include <CL/sycl.hpp>
 #include <iostream>
+#include "selector.hpp"
+
+using namespace std;
+using namespace sycl;
 
 // A device function, called from inside the kernel.
-static int GetDim(cl::sycl::id<1> wi, int dim) {
+static int GetDim(id<1> wi, int dim) {
   return wi[dim];
 }
 
-int main() {
-  using namespace cl::sycl;
-
+int main(int argc, char *argv[]) {
   constexpr size_t length = 64;
   int input[length];
   int output[length];
 
   // Initialize the input
-  for (unsigned int i = 0; i < length; i++)
+  for (int i = 0; i < length; i++)
     input[i] = i + 100;
 
   auto exception_handler = [](sycl::exception_list exceptionList) {
-    for (std::exception_ptr const& e : exceptionList) {
+    for (exception_ptr const& e : exceptionList) {
       try {
-        std::rethrow_exception(e);
+        rethrow_exception(e);
       } catch (sycl::exception const& e) {
-        std::terminate();
+        terminate();
       }
     }
   };
 
   try {
-    queue q(exception_handler);
-    std::cout << "[SYCL] Using device: ["
-              << q.get_device().get_info<info::device::name>()
-              << "]\n";
+    CustomSelector selector(GetDeviceType(argc, argv));
+    queue q(selector, exception_handler);
+    cout << "[SYCL] Using device: ["
+         << q.get_device().get_info<info::device::name>()
+         << "] from ["
+         << q.get_device().get_platform().get_info<info::platform::name>()
+         << "]\n";
 
     range<1> data_range{length};
-    buffer<int> buffer_in{&input[0], data_range};
-    buffer<int> buffer_out{&output[0], data_range};
+    buffer<int> buffer_in{input, data_range};
+    buffer<int> buffer_out{output, data_range};
 
     q.submit([&](handler& h) {
       auto in = buffer_in.get_access<access::mode::read>(h);
       auto out = buffer_out.get_access<access::mode::write>(h);
 
       // kernel-start
-      h.parallel_for(data_range, [=](id<1> index) {
+      h.parallel_for<class the_kernel>(data_range, [=](id<1> index) {
         int id0 = GetDim(index, 0);
         int element = in[index];  // breakpoint-here
         int result = element + 50;
@@ -70,19 +75,19 @@ int main() {
 
     q.wait_and_throw();
   } catch (sycl::exception const& e) {
-    std::cout << "fail; synchronous exception occurred: " << e.what() << "\n";
+    cout << "fail; synchronous exception occurred: " << e.what() << "\n";
     return -1;
   }
 
   // Verify the output
-  for (unsigned int i = 0; i < length; i++) {
+  for (int i = 0; i < length; i++) {
     int result = (i % 2 == 0) ? (input[i] + 100) : -1;
     if (output[i] != result) {
-      std::cout << "fail; element " << i << " is " << output[i] << "\n";
+      cout << "fail; element " << i << " is " << output[i] << "\n";
       return -1;
     }
   }
 
-  std::cout << "success; result is correct.\n";
+  cout << "success; result is correct.\n";
   return 0;
 }

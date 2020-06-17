@@ -4,7 +4,6 @@
 int main(int argc, char **argv)
 {
     int i = 0;
-    int retval = 0;
     size_t size = 0;
     size_t rank = 0;
 
@@ -14,16 +13,17 @@ int main(int argc, char **argv)
 
     ccl_request_t request;
     ccl_stream_t stream;
+    ccl_stream_type_t stream_type;
 
     ccl_init();
     ccl_get_comm_rank(NULL, &rank);
     ccl_get_comm_size(NULL, &size);
     
-    if (create_sycl_queue(argc, argv, q) != 0) {
+    if (create_sycl_queue(argc, argv, q, stream_type) != 0) {
         return -1;
     }
     /* create SYCL stream */
-    ccl_stream_create(ccl_stream_sycl, &q, &stream);
+    ccl_stream_create(stream_type, &q, &stream);
 
     {
         /* open buffers and initialize them on the CPU side */
@@ -42,13 +42,8 @@ int main(int argc, char **argv)
            dev_acc_sbuf[id] += 1;
        });
     });
-    /* exception handling */
-    try {
-        q.wait_and_throw();
-    } catch (cl::sycl::exception const& e) {
-        std::cout << "Caught synchronous SYCL exception:\n"
-          << e.what() << std::endl;
-    }
+
+    handle_exception(q);
 
     /* invoke ccl_allreduce on the CPU side */
     ccl_allreduce(&sendbuf,
@@ -72,13 +67,8 @@ int main(int argc, char **argv)
            }
        });
     });
-    /* exception handling */
-    try {
-        q.wait_and_throw();
-    } catch (cl::sycl::exception const& e) {
-        std::cout << "Caught synchronous SYCL exception:\n"
-          << e.what() << std::endl;
-    }
+
+    handle_exception(q);
 
     /* print out the result of the test on the CPU side */
     if (rank == COLL_ROOT) {
@@ -87,7 +77,6 @@ int main(int argc, char **argv)
             if (host_acc_rbuf_new[i] == -1) {
                 cout << "FAILED"<< std::endl;
                 break;
-		retval = -1;
             }
         }
         if (i == COUNT) {
@@ -99,5 +88,5 @@ int main(int argc, char **argv)
 
     ccl_finalize();
 
-    return retval;
+    return 0;
 }

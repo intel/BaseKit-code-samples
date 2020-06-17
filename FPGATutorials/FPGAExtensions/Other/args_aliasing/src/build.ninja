@@ -11,10 +11,16 @@ rule build_fpga_emu
   command = dpcpp-cl /GX ${emulator_flags} $in -o $out
 
 rule gen_report
-  command = dpcpp-cl /GX ${hardware_flags} -fsycl-link $in -o $out
+  command = dpcpp-cl /GX ${hardware_flags} -Xsboard=intel_a10gx_pac:pac_a10 -fsycl-link $in -o $out
 
 rule gen_report_noalias
-  command = dpcpp-cl /GX ${hardware_flags} -fsycl-link $in -Xsno-accessor-aliasing -o $out
+  command = dpcpp-cl /GX ${hardware_flags} -Xsboard=intel_a10gx_pac:pac_a10 -fsycl-link $in -Xsno-accessor-aliasing -o $out
+
+rule gen_report_s10_pac
+  command = dpcpp-cl /GX ${hardware_flags} -Xsboard=intel_s10sx_pac:pac_s10 -fsycl-link $in -o $out
+
+rule gen_report_noalias_s10_pac
+  command = dpcpp-cl /GX ${hardware_flags} -Xsboard=intel_s10sx_pac:pac_s10 -fsycl-link $in -Xsno-accessor-aliasing -o $out
 
 # FPGA emulator
 build fpga_emu: phony ${emulator_target}
@@ -23,7 +29,14 @@ build ${emulator_target}: build_fpga_emu ${source_file}
 # report
 report_alias_target = ${target_name}_alias_report.a
 report_noalias_target = ${target_name}_noalias_report.a
+report_alias_target_s10_pac = ${target_name}_alias_s10_pac_report.a
+report_noalias_target_s10_pac = ${target_name}_noalias_s10_pac_report.a
 
 build report: phony ${report_noalias_target} ${report_alias_target}
 build ${report_alias_target}: gen_report ${source_file} 
 build ${report_noalias_target}: gen_report_noalias ${source_file} 
+
+# report (S10 PAC)
+build report_s10_pac: phony ${report_noalias_target_s10_pac} ${report_alias_target_s10_pac}
+build ${report_alias_target_s10_pac}: gen_report_s10_pac ${source_file} 
+build ${report_noalias_target_s10_pac}: gen_report_noalias_s10_pac ${source_file} 

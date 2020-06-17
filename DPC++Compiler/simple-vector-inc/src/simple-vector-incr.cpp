@@ -82,4 +82,6 @@ int main() {
     std::cerr << "Unknown exception" << std::endl;
     std::terminate();
   }
+  
+  return 0;
 }

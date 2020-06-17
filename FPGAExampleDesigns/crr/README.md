@@ -3,8 +3,8 @@
 | Optimized for                     | Description
 ---                                 |---
 | OS                                | Linux* Ubuntu* 18.04; Windows* 10 or Windows* Server 2016
-| Hardware                          | Intel(R) Programmable Acceleration Card (PAC) with Intel(R) Arria(R) 10 GX FPGA; Intel(R) Xeon(R) CPU E5-1650 v2 @ 3.50GHz
-| Software                          | Intel(R) oneAPI DPC++ Compiler (Beta)
+| Hardware                          | Intel® Programmable Acceleration Card (PAC) with Intel Arria® 10 GX FPGA; Intel Xeon® CPU E5-1650 v2 @ 3.50GHz
+| Software                          | Intel® oneAPI DPC++ Compiler (Beta)
 
 _Notice: Limited support in Windows*, Compiling for FPGA hardware is not supported in Windows*_
 
@@ -67,21 +67,22 @@ Perform the following steps:
 
 1. Install the design into the `build` directory from the design directory by running `cmake`:
 
-```
-mkdir build
-```
+    ```
+    mkdir build
+    cd build
+    ```
 
-If you are compiling for the A10 PAC board, run `cmake` using the command:
+    If you are compiling for the Intel® PAC with Intel Arria® 10 GX FPGA, run `cmake` using the command:
 
-```
-cmake ..
-```
+    ```
+    cmake ..
+    ```
 
-If instead you are compiling for the S10 PAC board, run `cmake` using the command:
+    If instead you are compiling for the Intel® PAC with Intel Stratix® 10 SX FPGA, run `cmake` using the command:
 
-```
-cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
-```
+    ```
+    cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
+    ```
 
 2. Compile the design through the generated `Makefile`. The following four build targets are provided, matching the recommended development flow:
 
@@ -112,8 +113,7 @@ cmake .. -DFPGA_BOARD=intel_s10sx_pac:pac_s10
         ./crr.cpu_host ./src/data/ordered_inputs.csv -o=./src/data/ordered_outputs.csv
         ```
 
-3. Download the design, compiled for FPGA hardware, from this location: [download](https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/crr.fpga)
-
+(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/crr.fpga" download>here</a>.
 
 ## Building the CRR Design (Windows)
 
@@ -135,10 +135,16 @@ cd src
         crr.fpga_emu.exe ./data/ordered_inputs.csv -o=./data/ordered_outputs.csv
         ```
 
-    * Generate HTML optimization report. You can find the report in `../src/main.prj/reports/report.html`.
+    * Generate HTML optimization report. You can find the report in `../src/crr_report.prj/reports/report.html`.
 
         ```
         ninja report
+        ```
+
+        If you are targeting the Intel® PAC with Intel Stratix® 10 SX FPGA, please use the following target and find the report in `../src/crr_s10_pac_report.prj/reports/report.html`.
+
+        ```
+        ninja report_s10_pac
         ```
 
     *  **Not supported yet:** Compile and run on the FPGA hardware.
@@ -147,12 +153,12 @@ cd src
 
         ```
         ninja cpu_host
-        crr.fpga_emu.exe ./data/ordered_inputs.csv -o=./data/ordered_outputs.csv
+        crr.cpu_host.exe ./data/ordered_inputs.csv -o=./data/ordered_outputs.csv
         ```
 
 ## Building the CRR Design in Third-Party Integrated Development Environments (IDEs)  
 
-You can compile and run this example design in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel(R) oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)
+You can compile and run this example design in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel® oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)
 
   
 ## Running the Example Design
@@ -175,7 +181,7 @@ CPU-FPGA Equivalence: PASS
 
 ============ Throughput Test =============
 
-Avg throughput: 60.8 assets/s
+Avg throughput: 66.2 assets/s
 ```
 
 ### Arguments
@@ -202,7 +208,7 @@ Avg throughput: 60.8 assets/s
 `-Xshardware`                       | target FPGA hardware
 `-Xsfpc`                            | allows backend to remove intermediate roundings
 `-Xsparallel=2`                     | uses 2 cores when compiling the bitstream through Quartus
-`-Xsseed=2`                         | uses seed 2 during Quartus, yields slightly higher fmax
+`-Xsseed=5`                         | uses seed 5 during Quartus, yields slightly higher fmax
 
 ## Performance disclaimers
 

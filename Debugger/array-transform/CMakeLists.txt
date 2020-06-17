@@ -31,7 +31,6 @@ endif ()
 
 add_executable (${PROJECT_NAME} src/array-transform.cpp)
 target_compile_options (${PROJECT_NAME} PRIVATE -fsycl -g -O0)
-target_link_libraries (${PROJECT_NAME} sycl)
 
 # Add custom target for starting a debug session
 add_custom_target (debug-session
@@ -39,5 +38,11 @@ add_custom_target (debug-session
   DEPENDS ${PROJECT_NAME})
 
 # Add custom target for running
-add_custom_target(run ./${PROJECT_NAME}
+add_custom_target(run ./${PROJECT_NAME} cpu
+  DEPENDS ${PROJECT_NAME})
+
+add_custom_target(run-cpu ./${PROJECT_NAME} cpu
+  DEPENDS ${PROJECT_NAME})
+
+add_custom_target(run-gpu ./${PROJECT_NAME} gpu
   DEPENDS ${PROJECT_NAME})

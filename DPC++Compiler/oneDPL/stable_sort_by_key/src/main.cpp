@@ -7,7 +7,7 @@
 #include <CL/sycl.hpp>
 #include <iostream>
 
-#include <dpstd/iterators.h>
+#include <dpstd/iterator>
 #include <dpstd/algorithm>
 #include <dpstd/execution>
 
@@ -35,8 +35,7 @@ int main() {
 
   auto counting_begin = dpstd::counting_iterator<int>{0};
   // use default policy for algorithms execution
-  auto policy = dpstd::execution::make_device_policy(
-      queue(default_selector{}, AsyncHandler));
+  auto policy = dpstd::execution::make_device_policy(queue(AsyncHandler));
 
   // 1. Initialization of buffers
   // let keys_buf contain {n, n, n-2, n-2, ..., 4, 4, 2, 2}
