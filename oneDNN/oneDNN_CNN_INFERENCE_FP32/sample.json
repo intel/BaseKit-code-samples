@@ -6,6 +6,6 @@
  "languages": [{"cpp":{}}],
  "dependencies": ["oneDNN", "tbb","compiler|icc"],
  "os": ["linux"],
- "builder": ["cli","cmake"],
+ "builder": ["ide","cmake"],
  "targetDevice": ["CPU", "GPU"]
 }

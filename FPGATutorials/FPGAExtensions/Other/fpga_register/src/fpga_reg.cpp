@@ -84,8 +84,6 @@ int main(int argc, char* argv[]) {
 
 #if defined(FPGA_EMULATOR)
     intel::fpga_emulator_selector device_selector;
-#elif defined(CPU_HOST)
-    host_selector device_selector;
 #else
     intel::fpga_selector device_selector;
 #endif
@@ -104,8 +102,6 @@ int main(int argc, char* argv[]) {
            << "\n";
       cout << "If you are targeting the FPGA emulator, compile with "
               "-DFPGA_EMULATOR."
-           << "\n";
-      cout << "If you are targeting a CPU host device, compile with -DCPU_HOST."
            << "\n";
       return 1;
     }

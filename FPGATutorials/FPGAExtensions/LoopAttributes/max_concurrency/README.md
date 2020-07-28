@@ -94,13 +94,8 @@ The correct `max_concurrency` factor for a loop depends on the goals of your des
 
      The stdout output shows the GFlops for each kernel. On the PAC10 hardware board, we see that the number of GFlops doubles from using max_concurrency 1 to max_concurrency 2, after which increasing the value of max_concurrency does not increase the GFlops achieved, i.e., increasing the max_concurrency above 2 will spend additional RAM usage for no additional throughput gain. As such, for this tutorial design, maximal throughput is best achieved by using max_concurrency 2.
      ```
+(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://software.intel.com/content/dam/develop/external/us/en/documents/max_concurrency.fpga.tar.gz" download>here</a>.
 
-   * Compile and run on a CPU hardware (unoptimized) using: 
-
-     ```
-     make cpu_host
-     ./max_concurrency.cpu_host 
-     ```
 
 ## Building the `max_concurrency` Example (Windows)
 Note: `cmake` is not yet supported on Windows, a build.ninja file is provided instead. 
@@ -136,12 +131,6 @@ cd src
 
    * **Not supported yet:** Compile and run on an FPGA hardware.
 
-   * Compile and run on a CPU hardware (unoptimized) using: 
-
-     ```
-     ninja cpu_host
-     max_concurrency.cpu_host.exe 
-     ```
 
 ## Building the `max_concurrency` Example in Third-Party Integrated Development Environments (IDEs)
 

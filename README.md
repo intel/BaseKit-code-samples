@@ -6,6 +6,7 @@
 | DPC++Compiler/sepia-filter                              | GPU, CPU                     | Color image conversion using 1D range
 | DPC++Compiler/bootstrapping                | GPU, CPU                     | a simple data transfer program using DPC++
 | DPC++Compiler/complex_mult                | GPU, CPU                     | Complex number Multiplication
+| DPC++Compiler/discrete-cosine-transform        | GPU, CPU                     | Image processing algorithm used in JPEG compression
 | DPC++Compiler/Poly_Integral                | GPU, CPU                     | Polynomial Integral
 | DPC++Compiler/Projectile_motion                | GPU, CPU                     | Projectile Motion
 | DPC++Compiler/simple-vector-inc                | GPU, CPU                     | Simple vector increment
@@ -14,6 +15,7 @@
 | FPGATutorials/BestPractices/double_buffering| FPGA, CPU                 | See details under FPGATutorials
 | FPGATutorials/BestPractices/local_memory_cache| FPGA, CPU               | See details under FPGATutorials
 | FPGATutorials/BestPractices/n_way_buffering| FPGA, CPU                  | See details under FPGATutorials
+| FPGATutorials/BestPractices/remove_loop_carried_dependency| FPGA, CPU                  | See details under FPGATutorials
 | FPGATutorials/BestPractices/triangular_loop| FPGA, CPU                  | See details under FPGATutorials
 | FPGATutorials/Compilation/compile_flow| FPGA, CPU                 | See details under FPGATutorials
 | FPGATutorials/Compilation/device_link| FPGA, CPU                 | See details under FPGATutorials
@@ -33,11 +35,9 @@
 | Debugger/array-transform                              | GPU, CPU                     | Array transform
 | ThreadingBuildingBlocks/tbb-async-sycl             | GPU, CPU  | The calculations are split between TBB Flow Graph asynchronous node that calls SYCL kernel on GPU while TBB functional node does CPU part of calculations.
 | ThreadingBuildingBlocks/tbb-task-sycl              | GPU, CPU  | One TBB task executes SYCL code on GPU while another TBB task performs calculations using TBB parallel_for.
-| VideoProcessingLibrary/Simple decode                     | CPU, GPU | shows how to use VPL to perform a simple video decode
-| VideoProcessingLibrary/Decode with accelerator selection | CPU, GPU | shows how to select an accelerator to use for video decode
-| VideoProcessingLibrary/Decode with video post-processing | CPU, GPU | shows how to select a color format and output resolution when decoding with VPL
-| VideoProcessingLibrary/Demux and decode                  | CPU, GPU | shows how to use VPL to decode a video stream from a media container
-| VideoProcessingLibrary/Memory integration                | CPU, GPU | shows how to use VPL memory functions to access output pixel data for integration into user pipelines
+| VideoProcessingLibrary/hello-decode  | CPU | shows how to use oneVPL to perform a simple video decode
+| VideoProcessingLibrary/hello-encode  | CPU | shows how to use oneVPL to perform a simple video encode
+
 
 ## License  
 The code samples are licensed under MIT license 

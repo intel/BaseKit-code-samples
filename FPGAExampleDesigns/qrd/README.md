@@ -2,11 +2,10 @@
 
 | Optimized for                     | Description
 ---                                 |---
-| OS                                | Linux* Ubuntu* 18.04; Windows* 10 or Windows* Server 2016
+| OS                                | Linux* Ubuntu* 18.04
 | Hardware                          | Intel® Programmable Acceleration Card (PAC) with Intel Arria® 10 GX FPGA; Intel Xeon® CPU E5-1650 v2 @ 3.50GHz
 | Software                          | Intel® oneAPI DPC++ Compiler (Beta)
 
-_Notice: Limited support in Windows*, Compiling for FPGA hardware is not supported in Windows*_
 
 Performance 
 
@@ -48,7 +47,7 @@ This code sample is licensed under MIT license.
 
        ```
        make fpga_emu
-       ./qrd.fpga_emu 
+       CL_CONFIG_CPU_FORCE_PRIVATE_MEM_SIZE=32MB ./qrd.fpga_emu 
        ```
 
     * Generate HTML performance report. Find the report in `qrd_report.prj/reports/report.html`directory.
@@ -72,59 +71,14 @@ This code sample is licensed under MIT license.
        ./qrd.fpga 40960 
        ```
        
-    * Compile and run on CPU hardware (not optimized). This step generates a random matrix and computes QR decomposition.
-
-       ```
-       make cpu_host
-       ./qrd.cpu_host 
-       ```
-
-(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/qrd.fpga" download>here</a>.
+(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://software.intel.com/content/dam/develop/external/us/en/documents/qrd.fpga.tar.gz" download>here</a>.
 
 ## Building the Example Design (Windows)
-
-Note: `cmake` is not yet supported on Windows, a build.ninja file is provided instead. 
-Note: Ensure that Microsoft Visual Studio* (2017, or 2019 Version 16.4 or newer) with "Desktop development with C++" workload is installed on your system.
-
-1. Enter source file directory.
-
-```
-cd src
-```
-
-2. Compile the design. The following four targets are provided, matching the recommended development flow:
-
-    * Compile and run for emulation (fast compile time, targets emulated FPGA device). This step generates a random matrix and computes QR decomposition.
-
-      ```
-      ninja fpga_emu
-      ./qrd.fpga_emu 
-      ```
-
-    * Generate HTML performance report. Find the report in `../src/qrd_report.prj/reports/report.html`directory.
-
-      ```
-      ninja report
-      ``` 
-
-      If you are targeting the Intel® PAC with Intel Stratix® 10 SX FPGA, please use the following target and find the report in `../src/qrd_s10_pac_report.prj/reports/report.html`.
-
-      ```
-      ninja report_s10_pac
-      ```
-
-    * **Not supported yet:** Compile and run on an FPGA hardware.
-
-    * Compile and run on CPU hardware (not optimized). This step generates a random matrix and computes QR decomposition.
-
-       ```
-       ninja cpu_host
-       ./qrd.cpu_host 
-       ```
+**Not supported for this release**
 
 ## Building the Example Design in Third-Party Integrated Development Environments (IDEs)
 
-You can compile and run this example design in the Eclipse* IDE (in Linux*) and the Visual Studio* IDE (in Windows*). For instructions, refer to the following link: [Intel® oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)
+You can compile and run this example design in the Eclipse* IDE (in Linux*). For instructions, refer to the following link: [Intel® oneAPI DPC++ FPGA Workflows on Third-Party IDEs](https://software.intel.com/en-us/articles/intel-oneapi-dpcpp-fpga-workflow-on-ide)
 
 ## Using the Example design
 You can apply QR decomposition to a number of matrices. Invoke it as shown in the following: 

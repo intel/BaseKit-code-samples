@@ -193,15 +193,7 @@ Without optimization, the compiler achieved an II of 30 on the inner-loop. With 
       ./triangular_loop.fpga
       ```
 
-   * Compile and run on the CPU hardware (not optimized) using: 
-
-     ```
-     make cpu_host
-     ./triangular_loop.cpu_host
-     ```
-
-
-(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/triangular-loop.fpga" download>here</a>.
+(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://software.intel.com/content/dam/develop/external/us/en/documents/triangular_loop.fpga.tar.gz" download>here</a>.
 
 
 ## Building the `triangular_loop` Example (Windows)
@@ -237,13 +229,6 @@ cd src
      ```
 
    * **Not supported yet:** Compile and run on the FPGA hardware (longer compile time, targets FPGA device)
-
-   * Compile and run on the CPU hardware (not optimized) using: 
-
-     ```
-     make cpu_host
-     triangular_loop.cpu_host.exe
-     ```
 
 ## Building the `triangular_loop` Example in Third-Party Integrated Development Environments (IDEs)
 

@@ -204,7 +204,7 @@ following code snippet:
      If the compilation is successful, you see the following output in the console:
      > `PASSED: The results are correct`
 
-(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/pipe-array.fpga" download>here</a>.
+(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://software.intel.com/content/dam/develop/external/us/en/documents/pipe_array.fpga.tar.gz" download>here</a>.
 
 
 ## Building the `pipe_array` Design (Windows)

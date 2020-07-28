@@ -140,13 +140,6 @@ Perform the following steps:
 
 2. Compile the design through the generated `Makefile`. The following three targets are provided that match the recommended development flow:
 
-   * Compile and run on a CPU host device:
-
-     ```
-     make cpu_host
-     ./double_buffering.cpu_host
-     ```
-
    * Compile and run on the FPGA emulator:
 
      ```
@@ -168,6 +161,9 @@ cliloader ./double_buffering.fpga_emu
 ```
 
 When running non-FPGA-hardware targets, the profiling information extracted is different from what is described in this tutorial, and the optimization may not show a significant benefit.
+
+(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://software.intel.com/content/dam/develop/external/us/en/documents/system_profiling.fpga.tar.gz" download>here</a>.
+
 
 ## Building the Example Design in Third-Party Integrated Development Environments (IDEs)
 

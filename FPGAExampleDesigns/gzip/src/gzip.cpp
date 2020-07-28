@@ -196,8 +196,6 @@ int main(int argc, char **argv) {
                  "set up correctly\n";
     std::cout << "   If you are targeting the FPGA emulator, compile with "
                  "-DFPGA_EMULATOR\n";
-    std::cout
-        << "   If you are targeting a CPU host device, compile with -DCPU_HOST\n";
     return 1;
   }
   return 0;
@@ -241,7 +239,8 @@ int CompressFile(queue &q, std::string &input_file, std::string &output_file,
   }
 
   if (isz < minimum_filesize) {
-    std::cout << "Minimum filesize for compression is " << minimum_filesize << "\n";
+    std::cout << "Minimum filesize for compression is " << minimum_filesize
+              << "\n";
     return 1;
   }
 
@@ -277,10 +276,11 @@ int CompressFile(queue &q, std::string &input_file, std::string &output_file,
     kinfo[i].iteration = i;
     kinfo[i].pref_buffer = pinbuf;
 
-    kinfo[i].gzip_out_buf = i >= 3 ? kinfo[i - 3].gzip_out_buf
-                                   : new buffer<struct GzipOutInfo, 1>(kMinBufferSize);
-    kinfo[i].current_crc =
-        i >= 3 ? kinfo[i - 3].current_crc : new buffer<unsigned, 1>(kMinBufferSize);
+    kinfo[i].gzip_out_buf =
+        i >= 3 ? kinfo[i - 3].gzip_out_buf
+               : new buffer<struct GzipOutInfo, 1>(kMinBufferSize);
+    kinfo[i].current_crc = i >= 3 ? kinfo[i - 3].current_crc
+                                  : new buffer<unsigned, 1>(kMinBufferSize);
     kinfo[i].pibuf =
         i >= 3 ? kinfo[i - 3].pibuf : new buffer<char, 1>(kinfo[i].file_size);
     kinfo[i].pobuf =
@@ -288,8 +288,10 @@ int CompressFile(queue &q, std::string &input_file, std::string &output_file,
     kinfo[i].pobuf_decompress = (char *)malloc(kinfo[i].file_size);
   }
 
-  event event_output[buffers_count], event_crc[buffers_count],
-      event_size[buffers_count];
+  event event_output[buffers_count];
+  event event_crc[buffers_count];
+  event event_size[buffers_count];
+
   std::chrono::high_resolution_clock::time_point start_time0 =
       std::chrono::high_resolution_clock::now();
 
@@ -299,24 +301,29 @@ int CompressFile(queue &q, std::string &input_file, std::string &output_file,
           kinfo[index].pibuf->get_access<access::mode::discard_write>(h);
       h.copy(kinfo[index].pref_buffer, in_data);
     });
+
     SubmitGzipTasks(q, kinfo[index].file_size, kinfo[index].pibuf,
                     kinfo[index].pobuf, kinfo[index].gzip_out_buf,
                     kinfo[index].current_crc, kinfo[index].last_block);
+
     event_output[index] = q.submit([&](handler &h) {
       auto out_data = kinfo[index].pobuf->get_access<access::mode::read>(h);
       h.copy(out_data, kinfo[index].poutput_buffer);
     });
+
     event_size[index] = q.submit([&](handler &h) {
       auto out_data =
           kinfo[index].gzip_out_buf->get_access<access::mode::read>(h);
       h.copy(out_data, kinfo[index].out_info);
     });
+
     event_crc[index] = q.submit([&](handler &h) {
       auto out_data =
           kinfo[index].current_crc->get_access<access::mode::read>(h);
       h.copy(out_data, kinfo[index].buffer_crc);
     });
   }
+
   size_t compressed_sz = 0;
   for (int index = 0; index < buffers_count; index++) {
     event_output[index].wait();
@@ -336,6 +343,7 @@ int CompressFile(queue &q, std::string &input_file, std::string &output_file,
   std::chrono::high_resolution_clock::time_point end_time =
       std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> diff_total = (end_time - start_time0);
+
 #ifndef FPGA_EMULATOR
   double gbps = iterations * isz / (double)diff_total.count() / 1000000000.0;
 #endif
@@ -379,7 +387,6 @@ int CompressFile(queue &q, std::string &input_file, std::string &output_file,
   }
   free(kinfo);
 
-  if (report)
-    std::cout << "PASSED\n";
+  if (report) std::cout << "PASSED\n";
   return 0;
 }

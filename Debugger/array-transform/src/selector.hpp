@@ -53,10 +53,9 @@ static info::device_type GetDeviceType(int argc, char* argv[]) {
     type = info::device_type::cpu;
   else if (type_arg.compare("gpu") == 0)
     type = info::device_type::gpu;
-  else if (type_arg.compare("accelerator") == 0) {
-    cerr << "Device type '" << type_arg << "' is currently unsupported by debugger.\n";
-    exit(-1);
-  } else {
+  else if (type_arg.compare("accelerator") == 0)
+    type = info::device_type::accelerator;
+  else {
     cerr << "fail; unrecognized device type '" << type_arg << "'\n";
     exit(-1);
   }

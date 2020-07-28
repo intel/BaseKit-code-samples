@@ -9,18 +9,25 @@
 
 using namespace cl::sycl;
 
-constexpr int kInitSeed = 42;  // Seed for randomizing data inputs
-constexpr int kNumRuns = 2;  // This tutorial runs twice to show the impact with
-                             // and without the optimization.
-constexpr double kNs = 1000000000.0;  // number of nanoseconds in a second
-constexpr int kSize =
-    8 * 1024;  // Number of inputs. Don't set this too large, otherwise
-               // computation of the reference solution will take a long time on
-               // the host (the time is proportional to kSize^2)
-constexpr int kM =
-    30;  // >=1. Minimum number of iterations of the inner loop that must be
-         // executed in the optimized implementation. Set this approximately
-         // equal to the ii of inner loop in the unoptimized implementation.
+// Seed for randomizing data inputs
+constexpr int kInitSeed = 42;
+
+// This tutorial runs twice to show the impact with
+// and without the optimization.
+constexpr int kNumRuns = 2;
+
+// number of nanoseconds in a second
+constexpr double kNs = 1000000000.0;
+
+// Number of inputs. Don't set this too large, otherwise
+// computation of the reference solution will take a long time on
+// the host (the time is proportional to kSize^2)
+constexpr int kSize = 8 * 1024;
+
+// >=1. Minimum number of iterations of the inner loop that must be
+// executed in the optimized implementation. Set this approximately
+// equal to the ii of inner loop in the unoptimized implementation.
+constexpr int kM = 50;
 
 // do not use with unary operators, e.g., kMin(x++, y++)
 constexpr int kMin(int X, int Y) { return (((X) < (Y)) ? (X) : (Y)); };
@@ -30,7 +37,7 @@ class Task;
 // This method represents the operation you perform on the loop-carried variable
 // in the triangular loop (i.e. a dot product or something that may take many
 // cycles to complete).
-int SomethingComplicated(int x) { return (int)sqrt((float)x); }
+int SomethingComplicated(int x) { return (int)cl::sycl::sqrt((float)x); }
 
 // This kernel function implements two data paths: with and without the
 // optimization. 'optimize' specifies which path to take.
@@ -45,8 +52,9 @@ void TriangularLoop(std::unique_ptr<queue>& q, buffer<uint32_t>& input_buf,
 
     h.single_task<Task>([=]() [[intel::kernel_args_restrict]] {
       // See README for description of the loop_bound calculation.
-      const int loop_bound = (n * (n + 1) / 2 - 1) +  // real iterations
-                             (kM - 2) * (kM - 1) / 2;   // extra dummy iterations
+      const int real_iterations = (n * (n + 1) / 2 - 1);
+      const int extra_dummy_iterations = (kM - 2) * (kM - 1) / 2;
+      const int loop_bound = real_iterations + extra_dummy_iterations;
 
       // Local memory for the buffer to be operated on
       uint32_t local_buf[kSize];
@@ -84,8 +92,10 @@ void TriangularLoop(std::unique_ptr<queue>& q, buffer<uint32_t>& input_buf,
           }
           // Figure out the next value for the indices.
           y++;
-          if (y == n) {  // If we've hit the end, set y such that a minimum of kM
-                         // iterations are exected.
+
+          // If we've hit the end, set y such that a minimum of kM
+          // iterations are exected.
+          if (y == n) {
             x++;
             y = kMin(n - kM, x + 1);
           }
@@ -126,32 +136,25 @@ int main() {
                  "performance. The design may need to run on actual hardware "
                  "to observe the performance benefit of the optimization "
                  "exemplified in this tutorial.\n\n";
-#elif defined(CPU_HOST)
-    host_selector device_selector;
-    std::cout << "\nCPU Host target does not accurately measure kernel execution "
-                 "time. The design must run on actual hardware to observe the "
-                 "benefit of the optimization exemplified in this tutorial.\n\n";
 #else
     intel::fpga_selector device_selector;
 #endif
 
     auto property_list =
         cl::sycl::property_list{property::queue::enable_profiling()};
+
     std::unique_ptr<queue> q;
 
     try {
       // queue q(device_selector, property_list);
       q.reset(new queue(device_selector, exception_handler, property_list));
     } catch (exception const& e) {
-      std::cout << "Caught a synchronous SYCL exception:\n"
-                << e.what() << "\n";
+      std::cout << "Caught a synchronous SYCL exception:\n" << e.what() << "\n";
       std::cout << "If you are targeting an FPGA hardware, please "
                    "ensure that your system is plugged to an FPGA board that "
                    "is set up correctly.\n";
       std::cout << "If you are targeting the FPGA emulator, compile with "
                    "-DFPGA_EMULATOR.\n";
-      std::cout
-          << "If you are targeting a CPU host device, compile with -DCPU_HOST.\n";
       return 1;
     }
 
@@ -174,6 +177,7 @@ int main() {
     {
       // Get host-side accessors to the SYCL buffers.
       auto _input_host = input_buf.get_access<access::mode::write>();
+
       // Initialize random input
       for (int i = 0; i < kSize; ++i) {
         _input_host[i] = rand() % 256;
@@ -182,8 +186,10 @@ int main() {
       for (int i = 0; i < kSize; ++i) {
         gold[i] = _input_host[i];
       }
-    }  // Host accessor goes out-of-scope and is destructed. This is required in
-       // order to unblock the kernel's subsequent accessor to the same buffer.
+    }
+
+    // Host accessor now out-of-scope and is destructed. This is required in
+    // order to unblock the kernel's subsequent accessor to the same buffer.
 
     for (int x = 0; x < kSize; x++) {
       for (int y = x + 1; y < kSize; y++) {
@@ -196,7 +202,8 @@ int main() {
     for (int i = 0; i < kNumRuns; i++) {
       switch (i) {
         case 0: {
-          std::cout << "Beginning run without triangular loop optimization.\n\n";
+          std::cout
+              << "Beginning run without triangular loop optimization.\n\n";
           TriangularLoop(q, input_buf, output_buf, kSize, e, false);
           break;
         }

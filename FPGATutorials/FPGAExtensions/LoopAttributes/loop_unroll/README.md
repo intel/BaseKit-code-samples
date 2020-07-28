@@ -64,14 +64,7 @@ This tutorial helps you learn the following concepts:
      ```
      >**NOTE**: Only the FPGA hardware flow illustrates the performance difference among different `unroll` factors.
      
-   * Compile and run on CPU hardware (not optimized) using: 
-
-     ```
-     make cpu_host
-     ./loop_unroll.cpu_host
-     ```
-
-(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/loop-unroll.fpga" download>here</a>.
+(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://software.intel.com/content/dam/develop/external/us/en/documents/loop_unroll.fpga.tar.gz" download>here</a>.
 
 ## Building the `loop_unroll` Design (Windows)
 
@@ -107,12 +100,6 @@ cd src
 
    * **Not supported yet:** Compile and run on FPGA hardware.
      
-   * Compile and run on CPU hardware (not optimized) using: 
-
-     ```
-     ninja cpu_host
-     loop_unroll.cpu_host.exe
-     ```
 
 ## Building the `loop_unroll` Design in Third-Party Integrated Development Environments (IDEs)
 

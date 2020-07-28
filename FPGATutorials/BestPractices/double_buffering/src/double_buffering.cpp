@@ -11,19 +11,24 @@
 using namespace std::chrono;
 using namespace cl::sycl;
 
-#if defined(FPGA_EMULATOR) || defined(CPU_HOST)
-constexpr int kTimes = 20;  // # times to execute the kernel. kTimes must be >= 2
+// kTimes = # times to execute the kernel. kTimes must be >= 2
+// kSize = # of floats to process on each kernel execution.
+// run less in emulation to avoid high run time
+#if defined(FPGA_EMULATOR)
+constexpr int kTimes = 20;
 constexpr int kSize = 4096;
 #else
-constexpr int kTimes = 100;  // # times to execute the kernel. kTimes must be >= 2
-constexpr int kSize =
-    2621440;  // # of floats to process on each kernel execution. ~10MB
+constexpr int kTimes = 100;
+constexpr int kSize = 2621440;
 #endif
 
-constexpr int kPow = 20;  // Kernel executes a power function (base^kPow). Must be
-                         // >= 2. Can increase this to increase kernel execution
-                         // time, but ProcessOutput() time will also increase.
-constexpr int kNumRuns = 2;  // Number of iterations through the main loop
+// Kernel executes a power function (base^kPow). Must be
+// >= 2. Can increase this to increase kernel execution
+// time, but ProcessOutput() time will also increase.
+constexpr int kPow = 20;
+
+// Number of iterations through the main loop
+constexpr int kNumRuns = 2;
 
 bool pass = true;
 
@@ -54,7 +59,7 @@ void SimplePow(std::unique_ptr<queue> &q, buffer<cl_float, 1> &buffer_a,
     assert(kPow >= 2);
     const int p = kPow - 1;  // Assumes pow >= 2;
 
-    h.single_task<class SimpleVpow>([=]() [[intel::kernel_args_restrict]] {
+    h.single_task<SimpleVpow>([=]() [[intel::kernel_args_restrict]] {
       for (int j = 0; j < p; j++) {
         if (j == 0) {
           for (int i = 0; i < num; i++) {
@@ -128,12 +133,13 @@ void ProcessOutput(buffer<cl_float, 1> &input_buf,
      done here and this is just a note that this is the place
       where you *could* do it. */
   for (int i = 0; i < kSize / 8; i++) {
-    if ((num_errors < num_errors_to_print) &&
-        (MyPow(input_buf_acc[i], kPow) != output_buf_acc[i])) {
+    const bool out_valid = (MyPow(input_buf_acc[i], kPow) != output_buf_acc[i]);
+    if ((num_errors < num_errors_to_print) && out_valid) {
       if (num_errors == 0) {
         pass = false;
         std::cout << "Verification failed on kernel execution # " << exec_number
-                  << ". Showing up to " << num_errors_to_print << " mismatches.\n";
+                  << ". Showing up to " << num_errors_to_print
+                  << " mismatches.\n";
       }
       std::cout << "Verification failed on kernel execution # " << exec_number
                 << ", at element " << i << ". Expected " << std::fixed
@@ -143,8 +149,8 @@ void ProcessOutput(buffer<cl_float, 1> &input_buf,
     }
   }
 
-  // At this point we know the kernel has completed, so can query the profiling
-  // data.
+  // At this point we know the kernel has completed,
+  // so can query the profiling data.
   total_kernel_time_per_slot += SyclGetExecTimeNs(e);
 }
 
@@ -157,21 +163,23 @@ void ProcessOutput(buffer<cl_float, 1> &input_buf,
    completes.
 */
 void ProcessInput(buffer<cl_float, 1> &buf) {
-  auto buf_acc = buf.get_access<
-      access::mode::discard_write>();  // We are generating completely new input
-                                       // data, so can use discard_write() here
-                                       // to indicate we don't care about the
-                                       // SYCL buffer's current contents.
-  auto seed =
-      std::chrono::system_clock::now().time_since_epoch().count();  // seed
-  std::default_random_engine dre(seed);                             // engine
-  std::uniform_real_distribution<float> di(1.0f,
-                                           2.0f);  // Values between 1 and 2
+  // We are generating completely new input data, so can use discard_write()
+  // here to indicate we don't care about the SYCL buffer's current contents.
+  auto buf_acc = buf.get_access<access::mode::discard_write>();
 
-  float start_val =
-      di(dre);  // Randomly generate a start value and increment from there.
-                // Compared to randomly generating every value, this is done to
-                // speed up this function a bit.
+  // RNG seed
+  auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+
+  // RNG engine
+  std::default_random_engine dre(seed);
+
+  // generate random numbers between 1 and 2
+  std::uniform_real_distribution<float> di(1.0f, 2.0f);
+
+  // Randomly generate a start value and increment from there.
+  // Compared to randomly generating every value, this is done to
+  // speed up this function a bit.
+  float start_val = di(dre);
 
   for (int i = 0; i < kSize / 8; i++) {
     buf_acc[i] = start_val;
@@ -199,11 +207,6 @@ int main() {
                  "performance. The design may need to run on actual hardware "
                  "to observe the performance benefit of the optimization "
                  "exemplified in this tutorial.\n\n";
-#elif defined(CPU_HOST)
-    host_selector device_selector;
-    std::cout << "\nCPU Host target does not accurately measure kernel execution "
-                 "time. The design must run on actual hardware to observe the "
-                 "benefit of the optimization exemplified in this tutorial.\n\n";
 #else
     intel::fpga_selector device_selector;
 #endif
@@ -216,15 +219,12 @@ int main() {
       // queue q(device_selector, property_list);
       q.reset(new queue(device_selector, exception_handler, property_list));
     } catch (exception const &e) {
-      std::cout << "Caught a synchronous SYCL exception:\n"
-                << e.what() << "\n";
+      std::cout << "Caught a synchronous SYCL exception:\n" << e.what() << "\n";
       std::cout << "If you are targeting an FPGA hardware, please "
                    "ensure that your system is plugged to an FPGA board that "
                    "is set up correctly.\n";
       std::cout << "If you are targeting the FPGA emulator, compile with "
                    "-DFPGA_EMULATOR.\n";
-      std::cout
-          << "If you are targeting a CPU host device, compile with -DCPU_HOST.\n";
       return 1;
     }
 
@@ -241,10 +241,14 @@ int main() {
     std::vector<buffer<cl_float, 1>> input_buf;
     std::vector<buffer<cl_float, 1>> output_buf;
 
-    event sycl_events[2];  // SYCL events for each kernel launch.
-    cl_ulong total_kernel_time_per_slot[2];  // In nanoseconds. Total execution
-                                             // time of kernels in a given slot.
-    cl_ulong total_kernel_time = 0;  // Total execution time of all kernels.
+    // SYCL events for each kernel launch.
+    event sycl_events[2];
+
+    // In nanoseconds. Total execution time of kernels in a given slot.
+    cl_ulong total_kernel_time_per_slot[2];
+
+    // Total execution time of all kernels.
+    cl_ulong total_kernel_time = 0;
 
     // Allocate vectors to store the host-side copies of the input data
     // Create and allocate the SYCL buffers
@@ -276,16 +280,17 @@ int main() {
         }
       }
 
-      high_resolution_clock::time_point t1 =
-          high_resolution_clock::now();  // Start the timer. This will include
-                                         // the time to process the input data
-                                         // for the first 2 kernel executions.
+      // Start the timer. This will include the time to process the input data
+      // for the first 2 kernel executions.
+      high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
       if (i == 0) {  // Single buffering
         for (int i = 0; i < kTimes; i++) {
+          // Only print every few iterations, just to limit the prints.
           if (i % 10 == 0) {
             std::cout << "Launching kernel #" << i << "\n";
-          }  // Only print every few iterations, just to limit the prints.
+          }
+
           ProcessInput(input_buf[0]);
           SimplePow(q, input_buf[0], output_buf[0], sycl_events[0]);
           ProcessOutput(input_buf[0], output_buf[0], i, sycl_events[0],
@@ -296,22 +301,28 @@ int main() {
         // on processing the output of the first kernel.
         ProcessInput(input_buf[0]);
         ProcessInput(input_buf[1]);
+
         std::cout << "Launching kernel #0\n";
+
         SimplePow(q, input_buf[0], output_buf[0], sycl_events[0]);
         for (int i = 1; i < kTimes; i++) {
           if (i % 10 == 0) {
             std::cout << "Launching kernel #" << i << "\n";
           }  // Only print every few iterations, just to limit the prints.
-          SimplePow(q, input_buf[i % 2], output_buf[i % 2],
-                    sycl_events[i % 2]);  // Launch the next kernel
+
+          // Launch the next kernel
+          SimplePow(q, input_buf[i % 2], output_buf[i % 2], sycl_events[i % 2]);
+
           // Process output from previous kernel. This will block on kernel
           // completion.
           ProcessOutput(input_buf[(i - 1) % 2], output_buf[(i - 1) % 2], i,
                         sycl_events[(i - 1) % 2],
                         total_kernel_time_per_slot[(i - 1) % 2]);
+
           // Generate input for the next kernel.
           ProcessInput(input_buf[(i - 1) % 2]);
         }
+
         // Process output of the final kernel
         ProcessOutput(input_buf[(kTimes - 1) % 2], output_buf[(kTimes - 1) % 2],
                       i, sycl_events[(kTimes - 1) % 2],
@@ -324,13 +335,13 @@ int main() {
         total_kernel_time += total_kernel_time_per_slot[i];
       }
 
-      high_resolution_clock::time_point t2 =
-          high_resolution_clock::now();  // Stop the timer.
+      // Stop the timer.
+      high_resolution_clock::time_point t2 = high_resolution_clock::now();
 
       duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
 
-      std::cout << "\nOverall execution time " << ((i == 0) ? "without" : "with")
-                << " double buffering = "
+      std::cout << "\nOverall execution time "
+                << ((i == 0) ? "without" : "with") << " double buffering = "
                 << (unsigned)(time_span.count() * 1000) << " ms\n";
       std::cout << "Total kernel-only execution time "
                 << ((i == 0) ? "without" : "with") << " double buffering = "

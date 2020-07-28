@@ -26,11 +26,13 @@
 // This agreement shall be governed in all respects by the laws of the State of
 // California and by the laws of the United States of America.
 
-using namespace cl::sycl;
-
 #ifndef __GZIPKERNEL_H__
 #define __GZIPKERNEL_H__
 #pragma once
+
+#include <CL/sycl.hpp>
+
+using namespace cl::sycl;
 
 class LZReduction;
 class StaticHuffman;

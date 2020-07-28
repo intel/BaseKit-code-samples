@@ -1,6 +1,6 @@
 {
   "name": "Project Templates - Linux CMake project for FPGA",
-  "categories": ["Toolkit/Intel® oneAPI Base Toolkit/Project Templates"],
+  "categories": ["Toolkit/Project Templates"],
   "description": "Template 'Hello World'",
   "toolchain": ["dpcpp"],
   "os": ["linux"],

@@ -161,7 +161,7 @@ In all runs, the total kernel execution time is similar, as expected. In the fir
       ./n_way_buffering.fpga
       ```
 
-(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/n-way-buffering.fpga" download>here</a>.
+(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://software.intel.com/content/dam/develop/external/us/en/documents/n_way_buffering.fpga.tar.gz" download>here</a>.
 
 ## Building the `n_way_buffering` Design (Windows)
 
@@ -196,13 +196,6 @@ cd src
      ```
      
    * **Not supported yet:** Compile and run on FPGA hardware (longer compile time, targets FPGA device) using: 
-
-   * Compile and run on CPU hardware (not optimized) using: 
-
-     ```
-     ninja cpu_host
-     n_way_buffering.cpu_host.exe
-     ```
 
 ## Building the `n_way_buffering` Design in Third-Party Integrated Development Environments (IDEs)
 

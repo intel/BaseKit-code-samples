@@ -1,14 +1,10 @@
 set(SOURCE_FILE n_way_buffering.cpp)
 set(TARGET_NAME n_way_buffering)
 set(EMULATOR_TARGET ${TARGET_NAME}.fpga_emu)
-set(CPU_HOST_TARGET ${TARGET_NAME}.cpu_host)
 set(FPGA_TARGET ${TARGET_NAME}.fpga)
 
 set(EMULATOR_COMPILE_FLAGS "-fintelfpga -DFPGA_EMULATOR")
 set(EMULATOR_LINK_FLAGS " -lpthread -fintelfpga")
-
-set(CPU_HOST_COMPILE_FLAGS "-DCPU_HOST")
-set(CPU_HOST_LINK_FLAGS "-lpthread")
 
 # Intel supported FPGA Boards and their names
 set(A10_PAC_BOARD_NAME "intel_a10gx_pac:pac_a10")
@@ -48,16 +44,6 @@ else()
 	add_custom_target(fpga_emu DEPENDS ${EMULATOR_TARGET})
 	set_target_properties(${EMULATOR_TARGET} PROPERTIES COMPILE_FLAGS ${EMULATOR_COMPILE_FLAGS})
 	set_target_properties(${EMULATOR_TARGET} PROPERTIES LINK_FLAGS ${EMULATOR_LINK_FLAGS})
-endif()
-
-# cpu host
-if(WIN32)
-    set(WIN_HOST_TARGET ${CPU_HOST_TARGET}.exe)
-    add_custom_target(cpu_host DEPENDS ${WIN_HOST_TARGET})
-    separate_arguments(WIN_HOST_COMPILE_FLAGS WINDOWS_COMMAND "${CPU_HOST_COMPILE_FLAGS}")
-    add_custom_command(OUTPUT ${WIN_HOST_TARGET} 
-                   COMMAND ${CMAKE_CXX_COMPILER} ${WIN_HOST_COMPILE_FLAGS} /GX ${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE_FILE} -o ${CMAKE_BINARY_DIR}/${WIN_HOST_TARGET}
-                   DEPENDS ${SOURCE_FILE})  
 endif()
 
 # fpga

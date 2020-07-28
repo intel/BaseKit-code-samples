@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "kernel.hpp"
+
 using namespace cl::sycl;
 
 class SimpleAdd;
@@ -18,6 +19,7 @@ int main() {
   std::vector<float> vec_a(kArraySize);
   std::vector<float> vec_b(kArraySize);
   std::vector<float> vec_r(kArraySize);
+
   // Fill vectors a and b with random float values
   int count = kArraySize;
   for (int i = 0; i < count; i++) {

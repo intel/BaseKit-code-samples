@@ -26,20 +26,20 @@
 // This agreement shall be governed in all respects by the laws of the State of
 // California and by the laws of the United States of America.
 
-/////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //
 // CRRSolver CPU/FPGA Accelerator Demo Program
 //
-/////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //
-// This design implments simple Cox-Ross-Rubinstein(CRR) binomial tree model
-// with greeks for American exercise options. Optimization summay:
+// This design implements a simple Cox-Ross-Rubinstein(CRR) binomial tree model
+// (with Greeks) for American exercise options. Optimization summary:
 //    -- Area-consuming and low-frequency calculation (pre-calculation and
-//    post-calculation) is done on CPU.
+//       post-calculation) is done on CPU.
 //    -- Parallel operations in critical loop(L6).
 //    -- Pipelined loop L1, L2, L3, L4 and L6.
 //
-// The following diagram shows the mechanism of optimizations to CRR.
+// The following diagram shows the mechanism of optimizations in CRR.
 //
 //
 //                                               +------+         ^
@@ -202,6 +202,7 @@ crr_in_params prepare_data(input_data &inp) {
   R[0] = cl::sycl::pow(inp.DF, 1.0 / inp.nSteps);
   double dDF = exp(inp.T / 10000);
   R[1] = cl::sycl::pow(inp.DF * dDF, 1.0 / inp.nSteps);
+
   in_params.u[0] = exp(inp.Vol * sqrt(inp.T / inp.nSteps));
   in_params.u[1] = in_params.u[0];
   in_params.u[2] = exp((inp.Vol + 0.0001) * sqrt(inp.T / inp.nSteps));
@@ -209,10 +210,12 @@ crr_in_params prepare_data(input_data &inp) {
   in_params.u2[0] = in_params.u[0] * in_params.u[0];
   in_params.u2[1] = in_params.u[1] * in_params.u[1];
   in_params.u2[2] = in_params.u[2] * in_params.u[2];
+
   in_params.umin[0] =
       inp.Spot * cl::sycl::pow(1 / in_params.u[0], inp.nSteps + 2);
   in_params.umin[1] = inp.Spot * cl::sycl::pow(1 / in_params.u[1], inp.nSteps);
   in_params.umin[2] = inp.Spot * cl::sycl::pow(1 / in_params.u[2], inp.nSteps);
+
   in_params.c1[0] =
       R[0] *
       (in_params.u[0] - cl::sycl::pow(inp.Fwd / inp.Spot, 1.0 / inp.nSteps)) /
@@ -225,6 +228,7 @@ crr_in_params prepare_data(input_data &inp) {
       R[0] *
       (in_params.u[2] - cl::sycl::pow(inp.Fwd / inp.Spot, 1.0 / inp.nSteps)) /
       (in_params.u[2] - 1 / in_params.u[2]);
+
   in_params.c2[0] = R[0] - in_params.c1[0];
   in_params.c2[1] = R[1] - in_params.c1[1];
   in_params.c2[2] = R[0] - in_params.c1[2];
@@ -232,6 +236,7 @@ crr_in_params prepare_data(input_data &inp) {
   in_params.param_1[0] = inp.CP * in_params.umin[0];
   in_params.param_1[1] = inp.CP * in_params.umin[1];
   in_params.param_1[2] = inp.CP * in_params.umin[2];
+
   in_params.param_2 = inp.CP * inp.Strike;
 
   return in_params;
@@ -242,7 +247,9 @@ crr_res postprocess_data(input_data &inp, crr_in_params &in_params,
                          crr_res_params &res_params) {
   double h;
   crr_res res;
+
   h = inp.Spot * (in_params.u2[0] - 1 / in_params.u2[0]);
+
   res.value = res_params.pgreek[1];
   res.delta = (res_params.pgreek[2] - res_params.pgreek[0]) / h;
   res.gamma = 2 / h *
@@ -254,6 +261,7 @@ crr_res postprocess_data(input_data &inp, crr_in_params &in_params,
       (res_params.vals[0] - res_params.pgreek[3]) / 4 / inp.T * inp.nSteps;
   res.rho = (res_params.vals[1] - res.value) * 10000;
   res.vega = (res_params.vals[2] - res.value) * 10000;
+
   return res;
 }
 
@@ -431,11 +439,14 @@ func_params crr_main_func(int nSteps, double u, double u2, double c1, double c2,
                           double umin, double param_1, double param_2) {
   [[intelfpga::numbanks(SPATIAL_UNROLL),
     intelfpga::singlepump]] double init_optVal[MAX_N_STEPS + 3];
+
   [[intelfpga::numbanks(SPATIAL_UNROLL),
     intelfpga::singlepump]] double optVal[MAX_N_STEPS + 3];
+
   double final_val;
   double bottom_of_tree;
   func_params params;
+
   // L4:
   // Initialization -- calculte the last level of the binomial tree.
   for (int i = 0; i <= nSteps; i++) {
@@ -574,6 +585,7 @@ double sycl_device(vector<crr_in_params> &vals,
       });
     });
   }
+
   high_resolution_clock::time_point end_time = high_resolution_clock::now();
   std::chrono::duration<double> diff = end_time - start_time;
 
@@ -601,8 +613,6 @@ int main(int argc, char *argv[]) {
   try {
 #if defined(FPGA_EMULATOR)
     cl::sycl::intel::fpga_emulator_selector device_selector;
-#elif defined(CPU_HOST)
-    cl::sycl::host_selector device_selector;
 #else
     cl::sycl::intel::fpga_selector device_selector;
 #endif
@@ -663,7 +673,7 @@ int main(int argc, char *argv[]) {
     ReadInputFromFile(inputFile, inp);
 
 // Get the number of data from the input file
-#if defined(FPGA_EMULATOR) || defined(CPU_HOST)
+#if defined(FPGA_EMULATOR) 
     const int n_crrs = 1;
 #else
     const int n_crrs = inp.size();
@@ -680,6 +690,7 @@ int main(int argc, char *argv[]) {
 
     // warmup run - use this run to warmup accelerator
     sycl_device(in_params, res_params_dummy, deviceQueue);
+
     // Timed run - profile performance
     double time = sycl_device(in_params, res_params, deviceQueue);
     bool pass = true;
@@ -707,9 +718,6 @@ int main(int argc, char *argv[]) {
     std::cout << "   If you are targeting the FPGA emulator, compile with "
                  "-DFPGA_EMULATOR"
               << "\n";
-    std::cout
-        << "   If you are targeting a CPU host device, compile with -DCPU_HOST"
-        << "\n";
     return 1;
   }
   return 0;

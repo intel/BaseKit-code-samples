@@ -2,14 +2,9 @@ source_file = memory_attributes.cpp
 target_name = memory_attributes
 
 emulator_target = ${target_name}.fpga_emu.exe
-cpu_host_target = ${target_name}.cpu_host.exe
 
 hardware_flags = -fintelfpga -Xshardware
 emulator_flags = -fintelfpga -DFPGA_EMULATOR
-cpu_host_flags = -DCPU_HOST
-
-rule build_cpu_host
-  command = dpcpp-cl /GX ${cpu_host_flags} $in -o $out
 
 rule build_fpga_emu
   command = dpcpp-cl /GX ${emulator_flags} $in -o $out
@@ -39,10 +34,6 @@ report_target_2x_s10_pac = doublepump_s10_pac_report.a
 build report: phony ${report_target_1x} ${report_target_2x}
 build ${report_target_1x}: gen_report_1x ${source_file} 
 build ${report_target_2x}: gen_report_2x ${source_file} 
-
-# cpu host
-build cpu_host: phony ${cpu_host_target}
-build ${cpu_host_target}: build_cpu_host ${source_file}
 
 # report (S10 PAC)
 build report_s10_pac: phony ${report_target_1x_s10_pac} ${report_target_2x_s10_pac}

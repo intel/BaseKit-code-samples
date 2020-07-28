@@ -190,12 +190,8 @@ development flow:
     ```
     PASSED: all kernel results are correct.
     ```
+(Optional) As the above hardware compile may take several hours to complete, Intel® PAC with Intel Arria® 10 GX FPGA precompiled binaries can be downloaded <a href="https://software.intel.com/content/dam/develop/external/us/en/documents/mem_config.fpga.tar.gz" download>here</a>.
 
-  - Compile and run on CPU hardware (not optimized):
-    ```
-    make cpu_host
-    ./memory_attributes.cpu_host 
-    ```
 
 ### Building the Tutorial (Windows)
 
@@ -238,11 +234,6 @@ development flow:
 
   - **Not supported yet:** Compile and run on an FPGA hardware
 
-  - Compile and run on CPU hardware (not optimized):
-    ```
-    ninja cpu_host
-    memory_attributes.cpu_host.exe 
-    ```
 
 ## Building the Tutorial in Third-Party Integrated Development Environments (IDEs)
 

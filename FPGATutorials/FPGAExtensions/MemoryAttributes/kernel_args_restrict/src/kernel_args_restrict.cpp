@@ -12,8 +12,10 @@ using namespace cl::sycl;
 constexpr access::mode sycl_read = access::mode::read;
 constexpr access::mode sycl_write = access::mode::write;
 
+// problem input size
 constexpr int INSIZE = 1000000;
 
+// kernel names, global scope to avoid excessive name mangling
 class KernelArgsRestrict;
 class KernelArgsNoRestrict;
 
@@ -32,12 +34,9 @@ auto exception_handler = [](cl::sycl::exception_list exceptions) {
 void runKernels(int size, std::vector<int>& in,
                 std::vector<int>& norestrict_out,
                 std::vector<int>& restrict_out) {
-
   // device selector
 #if defined(FPGA_EMULATOR)
   intel::fpga_emulator_selector device_selector;
-#elif defined(CPU_HOST)
-  host_selector device_selector;
 #else
   intel::fpga_selector device_selector;
 #endif
@@ -48,19 +47,18 @@ void runKernels(int size, std::vector<int>& in,
 
   // create the SYCL device queue
   cl::sycl::queue device_queue(device_selector, exception_handler,
-                                property_list);
+                               property_list);
 
   // set up the input/output buffers
   buffer<int, 1> in_buf(in.data(), size);
   buffer<int, 1> norestrict_out_buf(norestrict_out.data(), size);
   buffer<int, 1> restrict_out_buf(restrict_out.data(), size);
 
-  // submit the task that DOES NOT apply the kernel_args_restrict attribute 
+  // submit the task that DOES NOT apply the kernel_args_restrict attribute
   event event_norestrict = device_queue.submit([&](handler& cgh) {
     // create accessors from global memory
     auto in_accessor = in_buf.template get_access<sycl_read>(cgh);
-    auto out_accessor =
-        norestrict_out_buf.template get_access<sycl_write>(cgh);
+    auto out_accessor = norestrict_out_buf.template get_access<sycl_write>(cgh);
 
     // run the task
     cgh.single_task<KernelArgsNoRestrict>([=]() {
@@ -165,9 +163,6 @@ int main() {
               << std::endl;
     std::cout << "   If you are targeting the FPGA emulator, compile with "
                  "-DFPGA_EMULATOR"
-              << std::endl;
-    std::cout << "   If you are targeting a CPU host device, compile with "
-                 "-DCPU_HOST"
               << std::endl;
     return 1;
   }

@@ -2,7 +2,7 @@
 
 | Code sample name | Supported Intel(r) Architecture(s) | Description
 |:---              |:---                                |:---
-| array-transform  | GPU, CPU                           | Small example for the [Get Started Guide](https://software.intel.com/en-us/get-started-with-debugging-dpcpp) of the debugger
+| array-transform  | GPU, CPU, FPGA (emulator)          | Small example for the [Get Started Guide](https://software.intel.com/en-us/get-started-with-debugging-dpcpp) of the debugger
 
 
 ## License

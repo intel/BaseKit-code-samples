@@ -12,4 +12,7 @@ endif()
 
 add_executable (tbb-async-sycl tbb-async-sycl.cpp)
 
+find_package(Threads REQUIRED)
+target_link_libraries(tbb-async-sycl Threads::Threads)
+
 add_custom_target (run ./tbb-async-sycl)

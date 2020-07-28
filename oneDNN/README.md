@@ -4,7 +4,7 @@ Deep Neural Networks Library for Deep Neural Networks (oneDNN) is an open-source
 
 Github : https://github.com/oneapi-src/oneDNN
 
-## License  
+## License
 The code samples are licensed under MIT license
 
 # oneDNN samples

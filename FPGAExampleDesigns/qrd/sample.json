@@ -3,7 +3,7 @@
   "categories": ["Toolkit/Intel® oneAPI Base Toolkit/FPGA/Example Designs"],
   "description": "Example design demonstrating high-performance QR decomposition of matrices",
   "toolchain": ["dpcpp"],
-  "os": ["linux", "windows"],
+  "os": ["linux"],
   "builder": ["ide", "cmake"],
   "targetDevice": ["FPGA"],
   "languages": [{"cpp":{}}],

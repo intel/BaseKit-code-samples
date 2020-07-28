@@ -12,27 +12,30 @@
 using namespace std::chrono;
 using namespace cl::sycl;
 
-constexpr int kLocalN = 5;  // N-way buffering. N must be >= 1.
+// N-way buffering. N must be >= 1.
+constexpr int kLocalN = 5;
 
-#if defined(FPGA_EMULATOR) || defined(CPU_HOST)
-constexpr int kTimes =
-    20;  // # times to execute the kernel. kTimes must be >= kLocalN
+// # times to execute the kernel. kTimes must be >= kLocalN
+#if defined(FPGA_EMULATOR) 
+constexpr int kTimes = 20;
 #else
-constexpr int kTimes =
-    100;  // # times to execute the kernel. kTimes must be >= kLocalN
+constexpr int kTimes = 100;
 #endif
 
-#if defined(FPGA_EMULATOR) || defined(CPU_HOST)
+// # of floats to process on each kernel execution.
+#if defined(FPGA_EMULATOR)
 constexpr int kSize = 4096;
 #else
-constexpr int kSize =
-    2621440;  // # of floats to process on each kernel execution. ~10MB
+constexpr int kSize = 2621440;  // ~10MB
 #endif
 
-constexpr int kPow = 20;  // Kernel executes a power function (base^kPow). Must be
-                         // >= 2. Can increase this to increase kernel execution
-                         // time, but ProcessOutput() time will also increase.
-constexpr int kNumRuns = 4;  // Number of iterations through the main loop
+// Kernel executes a power function (base^kPow). Must be
+// >= 2. Can increase this to increase kernel execution
+// time, but ProcessOutput() time will also increase.
+constexpr int kPow = 20;
+
+// Number of iterations through the main loop
+constexpr int kNumRuns = 4;
 
 bool pass = true;
 
@@ -128,6 +131,7 @@ void ProcessOutput(buffer<cl_float, 1> &output_buf,
   auto output_buf_acc = output_buf.get_access<access::mode::read>();
   int num_errors = 0;
   int num_errors_to_print = 10;
+
   /*  The use of update_host() in the kernel function allows for additional
      host-side operations to be performed here, in parallel with the buffer copy
      operation from device to host, before the blocking access to the output
@@ -135,12 +139,13 @@ void ProcessOutput(buffer<cl_float, 1> &output_buf,
      done here and this is just a note that this is the place
       where you *could* do it. */
   for (int i = 0; i < kSize; i++) {
-    if ((num_errors < num_errors_to_print) &&
-        (MyPow(input_copy.data()[i], kPow) != output_buf_acc[i])) {
+    bool out_valid = (MyPow(input_copy.data()[i], kPow) != output_buf_acc[i]);
+    if ((num_errors < num_errors_to_print) && out_valid) {
       if (num_errors == 0) {
         pass = false;
         std::cout << "Verification failed on kernel execution # " << exec_number
-                  << ". Showing up to " << num_errors_to_print << " mismatches.\n";
+                  << ". Showing up to " << num_errors_to_print
+                  << " mismatches.\n";
       }
       std::cout << "Verification failed on kernel execution # " << exec_number
                 << ", at element " << i << ". Expected " << std::fixed
@@ -163,21 +168,23 @@ void ProcessOutput(buffer<cl_float, 1> &output_buf,
    ProcessOutput().
 */
 void ProcessInput(buffer<cl_float, 1> &buf, std::vector<cl_float> &copy) {
-  auto buf_acc = buf.get_access<
-      access::mode::discard_write>();  // We are generating completely new input
-                                       // data, so can use discard_write() here
-                                       // to indicate we don't care about the
-                                       // SYCL buffer's current contents.
-  auto seed =
-      std::chrono::system_clock::now().time_since_epoch().count();  // seed
-  std::default_random_engine dre(seed);                             // engine
-  std::uniform_real_distribution<float> di(1.0f,
-                                           2.0f);  // Values between 1 and 2
+  // We are generating completely new input data, so can use discard_write()
+  // here to indicate we don't care about the SYCL buffer's current contents.
+  auto buf_acc = buf.get_access<access::mode::discard_write>();
 
-  float start_val =
-      di(dre);  // Randomly generate a start value and increment from there.
-                // Compared to randomly generating every value, this is done to
-                // speed up this function a bit.
+  // RNG seed
+  auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+
+  // RNG engine
+  std::default_random_engine dre(seed);
+
+  // Values between 1 and 2
+  std::uniform_real_distribution<float> di(1.0f, 2.0f);
+
+  // Randomly generate a start value and increment from there.
+  // Compared to randomly generating every value, this is done to
+  // speed up this function a bit.
+  float start_val = di(dre);
 
   for (int i = 0; i < kSize; i++) {
     buf_acc[i] = start_val;
@@ -206,11 +213,6 @@ int main() {
                  "performance. The design may need to run on actual hardware "
                  "to observe the performance benefit of the optimization "
                  "exemplified in this tutorial.\n\n";
-#elif defined(CPU_HOST)
-    host_selector device_selector;
-    std::cout << "\nCPU Host target does not accurately measure kernel execution "
-                 "time. The design must run on actual hardware to observe the "
-                 "benefit of the optimization exemplified in this tutorial.\n\n";
 #else
     intel::fpga_selector device_selector;
 #endif
@@ -223,15 +225,12 @@ int main() {
       // queue q(device_selector, property_list);
       q.reset(new queue(device_selector, exception_handler, property_list));
     } catch (exception const &e) {
-      std::cout << "Caught a synchronous SYCL exception:\n"
-                << e.what() << "\n";
+      std::cout << "Caught a synchronous SYCL exception:\n" << e.what() << "\n";
       std::cout << "If you are targeting an FPGA hardware, please "
                    "ensure that your system is plugged to an FPGA board that "
                    "is set up correctly.\n";
       std::cout << "If you are targeting the FPGA emulator, compile with "
                    "-DFPGA_EMULATOR.\n";
-      std::cout
-          << "If you are targeting a CPU host device, compile with -DCPU_HOST.\n";
       return 1;
     }
 
@@ -248,23 +247,33 @@ int main() {
     std::vector<buffer<cl_float, 1>> input_buf;
     std::vector<buffer<cl_float, 1>> output_buf;
 
-    std::vector<cl_float> input_buf_copy
-        [2 * kLocalN];  // For every execution slot, we need 2 host-side buffers
-                        // to store copies of the input data. One is used to
-                        // verify the previous kernel's output. The other stores
-                        // the new data for the next kernel execution.
-    event sycl_events[kLocalN];  // SYCL events for each kernel launch.
-    cl_ulong total_kernel_time_per_slot[kLocalN];  // In nanoseconds. Total
-                                                   // execution time of kernels
-                                                   // in a given slot.
-    cl_ulong total_kernel_time = 0;  // Total execution time of all kernels.
-    std::thread t_process_output[kLocalN];  // Threads to process the output
-                                            // from each kernel
-    std::thread t_process_input[kLocalN];   // Threads to process the input data
-                                            // for the next kernel
-    int N;  // Demonstrate with 1-way buffering first, then N-way buffering.
-    bool st = true;  // st = "single threaded". Used to enable multi-threading
-                     // in subsequent runs.
+    // For every execution slot, we need 2 host-side buffers
+    // to store copies of the input data. One is used to
+    // verify the previous kernel's output. The other stores
+    // the new data for the next kernel execution.
+    std::vector<cl_float> input_buf_copy[2 * kLocalN];
+
+    // SYCL events for each kernel launch.
+    event sycl_events[kLocalN];
+
+    // In nanoseconds. Total execution time of kernels in a given slot.
+    cl_ulong total_kernel_time_per_slot[kLocalN];
+
+    // Total execution time of all kernels.
+    cl_ulong total_kernel_time = 0;
+
+    // Threads to process the output from each kernel
+    std::thread t_process_output[kLocalN];
+
+    // Threads to process the input data for the next kernel
+    std::thread t_process_input[kLocalN];
+
+    // Demonstrate with 1-way buffering first, then N-way buffering.
+    int N;
+
+    // st = "single threaded".
+    // Used to enable multi-threading in subsequent runs.
+    bool st = true;
 
     // Allocate vectors to store the host-side copies of the input data
     for (int i = 0; i < 2 * kLocalN; i++) {
@@ -323,10 +332,9 @@ int main() {
           std::cout << "*** Beginning execution.\n";
       }
 
-      high_resolution_clock::time_point t1 =
-          high_resolution_clock::now();  // Start the timer. This will include
-                                         // the time to process the input data
-                                         // for the first N kernel executions.
+      // Start the timer. This will include the time to process the
+      // input data for the first N kernel executions.
+      high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
       // Process the input data for first N kernel executions. For
       // multi-threaded runs, this is done in parallel.
@@ -354,8 +362,9 @@ int main() {
         // have completed for the upcoming new execution for this slot. Block on
         // both of these.
         if (!st) {
-          if (i >= N) {  // ProcessOutput() is only relevant after the first N
-                         // kernels have been launched.
+          // ProcessOutput() is only relevant after the
+          // first N kernels have been launched.
+          if (i >= N) {
             t_process_output[i % N].join();
           }
 
@@ -363,9 +372,10 @@ int main() {
         }
 
         // Launch the kernel. This is non-blocking with respect to main().
+        // Only print every few iterations, just to limit the prints.
         if (i % 10 == 0) {
           std::cout << "Launching kernel #" << i << "\n";
-        }  // Only print every few iterations, just to limit the prints.
+        }
 
         SimplePow(q, input_buf[i % N], output_buf[i % N], sycl_events[i % N]);
 
@@ -381,22 +391,22 @@ int main() {
             ProcessOutput, std::ref(output_buf[i % N]),
             std::ref(input_buf_copy[i % (2 * N)]), i, sycl_events[i % N],
             std::ref(total_kernel_time_per_slot[i % N]));
+
+        // For single-threaded runs, force single-threaded operation by
+        // blocking here immediately.
         if (st) {
           t_process_output[i % N].join();
-        }  // For single-threaded runs, force single-threaded operation by
-           // blocking here immediately.
+        }
 
-        if (i <
-            kTimes - N) {  // For the final N kernel launches, no need to process
-                          // input data because there will be no more launches.
-          t_process_input[i % N] = std::thread(
-              ProcessInput, std::ref(input_buf[i % N]),
-              std::ref(
-                  input_buf_copy[(i + N) %
-                                 (2 *
-                                  N)]));  // The indexes for the input_buf_copy
-                                          // used by ProcessOutput() and
-                                          // ProcessInput() are spaced N apart.
+        // For the final N kernel launches, no need to process
+        // input data because there will be no more launches.
+        if (i < kTimes - N) {
+          // The indexes for the input_buf_copy used by ProcessOutput() and
+          // ProcessInput() are spaced N apart.
+          t_process_input[i % N] =
+              std::thread(ProcessInput, std::ref(input_buf[i % N]),
+                          std::ref(input_buf_copy[(i + N) % (2 * N)]));
+
           if (st) {
             t_process_input[i % N].join();
           }
@@ -413,8 +423,8 @@ int main() {
         total_kernel_time += total_kernel_time_per_slot[i];
       }
 
-      high_resolution_clock::time_point t2 =
-          high_resolution_clock::now();  // Stop the timer.
+      // Stop the timer.
+      high_resolution_clock::time_point t2 = high_resolution_clock::now();
 
       duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
 

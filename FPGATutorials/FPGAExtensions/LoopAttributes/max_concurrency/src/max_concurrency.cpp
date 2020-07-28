@@ -41,10 +41,12 @@ void PartialSumWithShift(const device_selector &selector,
                          const FloatArray &array, const float shift,
                          FloatScalar &result) {
   double kernel_time = 0.0;
+
   try {
     auto property_list =
         cl::sycl::property_list{cl::sycl::property::queue::enable_profiling()};
     std::unique_ptr<queue> device_queue;
+
     event kernel_event;
     device_queue.reset(new queue(selector, exception_handler, property_list));
 
@@ -52,11 +54,14 @@ void PartialSumWithShift(const device_selector &selector,
     buffer<cl_float, 1> buffer_array(array.data(), number_of_items);
     range<1> one{1};
     buffer<cl_float, 1> buffer_result(result.data(), one);
+
     kernel_event = device_queue->submit([&](handler &cgh) {
       auto accessor_array = buffer_array.get_access<sycl_read>(cgh);
       auto accessor_result = buffer_result.get_access<sycl_write>(cgh);
-      cgh.single_task<KernelCompute<CONCURRENCY>>([=]() [[intel::kernel_args_restrict]] {
+      cgh.single_task<KernelCompute<CONCURRENCY>>([=
+      ]() [[intel::kernel_args_restrict]] {
         float r = 0;
+
         [[intelfpga::max_concurrency(CONCURRENCY)]] for (unsigned i = 0;
                                                          i < kMaxIter; i++) {
           float a1[kSize];
@@ -67,13 +72,16 @@ void PartialSumWithShift(const device_selector &selector,
         accessor_result[0] = r;
       });
     });
+
     device_queue->wait_and_throw();
+
     cl_ulong startk = kernel_event.template get_profiling_info<
         cl::sycl::info::event_profiling::command_start>();
     cl_ulong endk = kernel_event.template get_profiling_info<
         cl::sycl::info::event_profiling::command_end>();
     /* unit is nano second, convert to ms */
     kernel_time = (double)(endk - startk) * 1e-6f;
+
   } catch (cl::sycl::exception const &e) {
     std::cout << "Caught a SYCL exception:" << '\n' << e.what() << '\n';
     return;
@@ -109,8 +117,6 @@ int main(int argc, char **argv) {
 
 #if defined(FPGA_EMULATOR)
   const device_selector &selector = intel::fpga_emulator_selector{};
-#elif defined(CPU_HOST)
-  const device_selector &selector = host_selector{};
 #else
   const device_selector &selector = intel::fpga_selector{};
 #endif

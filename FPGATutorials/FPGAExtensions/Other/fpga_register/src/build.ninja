@@ -2,14 +2,9 @@ source_file = fpga_reg.cpp
 target_name = fpga_reg
 
 emulator_target = ${target_name}.fpga_emu.exe
-cpu_host_target = ${target_name}.cpu_host.exe
 
 hardware_flags = -fintelfpga -Xshardware
 emulator_flags = -fintelfpga -DFPGA_EMULATOR
-cpu_host_flags = -DCPU_HOST
-
-rule build_cpu_host
-  command = dpcpp-cl /GX ${cpu_host_flags} $in -o $out
 
 rule build_fpga_emu
   command = dpcpp-cl /GX ${emulator_flags} $in -o $out
@@ -39,10 +34,6 @@ report_reg_target_s10_pac = ${target_name}_registered_s10_pac_report.a
 build report: phony ${report_target} ${report_reg_target}
 build ${report_target}: gen_report ${source_file} 
 build ${report_reg_target}: gen_report_registered ${source_file} 
-
-# cpu host
-build cpu_host: phony ${cpu_host_target}
-build ${cpu_host_target}: build_cpu_host ${source_file}
 
 # report (S10 PAC)
 build report_s10_pac: phony ${report_target_s10_pac} ${report_reg_target_s10_pac}
