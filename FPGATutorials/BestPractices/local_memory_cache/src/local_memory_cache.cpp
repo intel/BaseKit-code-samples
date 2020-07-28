@@ -9,13 +9,11 @@
 
 using namespace cl::sycl;
 
-//#define kInitNumInputs (16 * 1024 * 1024)  // Default number of inputs.
 constexpr int kInitNumInputs = 16 * 1024 * 1024;  // Default number of inputs.
-constexpr int kNumOutputs = 64;                    // Number of outputs
-constexpr int kInitSeed = 42;   // Seed for randomizing data inputs
-constexpr int kCacheDepth = 5;  // Depth of the cache.
-constexpr int kNumRuns = 2;  // This tutorial runs twice to show the impact with
-                             // and without the cache.
+constexpr int kNumOutputs = 64;                   // Number of outputs
+constexpr int kInitSeed = 42;         // Seed for randomizing data inputs
+constexpr int kCacheDepth = 5;        // Depth of the cache.
+constexpr int kNumRuns = 2;           // runs twice to show the impact of cache
 constexpr double kNs = 1000000000.0;  // number of nanoseconds in a second
 
 class Task;
@@ -36,6 +34,7 @@ void Histogram(std::unique_ptr<queue>& q, buffer<uint32_t>& input_buf,
       // Local memory for Histogram
       uint32_t local_output[kNumOutputs];
       uint32_t local_output_with_cache[kNumOutputs];
+
       // Register-based cache of recently-accessed memory locations
       uint32_t last_sum[kCacheDepth + 1];
       uint32_t last_sum_index[kCacheDepth + 1];
@@ -49,24 +48,24 @@ void Histogram(std::unique_ptr<queue>& q, buffer<uint32_t>& input_buf,
       // Compute the Histogram
       if (!cache) {  // Without cache
         for (uint32_t n = 0; n < kInitNumInputs; ++n) {
-          uint32_t b = _input[n] %
-                       kNumOutputs;  // Compute the Histogram index to increment
+          // Compute the Histogram index to increment
+          uint32_t b = _input[n] % kNumOutputs;
           local_output[b]++;
         }
       } else {  // With cache
-        [[intelfpga::ivdep(
-            kCacheDepth)]]  // Specify that the minimum dependence-distance of
-                            // loop carried variables is kCacheDepth.
-        for (uint32_t n = 0; n < kInitNumInputs; ++n) {
-          uint32_t b = _input[n] %
-                       kNumOutputs;  // Compute the Histogram index to increment
 
-          uint32_t val =
-              local_output_with_cache[b];  // Get the value from the local mem
-                                           // at this index.
+        // Specify that the minimum dependence-distance of
+        // loop carried variables is kCacheDepth.
+        [[intelfpga::ivdep(kCacheDepth)]] for (uint32_t n = 0;
+                                               n < kInitNumInputs; ++n) {
+          // Compute the Histogram index to increment
+          uint32_t b = _input[n] % kNumOutputs;
 
-// However, if this location in local mem was recently written to, take the
-// value from the cache.
+          // Get the value from the local mem at this index.
+          uint32_t val = local_output_with_cache[b];
+
+          // However, if this location in local mem was recently
+          // written to, take the value from the cache.
 #pragma unroll
           for (int i = 0; i < kCacheDepth + 1; i++) {
             if (last_sum_index[i] == b) val = last_sum[i];
@@ -125,11 +124,6 @@ int main() {
                  "performance. The design may need to run on actual hardware "
                  "to observe the performance benefit of the optimization "
                  "exemplified in this tutorial.\n\n";
-#elif defined(CPU_HOST)
-    host_selector device_selector;
-    std::cout << "\nCPU Host target does not accurately measure kernel execution "
-                 "time. The design must run on actual hardware to observe the "
-                 "benefit of the optimization exemplified in this tutorial.\n\n";
 #else
     intel::fpga_selector device_selector;
 #endif
@@ -142,15 +136,12 @@ int main() {
       // queue q(device_selector, property_list);
       q.reset(new queue(device_selector, exception_handler, property_list));
     } catch (exception const& e) {
-      std::cout << "Caught a synchronous SYCL exception:\n"
-                << e.what() << "\n";
+      std::cout << "Caught a synchronous SYCL exception:\n" << e.what() << "\n";
       std::cout << "If you are targeting an FPGA hardware, please "
                    "ensure that your system is plugged to an FPGA board that "
                    "is set up correctly.\n";
       std::cout << "If you are targeting the FPGA emulator, compile with "
                    "-DFPGA_EMULATOR.\n";
-      std::cout
-          << "If you are targeting a CPU host device, compile with -DCPU_HOST.\n";
       return 1;
     }
 
@@ -188,8 +179,10 @@ int main() {
         int b = _input_host[i] % kNumOutputs;
         gold[b]++;
       }
-    }  // Host accessor goes out-of-scope and is destructed. This is required in
-       // order to unblock the kernel's subsequent accessor to the same buffer.
+    }
+
+    // Host accessor is now out-of-scope and is destructed. This is required
+    // in order to unblock the kernel's subsequent accessor to the same buffer.
 
     for (int i = 0; i < kNumRuns; i++) {
       switch (i) {

@@ -78,13 +78,13 @@ inline static void PutUlong(uint8_t *pc, unsigned long l) {
 }
 
 // returns 0 on success, otherwise failure
-int WriteBlockGzip(std::string &original_filename,  // Original file name
-                                                   // that's being compressed
-                   std::string &out_filename,       // gzip filename
-                   char *obuf,           // pointer to compressed data block
-                   size_t blen,          // length of compressed data block
-                   size_t ilen,          // original block length
-                   uint32_t buffer_crc)  // the block's crc
+int WriteBlockGzip(
+    std::string &original_filename,  // Original file name being compressed
+    std::string &out_filename,       // gzip filename
+    char *obuf,                      // pointer to compressed data block
+    size_t blen,                     // length of compressed data block
+    size_t ilen,                     // original block length
+    uint32_t buffer_crc)             // the block's crc
 {
   //------------------------------------------------------------------
   // Setup the gzip output file header.
@@ -99,6 +99,7 @@ int WriteBlockGzip(std::string &original_filename,  // Original file name
 
   unsigned char *pgziphdr =
       (unsigned char *)malloc(sizeof(gzip_header) + max_filename_sz);
+
   if (!pgziphdr) {
     std::cout << "pgzip header cannot be allocated\n";
     return 1;

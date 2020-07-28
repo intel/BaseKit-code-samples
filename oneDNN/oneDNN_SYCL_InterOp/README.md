@@ -1,9 +1,9 @@
 # oneDNN SYCL Interop sample
- This oneDNN SYCL Interop sample code is implemented using C++ and DPC++ language for CPU and GPU. 
+ This oneDNN SYCL Interop sample code is implemented using C++ and DPC++ language for CPU and GPU.
 
 | Optimized for                       | Description
 |:---                               |:---
-| OS                                | Linux Ubuntu 18.04; 
+| OS                                | Linux Ubuntu 18.04;
 | Hardware                          | Kaby Lake with GEN9 or newer
 | Software                          | Intel oneAPI Deep Neural Network Library (oneDNN), Intel oneAPI DPC++ Compiler, Intel oneAPI DPC++ Library (oneDPL), Intel oneAPI Threading Building Blocks (oneTBB)
 | What you will learn               | oneDNN SYCL extensions API programming for both Intel CPU and GPU
@@ -35,53 +35,58 @@ The sample also requires OpenCL driver. Please refer [System Requirements](https
 You can refer to this page [oneAPI](https://software.intel.com/en-us/oneapi) for toolkit installation.
 
 
-## How to Build  
+## How to Build
 
 
-### Using DPC++ Compiler  
+### Using DPC++ Compiler
 
 ------
 
 By using DPC++ compiler, this sample supports a SYCL custom kernel both on Intel CPU and GPU.
 
-#### on Linux  
+#### on Linux
 
 - Build SYCL Interops program with DPC++  \
   please replace ${ONEAPI_ROOT} for your installation path. \
-  ex : /opt/intel/inteloneapi 
-   
+  ex : /opt/intel/oneapi
+
   First, please use a clean console environment without exporting any none default environment variables.
 ```
     source ${INTEL_ONEAPI_INSTALL_FOLDER}/setvars.sh --dnnl-configuration=cpu_dpcpp_gpu_dpcpp
 ```
-or 
+or
 
 ```
-    source ${INTEL_ONEAPI_INSTALL_FOLDER}/setvars.sh 
+    source ${INTEL_ONEAPI_INSTALL_FOLDER}/setvars.sh
 ```
   dnnl-configuration is set cpu_dpcpp_gpu_dpcpp to by default if users don't input --dnnl-configuraition argument.
-  
-  Make sure that both the enviroments of compiler and dnnl are properly set up before you process following steps.
-  If setvars.sh complains "not found" for compiler or dnnl, please check your installation first.
-  
-```    
+
+  Make sure that both the enviroments of compiler and oneDNN are properly set up
+  before you process following steps.
+  If setvars.sh complains "not found" for compiler or oneDNN, please check your
+  installation first.
+
+```
     cd oneapi-toolkit/oneDNN/oneDNN_SYCL_InterOp
     mkdir dpcpp
     cd dpcpp
-    cmake .. -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=dpcpp 
+    cmake .. -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=dpcpp
     make sycl-interop-cpp
 ```
-## How to Run 
 
-### on Linux  
+> NOTE: The source file "sycl_interop.cpp" will be under dpcpp/src folder. Users can rebuild the sycl_interop.cpp by typing "make" under dpcpp folder.
+
+## How to Run
+
+### on Linux
 - Run the program  on CPU
   ```
-  ./out/sycl-interop-cpp cpu  
+  ./out/sycl-interop-cpp cpu
   ```
 - Run the program  on GPU
 
   ```
-  ./out/sycl-interop-cpp gpu  
+  ./out/sycl-interop-cpp gpu
   ```
 >  NOTE: Zero Level runtime is enabled by default. Please make sure proper installation of zero level driver \
 including level-zero-devel package following installation guide. \
@@ -91,9 +96,9 @@ Please apply workaround to set SYCL_BE=PI_OPENCL before running a DPC++ program 
 For applying the workaround in this sample, users can add `export SYCL_BE=PI_OPENCL` in CMakeLists.txt. \
 After applying the worklaround, sample use OpenCL runtime instead.\
 
-## Result Validation 
+## Result Validation
 
-### on Linux  
+### on Linux
 
 - Enable oneDNN Verbose log
 

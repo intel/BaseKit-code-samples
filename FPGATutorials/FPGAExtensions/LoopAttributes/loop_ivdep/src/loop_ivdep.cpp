@@ -39,21 +39,27 @@ void TransposeAndFold(const device_selector &selector,
         cl::sycl::property_list{cl::sycl::property::queue::enable_profiling()};
     event kernel_event;
     queue device_queue(selector, exception_handler, property_list);
+
     buffer<float, 1> buffer_input(m_input.data(), kMatrixSize);
     buffer<float, 1> buffer_output(m_output.data(), kMatrixSize);
+
     /* Run the base version without the ivdep attribute for performance
      * evaluation */
     kernel_event = device_queue.submit([&](handler &cgh) {
       auto accessor_input = buffer_input.get_access<access::mode::read>(cgh);
       auto accessor_output = buffer_output.get_access<access::mode::write>(cgh);
-      cgh.single_task<KernelCompute<SAFELEN>>([=]() [[intel::kernel_args_restrict]] {
+
+      cgh.single_task<KernelCompute<SAFELEN>>([=
+      ]() [[intel::kernel_args_restrict]] {
         float in_buffer[kRowLength][kRowLength];
         float temp_buffer[kRowLength][kRowLength];
+
         /* Initialize local buffers */
         for (int i = 0; i < kMatrixSize; i++) {
           in_buffer[i / kRowLength][i % kRowLength] = accessor_input[i];
           temp_buffer[i / kRowLength][i % kRowLength] = 0;
         }
+
         /* No iterations of the following loop store data into the same memory
          * location */
         /* that are less than kRowLength iterations apart. */
@@ -64,6 +70,7 @@ void TransposeAndFold(const device_selector &selector,
             temp_buffer[j % kRowLength][i] += in_buffer[i][j % kRowLength];
           }
         }
+
         /* Write result to output */
         for (int i = 0; i < kMatrixSize; i++) {
           accessor_output[i] = temp_buffer[i / kRowLength][i % kRowLength];
@@ -76,6 +83,7 @@ void TransposeAndFold(const device_selector &selector,
         cl::sycl::info::event_profiling::command_start>();
     cl_ulong end_k = kernel_event.template get_profiling_info<
         cl::sycl::info::event_profiling::command_end>();
+
     /* unit is nano second, convert to ms */
     kernel_time = (double)(end_k - start_k) * 1e-6f;
   } catch (cl::sycl::exception const &e) {
@@ -101,8 +109,6 @@ int main(int argc, char **argv) {
 
 #if defined(FPGA_EMULATOR)
   const device_selector &selector = intel::fpga_emulator_selector{};
-#elif defined(CPU_HOST)
-  const device_selector &selector = host_selector{};
 #else
   const device_selector &selector = intel::fpga_selector{};
 #endif

@@ -11,19 +11,23 @@
 using namespace std::chrono;
 using namespace cl::sycl;
 
-#define TIMES \
-  (3)  // # times to execute the kernel.
-       // TIMES must be >= 2; small for this tutorial
-       // for easier visualization of data.
-#define SIZE \
-  (2621440)  // # of floats to process on each
-             // kernel execution. ~10MB
-#define POW \
-  (20)                // Kernel executes a power function (base^POW).
-                      // Must be >= 2.
-                      // Can increase this to increase kernel execution time,
-                      // but process_output() time will also increase.
-#define NUM_RUNS (2)  // Number of iterations through the main loop
+// # times to execute the kernel.
+// TIMES must be >= 2; small for this tutorial
+// for easier visualization of data.
+#define TIMES 3
+
+// # of floats to process on each
+// kernel execution. ~10MB
+#define SIZE 2621440
+
+// Kernel executes a power function (base^POW).
+// Must be >= 2.
+// Can increase this to increase kernel execution time,
+// but process_output() time will also increase.
+#define POW 20
+
+// Number of iterations through the main loop
+#define NUM_RUNS 2
 
 /*  Note that this is the same design as that of the double_buffering tutorial.
     This tutorial uses the OpenCL Intercept Layer to visualize the same
@@ -80,8 +84,7 @@ void simple_pow(std::unique_ptr<queue> &deviceQueue,
     });
 
     queue_event = deviceQueue->submit([&](handler &cgh) {
-      auto accessorB =
-          bufferB.template get_access<access::mode::read>(cgh);
+      auto accessorB = bufferB.template get_access<access::mode::read>(cgh);
 
       /*
         Explicitly instruct the SYCL runtime to copy the kernel's output buffer
@@ -146,8 +149,8 @@ void process_output(buffer<cl_float, 1> &input_buf,
      done here and this is just a note that this is the place
       where you *could* do it. */
   for (int i = 0; i < SIZE / 8; i++) {
-    if ((num_errors < num_errors_to_print) &&
-        (my_pow(input_buf_acc[i], POW) != output_buf_acc[i])) {
+    const bool out_valid = (my_pow(input_buf_acc[i], POW) != output_buf_acc[i]);
+    if ((num_errors < num_errors_to_print) && out_valid) {
       if (num_errors == 0) {
         pass = false;
         std::cout << "Verification failed on kernel execution # " << exec_number
@@ -176,21 +179,23 @@ void process_output(buffer<cl_float, 1> &input_buf,
    completes.
 */
 void process_input(buffer<cl_float, 1> &buf) {
-  auto buf_acc = buf.template get_access<
-      access::mode::discard_write>();  // We are generating completely new input
-                                       // data, so can use discard_write() here
-                                       // to indicate we don't care about the
-                                       // SYCL buffer's current contents.
-  auto seed =
-      std::chrono::system_clock::now().time_since_epoch().count();  // seed
-  std::default_random_engine dre(seed);                             // engine
-  std::uniform_real_distribution<float> di(1.0f,
-                                           2.0f);  // Values between 1 and 2
+  // We are generating completely new input data, so can use discard_write()
+  // here to indicate we don't care about the SYCL buffer's current contents.
+  auto buf_acc = buf.template get_access<access::mode::discard_write>();
 
-  float start_val =
-      di(dre);  // Randomly generate a start value
-                // and increment from there. Compared to randomly generating
-                // every value, this is done to speed up this function a bit.
+  // seed for RNG
+  auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+
+  // random number engine
+  std::default_random_engine dre(seed);
+
+  // random number between 1 and 2
+  std::uniform_real_distribution<float> di(1.0f, 2.0f);
+
+  // Randomly generate a start value
+  // and increment from there. Compared to randomly generating
+  // every value, this is done to speed up this function a bit.
+  float start_val = di(dre);
 
   for (int i = 0; i < SIZE / 8; i++) {
     buf_acc[i] = start_val;
@@ -214,8 +219,6 @@ int main() {
   try {
 #if defined(FPGA_EMULATOR)
     intel::fpga_emulator_selector device_selector;
-#elif defined(CPU_HOST)
-    host_selector device_selector;
 #else
     intel::fpga_selector device_selector;
 #endif
@@ -238,9 +241,6 @@ int main() {
       std::cout << "If you are targeting the FPGA emulator, compile with "
                    "-DFPGA_EMULATOR."
                 << std::endl;
-      std::cout
-          << "If you are targeting a CPU host device, compile with -DCPU_HOST."
-          << std::endl;
       return 1;
     }
 
@@ -298,17 +298,16 @@ int main() {
         }
       }
 
-      high_resolution_clock::time_point t1 =
-          high_resolution_clock::now();  // Start the timer.
-                                         // This will include the time to
-                                         // process the input data for the first
-                                         // 2 kernel executions.
+      // Start the timer. This will include the time to
+      // process the input data for the first 2 kernel executions.
+      high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
       if (i == 0) {  // Single buffering
         for (int i = 0; i < TIMES; i++) {
           if (i % 10 == 0) {
             std::cout << "Launching kernel #" << i << std::endl;
           }  // Only print every few iterations, just to limit the prints.
+
           process_input(input_buf[0]);
           simple_pow(device_queue, input_buf[0], output_buf[0], sycl_events[0]);
           process_output(input_buf[0], output_buf[0], i, sycl_events[0],
@@ -324,6 +323,7 @@ int main() {
           if (i % 10 == 0) {
             std::cout << "Launching kernel #" << i << std::endl;
           }  // Only print every few iterations, just to limit the prints.
+
           simple_pow(device_queue, input_buf[i % 2], output_buf[i % 2],
                      sycl_events[i % 2]);  // Launch the next kernel
           // Process output from previous kernel. This will block on kernel

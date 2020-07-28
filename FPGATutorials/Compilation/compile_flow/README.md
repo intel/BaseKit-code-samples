@@ -129,15 +129,7 @@ Perform the following steps:
      ./compile_flow.fpga 
      ```
 
-   * Compile and run on CPU hardware (not optimized): 
-
-     ```
-     make cpu_host
-     ./compile_flow.cpu_host
-     ```
-
-(Optional) As the above hardware compile may take several hours to complete, an Intel®; PAC with Intel Arria®; 10 GX FPGA precompiled binary can be downloaded <a href="https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/compile-flow.fpga" download>here</a>.
-
+(Optional) As the above hardware compile may take several hours to complete, an Intel®; PAC with Intel Arria®; 10 GX FPGA precompiled binary can be downloaded <a href="https://software.intel.com/content/dam/develop/external/us/en/documents/compile_flow.fpga.tar.gz" download>here</a>.
 
 ## Building the Example (Windows)
 
@@ -173,13 +165,6 @@ cd src
      ```
 
    * **Not supported yet:**  Compile and run on FPGA hardware
-
-   * Compile and run on CPU hardware (not optimized): 
-
-     ```
-     ninja cpu_host
-     compile_flow.cpu_host.exe
-     ```
 
 ## Building the Example in Third-Party Integrated Development Environments (IDEs)
 

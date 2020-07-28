@@ -32,13 +32,15 @@
  */
 
 #include <CL/sycl.hpp>
-#include "kernels.hpp"
+
 #include "gzipkernel.hpp"
+#include "kernels.hpp"
 
 using namespace cl::sycl;
 
 using acc_dist_channel = cl::sycl::intel::pipe<class some_pipe, struct DistLen>;
-using acc_dist_channel_last = cl::sycl::intel::pipe<class some_pipe2, struct DistLen>;
+using acc_dist_channel_last =
+    cl::sycl::intel::pipe<class some_pipe2, struct DistLen>;
 
 template <int Begin, int End>
 struct Unroller {
@@ -692,6 +694,7 @@ bool HufEnc(char *len, short *dist, unsigned char *data, unsigned int *outdata,
   Unroller<0, kVec>::step([&](int i) {
     new_leftover[i] = 0;
     outdata[i] = 0;
+
     Unroller<0, kVec>::step([&](int j) {
       // figure out whether code[j] goes into bucket[i]
       bool match_first = ((bitpos[j] >> 5) & (kVec - 1)) == i;
@@ -719,6 +722,7 @@ bool HufEnc(char *len, short *dist, unsigned char *data, unsigned int *outdata,
     outdata[i] |= leftover[i];
     leftover[i] = outdata[i];
   });
+
   // HACK: split unroll into two unrolls to avoid compiler crash
   if (write) {
     Unroller<0, kVec>::step([&](int i) { leftover[i] = new_leftover[i]; });
@@ -1958,7 +1962,9 @@ void SubmitGzipTasks(queue &q,
               0xbdbdf21c,
           },
       };
+
       const int num_nibbles_parallel = 64;
+
       // this section of code should be on the hardware accelerator
       const int num_sections = accessor_isz / (num_nibbles_parallel /
                                                2);  // how many loop iterations
@@ -1990,9 +1996,11 @@ void SubmitGzipTasks(queue &q,
       accresult_crc[0] = ~result;
     });
   });
+
   q.submit([&](handler &h) {
     auto accessor_isz = block_size;
     auto acc_pibuf = pibuf->get_access<access::mode::read>(h);
+
     h.single_task<LZReduction>([=]() [[intel::kernel_args_restrict]] {
       //-------------------------------------
       //   Hash Table(s)
@@ -2014,12 +2022,10 @@ void SubmitGzipTasks(queue &q,
 
       // This is the window of data on which we look for matches
       // We fetch twice our data size because we have kVec offsets
-
       unsigned char current_window[kVecX2];
 
       // This is the window of data on which we look for matches
       // We fetch twice our data size because we have kVec offsets
-
       unsigned char compare_window[kLen][kVec][kVec];
       // kVec bytes per dict----------|    |   |
       // kVec dictionaries-----------------|   |
@@ -2032,6 +2038,7 @@ void SubmitGzipTasks(queue &q,
 
       // Initialize input stream position
       unsigned int inpos_minus_vec_div_16 = 0;
+
       // this is ceiling of (insize-kVec)/16, original comparison was
       // inpos < insize, now inpos is carried as (inpos-kVec)/16 so this is what
       // we compare to
@@ -2052,6 +2059,7 @@ void SubmitGzipTasks(queue &q,
 
       Unroller<0, kVec>::step(
           [&](int i) { current_window[i + kVec] = in.data[i]; });
+
       do {
         //-----------------------------
         // Prepare current window
@@ -2062,7 +2070,8 @@ void SubmitGzipTasks(queue &q,
             [&](int i) { current_window[i] = current_window[i + kVec]; });
 
         // load in new data
-        Unroller<0, kVec>::step([&](int i) { in.data[i] = acc_pibuf[inpos++]; });
+        Unroller<0, kVec>::step(
+            [&](int i) { in.data[i] = acc_pibuf[inpos++]; });
 
         Unroller<0, kVec>::step(
             [&](int i) { current_window[kVec + i] = in.data[i]; });
@@ -2096,8 +2105,8 @@ void SubmitGzipTasks(queue &q,
         // loop over compare windows
         Unroller<0, kVec>::step([&](int i) {
           Unroller<0, kLen>::step([&](int j) {
-            // loop over frames in this compare window (they come from different
-            // dictionaries)
+            // loop over frames in this compare window
+            // (they come from different dictionaries)
             compare_offset[j][i] = dict_offset[hash[i]][j];
           });
         });
@@ -2168,18 +2177,22 @@ void SubmitGzipTasks(queue &q,
                 (((inpos_minus_vec_div_16 << kVecPow) | (i & (kVec - 1))) -
                      (compare_offset[i][m]) <
                  kMaxDistance);
+
             unsigned int new_offset =
                 (((inpos_minus_vec_div_16 << kVecPow) | (m & (kVec - 1))) &
                  0x7ffff) -
                 ((compare_offset[i][m] & 0x7ffff));
+
             // Reconsider if new_offset is bigger than current offset, might
             // take more bytes to encode
             update_best = update_best && (length[m] == best_length[m]) &&
-                                 (new_offset > best_offset[m])
-                             ? false
-                             : update_best;
+                                  (new_offset > best_offset[m])
+                              ? false
+                              : update_best;
+
             best_offset[m] = (update_best ? new_offset : best_offset[m]) &
                              0x7ffff;  // 19 bits is sufficient
+
             best_length[m] = (update_best ? length[m] : best_length[m]) &
                              0x1f;  // 5 bits is sufficient
           });
@@ -2224,6 +2237,7 @@ void SubmitGzipTasks(queue &q,
           unsigned char next_match_search = guess;
           Unroller<0, kVec>::step([&](int i) {
             unsigned int len = best_length[i];
+
             // Skip to the next match
             next_match_search =
                 i >= next_match_search && len > 0 ? i + len : next_match_search;
@@ -2238,7 +2252,8 @@ void SubmitGzipTasks(queue &q,
         unsigned char current_valid_pos = first_valid_pos;
         first_valid_pos =
             first_valid_pos_speculative[first_valid_pos & (kVec - 1)] &
-            (kVec - 1);  // first_valid_pos only needs 4 bits, make this explicit
+            (kVec -
+             1);  // first_valid_pos only needs 4 bits, make this explicit
 
         // greedy match selection
         Unroller<0, (kVec)>::step([&](int i) {
@@ -2312,6 +2327,7 @@ void SubmitGzipTasks(queue &q,
       // Add the gzip start block marker. Assumes static huffman trees.
       leftover_size = 3;
       leftover[0] = ((kStaticTrees << 1) + (acc_eof));
+
       do {
         struct DistLen in;
         // init the input structure for the gzip end block marker.

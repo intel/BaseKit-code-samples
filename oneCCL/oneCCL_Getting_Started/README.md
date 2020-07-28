@@ -75,8 +75,10 @@ You can refer to this page [oneAPI](https://software.intel.com/en-us/oneapi) for
   mkdir build  
   cd build 
   cmake .. -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
-  make
+  make cpu_allreduce_cpp_test
   ```
+> NOTE: The source file "cpu_allreduce_cpp_test.cpp" will be copied from ${INTEL_ONEAPI_INSTALL_FOLDER}/ccl/latest/examples/cpu to build/src/cpu folder.
+Users can rebuild the cpu_allreduce_cpp_test.cpp by typing "make cpu_allreduce_cpp_test" under build folder.
 
 #### GPU and CPU:
 
@@ -91,8 +93,10 @@ You can refer to this page [oneAPI](https://software.intel.com/en-us/oneapi) for
   mkdir build  
   cd build 
   cmake ..  -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=dpcpp
-  make
+  make sycl_allreduce_cpp_test
   ```
+> NOTE: The source file "sycl_allreduce_cpp_test.cpp" will be copied from ${INTEL_ONEAPI_INSTALL_FOLDER}/ccl/latest/examples/sycl to build/src/sycl folder.
+Users can rebuild the sycl_allreduce_cpp_test.cpp by typing "make sycl_allreduce_cpp_test" under build folder.
 
 ## How to Run  
 
@@ -105,12 +109,12 @@ You can refer to this page [oneAPI](https://software.intel.com/en-us/oneapi) for
   please replace the {NUMBER_OF_PROCESSES} with integer number accordingly
 
   ```
-  mpirun -n ${NUMBER_OF_PROCESSES} ./out/cpu_allreduce_cpp_test 
+  mpirun -n ${NUMBER_OF_PROCESSES} ./out/cpu/cpu_allreduce_cpp_test 
   ```
   
   ex: 
   ```
-  mpirun -n 2 ./out/cpu_allreduce_cpp_test
+  mpirun -n 2 ./out/cpu/cpu_allreduce_cpp_test
   ``` 
   
 
@@ -121,12 +125,12 @@ You can refer to this page [oneAPI](https://software.intel.com/en-us/oneapi) for
   please replace the {NUMBER_OF_PROCESSES} with integer number accordingly
 
   ```
-  mpirun -n ${NUMBER_OF_PROCESSES} ./out/sycl_allreduce_cpp_test gpu|cpu|host|default
+  mpirun -n ${NUMBER_OF_PROCESSES} ./out/sycl/sycl_allreduce_cpp_test gpu|cpu|host|default
   ```
   
   ex: run on GPU
   ```
-  mpirun -n 2 ./out/sycl_allreduce_cpp_test gpu
+  mpirun -n 2 ./out/sycl/sycl_allreduce_cpp_test gpu
   ``` 
   
 
@@ -151,3 +155,22 @@ You can refer to this page [oneAPI](https://software.intel.com/en-us/oneapi) for
   Example passes
   ```
   please note that name of running device may vary according to your environment
+  
+- Enable oneCCL Verbose log 
+
+  oneCCL has different log level. Users can refer below table for related log level. 
+  
+  | CCL_LOG_LEVEL | value 
+  | :------ | :------ 
+  | ERROR | 0   
+  | INFO | 1    
+  | DEBUG | 2   
+  | TRACE | 3    
+  
+  
+  Users can enable oneCCL verbose log by following below command to see more 
+  runtime information from oneCCL.
+  ```
+  export CCL_LOG_LEVEL=1
+  ```
+

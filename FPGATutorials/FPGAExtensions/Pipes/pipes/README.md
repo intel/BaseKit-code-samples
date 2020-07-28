@@ -214,7 +214,7 @@ void Consumer(std::vector<int> &output) {
      > `PASSED: The results are correct`
 
 
-(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/pipes.fpga" download>here</a>.
+(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://software.intel.com/content/dam/develop/external/us/en/documents/pipes.fpga.tar.gz" download>here</a>.
 
 ## Building the Example (Windows)
 

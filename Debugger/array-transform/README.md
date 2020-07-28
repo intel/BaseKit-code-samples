@@ -9,7 +9,7 @@ of the debugger.
 | OS                              | Linux Ubuntu 18.04, Windows 10
 | Hardware                        | Kaby Lake with GEN9 (on GPU) or newer (on CPU)
 | Software                        | Intel&reg; oneAPI DPC++ Compiler (beta) 
-| What you will learn             | Essential debugger features for effective debugging of DPC++ on CPU and GPU
+| What you will learn             | Essential debugger features for effective debugging of DPC++ on CPU, GPU, and FPGA emulator
 | Time to complete                | 20 minutes for CPU, 30 minutes for GPU
 
 ## License
@@ -47,10 +47,6 @@ To start a debugging session:
 $ make debug-session
 ```
 
-*Note:* This will set the environment variable
-`SYCL_PROGRAM_COMPILE_OPTIONS` to `"-g -cl-opt-disable"` before starting
-the debugger.
-
 To clean up:
 
 ```
@@ -62,7 +58,6 @@ $ make clean
 #### Command line using MSBuild
 
 * `set CL_CONFIG_USE_NATIVE_DEBUGGER=1`
-* `set SYCL_PROGRAM_COMPILE_OPTIONS=-g -cl-opt-disable`
 * `MSBuild array-transform.sln /t:Rebuild /p:Configuration="debug"`
 
 #### Visual Studio IDE

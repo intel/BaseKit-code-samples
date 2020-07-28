@@ -3,11 +3,9 @@ host_source_file = main.cpp
 target_name = device_link
 
 emulator_target = ${target_name}.fpga_emu.exe
-cpu_host_target = ${target_name}.cpu_host.exe
 
 hardware_flags = -fintelfpga -Xshardware
 emulator_flags = -fintelfpga -DFPGA_EMULATOR
-cpu_host_flags = -DCPU_HOST
 
 rule parse_emu
   command = dpcpp-cl -c /EHcs ${emulator_flags} ${in} /Fo${out}	
@@ -17,10 +15,6 @@ rule gen_image_obj
 
 rule link
   command = dpcpp-cl -fintelfpga  ${in} -o ${out} 
-
-rule build_cpu_host
-  command = dpcpp-cl /EHcs ${cpu_host_flags} $in -o $out
-
 
 # FPGA emulator
 build fpga_emu: phony ${emulator_target}
@@ -36,7 +30,3 @@ build ${dev_emu_obj}: parse_emu ${device_source_file}
 build ${dev_image_emu_obj}: gen_image_obj ${dev_emu_obj}
 
 build ${emulator_target}: link ${host_emu_obj} ${dev_image_emu_obj}
-
-# cpu host
-build cpu_host: phony ${cpu_host_target}
-build ${cpu_host_target}: build_cpu_host ${host_source_file} ${device_source_file}

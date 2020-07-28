@@ -64,11 +64,10 @@ int main(int argc, char *argv[]) {
          << "\n";
     return 1;
   }
+
   try {
 #if defined(FPGA_EMULATOR)
     intel::fpga_emulator_selector device_selector;
-#elif defined(CPU_HOST)
-    host_selector device_selector;
 #else
     intel::fpga_selector device_selector;
 #endif
@@ -87,9 +86,12 @@ int main(int argc, char *argv[]) {
     // For output-postprocessing
     float q_matrix[ROWS_COMPONENT][COLS_COMPONENT][2];
     float r_matrix[R_COMPONENT][R_COMPONENT][2];
+
     cout << "Generating " << matrices << " random matri"
          << ((matrices == 1) ? "x " : "ces ") << "\n";
+
     srand(RANDOM_SEED);
+
     for (int i = 0; i < matrices; i++) {
       for (int row = 0; row < ROWS_COMPONENT; row++) {
         for (int col = 0; col < COLS_COMPONENT; col++) {
@@ -109,7 +111,7 @@ int main(int argc, char *argv[]) {
 
     SyclDevice(a_matrix, qr_matrix, q, 1, 1);  // Accelerator warmup
 
-#if defined(FPGA_EMULATOR) || defined(CPU_HOST)
+#if defined(FPGA_EMULATOR)
     int reps = 2;
 #else
     int reps = 32;
@@ -190,7 +192,8 @@ int main(int argc, char *argv[]) {
       int count = 0;
       for (int row = 0; row < ROWS_COMPONENT; row++) {
         for (int col = 0; col < COLS_COMPONENT; col++) {
-          if (std::isnan(v_matrix[row][col][0]) || std::isnan(v_matrix[row][col][1])) {
+          if (std::isnan(v_matrix[row][col][0]) ||
+              std::isnan(v_matrix[row][col][1])) {
             count++;
           }
           float real = v_matrix[row][col][0] -
@@ -213,9 +216,11 @@ int main(int argc, char *argv[]) {
         return 1;
       }
     }
+
     cout << "\n"
          << "PASSED"
          << "\n";
+
     return 0;
   } catch (cl::sycl::exception const &e) {
     cout << "Caught a synchronous SYCL exception: " << e.what() << "\n";
@@ -226,8 +231,7 @@ int main(int argc, char *argv[]) {
     cout << "   If you are targeting the FPGA emulator, compile with "
             "-DFPGA_EMULATOR"
          << "\n";
-    cout << "   If you are targeting a CPU host device, compile with -DCPU_HOST"
-         << "\n";
+
     terminate();
   }
 }

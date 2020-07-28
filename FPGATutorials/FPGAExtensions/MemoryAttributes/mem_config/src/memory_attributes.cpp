@@ -83,8 +83,6 @@ unsigned RunKernel(unsigned init, unsigned int const dict_offset_init[]) {
   {
 #if defined(FPGA_EMULATOR)
     intel::fpga_emulator_selector device_selector;
-#elif defined(CPU_HOST)
-    host_selector device_selector;
 #else
     intel::fpga_selector device_selector;
 #endif
@@ -103,8 +101,7 @@ unsigned RunKernel(unsigned init, unsigned int const dict_offset_init[]) {
       auto accessor_D = buffer_dict_offset_init.get_access<kSyclRead>(cgh);
       auto accessor_R = buffer_R.get_access<kSyclWrite>(cgh);
 
-      cgh.single_task<class KernelCompute>([=
-      ]() [[intel::kernel_args_restrict]] {
+      cgh.single_task<KernelCompute>([=]() [[intel::kernel_args_restrict]] {
 #if defined(SINGLEPUMP)
         [[intelfpga::singlepump, intelfpga::memory("MLAB"),
           intelfpga::numbanks(kVec), intelfpga::max_replicates(kVec)]]
@@ -187,8 +184,6 @@ int main() {
                    "is set up correctly\n";
       std::cout << "   If you are targeting the FPGA emulator, compile with "
                    "-DFPGA_EMULATOR\n";
-      std::cout << "   If you are targeting a CPU host device, compile with "
-                   "-DCPU_HOST\n";
       return 1;
     }
   }

@@ -86,6 +86,7 @@ void SyclDevice(vector<float> &in_matrix, vector<float> &out_matrix, queue &q,
   if (matrices % chunk) {
     chunk = 1;
   }
+
   // Create buffers and allocate space for them.
   buffer<float, 1> *input_matrix[kNum], *output_matrix[kNum];
   for (int i = 0; i < kNum; i++) {
@@ -94,6 +95,7 @@ void SyclDevice(vector<float> &in_matrix, vector<float> &out_matrix, queue &q,
     output_matrix[i] =
         new buffer<float, 1>((ROWS_COMPONENT + 1) * COLS_COMPONENT * 3 * chunk);
   }
+
   for (int i = 0; i < reps; i++) {
     for (int i = 0, it = 0; it < matrices; it += chunk, i = (i + 1) % kNum) {
       const float *kptr =
@@ -101,11 +103,13 @@ void SyclDevice(vector<float> &in_matrix, vector<float> &out_matrix, queue &q,
       float *kptr2 =
           out_matrix.data() + (ROWS_COMPONENT + 1) * COLS_COMPONENT * 3 * it;
       int matrices = chunk;
+
       q.submit([&](handler &h) {
         auto in_matrix2 =
             input_matrix[i]->get_access<access::mode::discard_write>(h);
         h.copy(kptr, in_matrix2);
       });
+
       q.submit([&](handler &h) {
         auto in_matrix = input_matrix[i]->get_access<access::mode::read>(h);
         auto out_matrix =
@@ -113,11 +117,12 @@ void SyclDevice(vector<float> &in_matrix, vector<float> &out_matrix, queue &q,
         auto out_matrix2 = out_matrix;
         h.single_task<class QRD>([=]() [[intel::kernel_args_restrict]] {
           for (int l = 0; l < matrices; l++) {
-            [[intelfpga::bankwidth(4 * 8)]] [
-                [intelfpga::numbanks(ROWS_VECTOR / 4)]] struct {
+            [[intelfpga::bankwidth(4 * 8),
+              intelfpga::numbanks(ROWS_VECTOR / 4)]] struct {
               MyComplex d[ROWS_COMPONENT];
             } a_matrix[COLS_COMPONENT], ap_matrix[COLS_COMPONENT],
                 aload_matrix[COLS_COMPONENT];
+
             MyComplex vector_ai[ROWS_COMPONENT], vector_ti[ROWS_COMPONENT];
             MyComplex s_or_i[COLS_COMPONENT];
 
@@ -129,34 +134,41 @@ void SyclDevice(vector<float> &in_matrix, vector<float> &out_matrix, queue &q,
                 tmp[k].x() = in_matrix[idx * 2 * 4 + k * 2];
                 tmp[k].y() = in_matrix[idx * 2 * 4 + k * 2 + 1];
               });
+
               idx++;
               int jtmp = i % (ROWS_COMPONENT / 4);
 
               Unroller<0, ROWS_COMPONENT / 4>::Step([&](int k) {
                 Unroller<0, 4>::Step([&](int t) {
-                  if (jtmp == k)
+                  if (jtmp == k) {
                     aload_matrix[i / (ROWS_COMPONENT / 4)].d[k * 4 + t] =
                         tmp[t];
+                  }
+
                   // Delay data signals to create a vine-based data distribution
                   // to lower signal fanout.
                   tmp[t].x() = intel::fpga_reg(tmp[t].x());
                   tmp[t].y() = intel::fpga_reg(tmp[t].y());
                 });
+
                 jtmp = intel::fpga_reg(jtmp);
               });
             }
 
             float p_ii_x, i_r_ii_x;
-            short i = -1,
-                  j = N_VALUE - SAFE_COLS < 0 ? (N_VALUE - SAFE_COLS) : 0;
+            short i = -1;
+            short j = N_VALUE - SAFE_COLS < 0 ? (N_VALUE - SAFE_COLS) : 0;
             int qr_idx = l * (ROWS_COMPONENT + 1) * COLS_COMPONENT * 3 / 2;
+
             [[intelfpga::ii(1)]] [[intelfpga::ivdep(
                 FIXED_ITERATIONS)]] for (int s = 0; s < ITERATIONS; s++) {
               MyComplex vector_t[ROWS_COMPONENT];
               MyComplex sori[ROWS_COMPONENT / 4];
+
               bool j_eq_i[ROWS_COMPONENT / 4], i_gt_0[ROWS_COMPONENT / 4],
                   i_ge_0_j_eq_i[ROWS_COMPONENT / 4],
                   j_eq_i_plus_1[ROWS_COMPONENT / 4], i_lt_0[ROWS_COMPONENT / 4];
+
               Unroller<0, ROWS_COMPONENT / 4>::Step([&](int k) {
                 i_gt_0[k] = intel::fpga_reg(i > 0);
                 i_lt_0[k] = intel::fpga_reg(i < 0);
@@ -166,6 +178,7 @@ void SyclDevice(vector<float> &in_matrix, vector<float> &out_matrix, queue &q,
                 sori[k].x() = intel::fpga_reg(s_or_i[j].x());
                 sori[k].y() = intel::fpga_reg(s_or_i[j].y());
               });
+
               Unroller<0, ROWS_COMPONENT>::Step([&](int k) {
                 vector_t[k] = aload_matrix[j].d[k];
                 if (i_gt_0[k / 4]) vector_t[k] = a_matrix[j].d[k];
@@ -182,28 +195,35 @@ void SyclDevice(vector<float> &in_matrix, vector<float> &out_matrix, queue &q,
                   ap_matrix[j].d[k] = a_matrix[j].d[k] = vector_t[k];
                 if (j_eq_i_plus_1[k / 4]) vector_ti[k] = vector_t[k];
               });
+
               MyComplex p_ij = MyComplex(0, 0);
               Unroller<0, ROWS_COMPONENT>::Step([&](int k) {
                 p_ij = p_ij + MulMycomplex(vector_t[k], vector_ti[k]);
               });
+
               if (j == i + 1) {
                 p_ii_x = p_ij.x();
                 i_r_ii_x = rsqrt(p_ij.x());
               }
+
               MyComplex s_ij =
                   MyComplex(0.0f - (p_ij.x()) / p_ii_x, p_ij.y() / p_ii_x);
+
               if (j >= 0) {
                 s_or_i[j] = MyComplex(j == i + 1 ? i_r_ii_x : s_ij.x(),
                                       j == i + 1 ? 0.0f : s_ij.y());
               }
+
               MyComplex r_ii = j == i + 1 ? MyComplex(sqrt(p_ii_x), 0.0)
                                           : MyComplex(i_r_ii_x * p_ij.x(),
                                                       i_r_ii_x * p_ij.y());
+
               if (j >= i + 1 && i + 1 < N_VALUE) {
                 out_matrix[qr_idx * 2] = r_ii.x();
                 out_matrix[qr_idx * 2 + 1] = r_ii.y();
                 qr_idx++;
               }
+
               if (j == N_VALUE - 1) {
                 j = ((N_VALUE - SAFE_COLS) > i) ? (i + 1)
                                                 : (N_VALUE - SAFE_COLS);
@@ -212,6 +232,7 @@ void SyclDevice(vector<float> &in_matrix, vector<float> &out_matrix, queue &q,
                 j++;
               }
             }
+
             qr_idx /= 4;
             for (short i = 0; i < store_iter; i++) {
               int desired = i % (ROWS_COMPONENT / 4);
@@ -220,6 +241,7 @@ void SyclDevice(vector<float> &in_matrix, vector<float> &out_matrix, queue &q,
                 get[k] = desired == k;
                 desired = intel::fpga_reg(desired);
               });
+
               MyComplex tmp[4];
               Unroller<0, ROWS_COMPONENT / 4>::Step([&](int t) {
                 Unroller<0, 4>::Step([&](int k) {
@@ -233,21 +255,25 @@ void SyclDevice(vector<float> &in_matrix, vector<float> &out_matrix, queue &q,
                           : intel::fpga_reg(tmp[k].y());
                 });
               });
+
               Unroller<0, 4>::Step([&](int k) {
                 out_matrix2[qr_idx * 2 * 4 + k * 2] = tmp[k].x();
                 out_matrix2[qr_idx * 2 * 4 + k * 2 + 1] = tmp[k].y();
               });
+
               qr_idx++;
             }
           }
         });
       });
+
       q.submit([&](handler &h) {
         auto final_matrix = output_matrix[i]->get_access<access::mode::read>(h);
         h.copy(final_matrix, kptr2);
       });
     }
   }
+
   for (int i = 0; i < kNum; i++) {
     delete input_matrix[i];
     delete output_matrix[i];

@@ -123,15 +123,7 @@ In both runs, the total kernel execution time is similar, as expected. However, 
      ./double_buffering.fpga
      ```
 
-   * Compile and run on CPU hardware (not optimized): 
-
-     ```
-     make cpu_host
-     ./double_buffering.cpu_host
-     ```
-
-
-(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/double-buffering.fpga" download>here</a>.
+(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://software.intel.com/content/dam/develop/external/us/en/documents/double_buffering.fpga.tar.gz" download>here</a>.
 
 
 ## Building the `double_buffering` Design (Windows)
@@ -168,12 +160,6 @@ cd src
 
    * **Not supported yet:** Compile and run on FPGA hardware (longer compile time, targets FPGA device): 
 
-   * Compile and run on CPU hardware (not optimized): 
-
-     ```
-     ninja cpu_host
-     double_buffering.cpu_host.exe 
-     ```
 
 ## Building the `double_buffering` Design in Third-Party Integrated Development Environments (IDEs)
 

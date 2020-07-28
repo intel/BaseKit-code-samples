@@ -2,7 +2,6 @@ set(SOURCE_FILE use_library.cpp)
 set(HEADER_FILE lib.hpp)
 set(TARGET_NAME use_library)
 set(EMULATOR_TARGET ${TARGET_NAME}_emu.fpga)
-set(CPU_HOST_TARGET ${TARGET_NAME}.cpu_host)
 set(FPGA_TARGET ${TARGET_NAME}.fpga)
 set(REPORT_TARGET ${TARGET_NAME}_report.a)
 
@@ -31,9 +30,6 @@ set(HARDWARE_LINK_FLAGS "-fintelfpga -Xshardware ${LIBRARY_DEVICE_LINK_FLAGS} ${
 
 set(EMULATOR_COMPILE_FLAGS "-fintelfpga -DFPGA_EMULATOR")
 set(EMULATOR_LINK_FLAGS "-fintelfpga ${LIBRARY_DEVICE_LINK_FLAGS}")
-
-set(CPU_HOST_COMPILE_FLAGS "-DCPU_HOST")
-set(CPU_HOST_LINK_FLAGS "${LIBRARY_HOST_LINK_FLAGS}")
 
 #create hls source object
 add_custom_target(
@@ -65,13 +61,6 @@ add_custom_target(
     COMMAND fpga_libtool ${HLS_SOURCE_OBJECT} ${OCL_SOURCE_OBJECT} ${SYCL_SOURCE_OBJECT} ${RTL_SOURCE_OBJECT} --target sycl --create ${LIBRARY_ARCHIVE} 
     DEPENDS create_hls_source_object create_ocl_source_object create_sycl_source_object create_rtl_source_object
     )
-
-# cpu host
-add_executable(${CPU_HOST_TARGET} EXCLUDE_FROM_ALL ${SOURCE_FILE})
-add_custom_target(cpu_host DEPENDS ${CPU_HOST_TARGET})
-set_target_properties(${CPU_HOST_TARGET} PROPERTIES COMPILE_FLAGS ${CPU_HOST_COMPILE_FLAGS})
-set_target_properties(${CPU_HOST_TARGET} PROPERTIES LINK_FLAGS ${CPU_HOST_LINK_FLAGS})
-add_dependencies(${CPU_HOST_TARGET} create_hls_source_object create_ocl_source_object create_sycl_source_object create_rtl_source_object)
 
 # fpga emulator
 set(SOURCE_OBJ_FILE_EMU ${SOURCE_FILE}.emu.o)

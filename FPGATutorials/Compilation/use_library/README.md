@@ -13,7 +13,7 @@ A library is useful for reusing code or separating code for testing purposes. A 
 ## Library Generation
 You can create a library using the following steps:
 
-1. `fpga_crossgen` creates object file that contains representations for target devices (CPU and FPGA) and FPGA emulator. Currently it can generate object file from *HLS*, *OpenCL*, *RTL*, and *SYCL** source. Here is an example of `fpga_crossgen` creating SYCL* target objects from various sources:
+1. `fpga_crossgen` creates object file that contains representations for target devices (FPGA) and FPGA emulator. Currently it can generate object file from *HLS*, *OpenCL*, *RTL*, and *SYCL** source. Here is an example of `fpga_crossgen` creating SYCL* target objects from various sources:
    
    ```
    fpga_crossgen lib_hls.cpp --source hls --target sycl -o lib_hls.o
@@ -63,15 +63,7 @@ Perform the following steps:
        ./use_library.fpga
        ```
 
-    * Compile and run on a CPU hardware (unoptimized) using the following command:
-
-       ```
-       make cpu_host
-       ./use_library.cpu_host
-       ```
-
-(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/use-library.fpga" download>here</a>.
-
+(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://software.intel.com/content/dam/develop/external/us/en/documents/use_library.fpga.tar.gz" download>here</a>.
 
 ## Building the `use_library` Tutorial in Third-Party Integrated Development Environments (IDEs)
 

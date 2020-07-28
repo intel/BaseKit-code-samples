@@ -106,14 +106,7 @@ Perform the following steps:
         ./crr.fpga ./src/data/ordered_inputs.csv -o=./src/data/ordered_outputs.csv
         ```
 
-    * Compile and run on the CPU hardware (unoptimized) using:
-
-        ```
-        make cpu_host
-        ./crr.cpu_host ./src/data/ordered_inputs.csv -o=./src/data/ordered_outputs.csv
-        ```
-
-(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://www.intel.com/content/dam/altera-www/global/en_US/others/support/examples/download/crr.fpga" download>here</a>.
+(Optional) As the above hardware compile may take several hours to complete, an Intel® PAC with Intel Arria® 10 GX FPGA precompiled binary can be downloaded <a href="https://software.intel.com/content/dam/develop/external/us/en/documents/crr.fpga.tar.gz" download>here</a>.
 
 ## Building the CRR Design (Windows)
 
@@ -148,13 +141,6 @@ cd src
         ```
 
     *  **Not supported yet:** Compile and run on the FPGA hardware.
-
-    * Compile and run on the CPU hardware (unoptimized) using:
-
-        ```
-        ninja cpu_host
-        crr.cpu_host.exe ./data/ordered_inputs.csv -o=./data/ordered_outputs.csv
-        ```
 
 ## Building the CRR Design in Third-Party Integrated Development Environments (IDEs)  
 

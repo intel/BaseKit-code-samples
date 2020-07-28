@@ -1,0 +1,10 @@
+{
+  "name": "Hello_World_GPU",
+  "categories": ["Toolkit/Project Templates"],
+  "toolchain": ["dpcpp"],
+  "description": "Template 'Hello World' on GPU",
+  "languages": [{"cpp":{}}],
+  "targetDevice": ["GPU"],
+  "os": ["windows"],
+  "builder": ["ide"]
+}

@@ -1,7 +1,6 @@
 set(SOURCE_FILE main.cpp)
 set(TARGET_NAME crr)
 set(EMULATOR_TARGET ${TARGET_NAME}.fpga_emu)
-set(CPU_HOST_TARGET ${TARGET_NAME}.cpu_host)
 set(FPGA_TARGET ${TARGET_NAME}.fpga)
 set(REPORTS_TARGET ${TARGET_NAME}_report)
 
@@ -36,8 +35,6 @@ set(HARDWARE_LINK_FLAGS -fintelfpga -Xshardware -Xsdaz -Xsrounding=faithful -Xsp
 set(EMULATOR_COMPILE_FLAGS "-fintelfpga -DFPGA_EMULATOR")
 set(EMULATOR_LINK_FLAGS "-fintelfpga")
 
-set(CPU_HOST_COMPILE_FLAGS "-DCPU_HOST")
-
 #copy input data
 configure_file("data/ordered_inputs.csv" "data/ordered_inputs.csv" COPYONLY)
 
@@ -54,21 +51,6 @@ else()
     add_custom_target(fpga_emu DEPENDS ${EMULATOR_TARGET})
     set_target_properties(${EMULATOR_TARGET} PROPERTIES COMPILE_FLAGS ${EMULATOR_COMPILE_FLAGS})
     set_target_properties(${EMULATOR_TARGET} PROPERTIES LINK_FLAGS ${EMULATOR_LINK_FLAGS})
-endif()
-
-# cpu host
-if(WIN32)
-    set(WIN_HOST_TARGET ${CPU_HOST_TARGET}.exe)
-    add_custom_target(cpu_host DEPENDS ${WIN_HOST_TARGET})
-    separate_arguments(WIN_HOST_COMPILE_FLAGS WINDOWS_COMMAND "${CPU_HOST_COMPILE_FLAGS}")
-    add_custom_command(OUTPUT ${WIN_HOST_TARGET} 
-                   COMMAND ${CMAKE_CXX_COMPILER} ${WIN_HOST_COMPILE_FLAGS} /GX ${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE_FILE} -o ${CMAKE_BINARY_DIR}/${WIN_HOST_TARGET}
-                   DEPENDS ${SOURCE_FILE})  
-
-else()
-    add_executable(${CPU_HOST_TARGET} EXCLUDE_FROM_ALL ${SOURCE_FILE})
-    add_custom_target(cpu_host DEPENDS ${CPU_HOST_TARGET})
-    set_target_properties(${CPU_HOST_TARGET} PROPERTIES COMPILE_FLAGS ${CPU_HOST_COMPILE_FLAGS})
 endif()
 
 # fpgas

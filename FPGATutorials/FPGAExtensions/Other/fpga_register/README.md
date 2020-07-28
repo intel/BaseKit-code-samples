@@ -65,11 +65,9 @@ This tutorial helps you learn the following concepts:
      ```
      >**NOTE**: Only the FPGA hardware flow illustrates the performance difference of using the fpga_reg extension. This will be easily evident with the differences in the fmax of the two designs. The fmax can be found in `fpga_reg_report.prj/reports/report.html` and `fpga_reg_registered_report.prj/reports/report.html`.
 
-   * Compile and run on CPU hardware (not optimized) using: 
-     ```
-     make cpu_host
-     ./fpga_reg.cpu_host
-     ```
+
+(Optional) As the above hardware compile may take several hours to complete, Intel® PAC with Intel Arria® 10 GX FPGA precompiled binaries can be downloaded <a href="https://software.intel.com/content/dam/develop/external/us/en/documents/fpga_reg.fpga.tar.gz" download>here</a>.
+
 
 ## Building the `fpga_register` Design (Windows)
 
@@ -109,11 +107,6 @@ cd src
 
    * **Not supported yet:** Compile and run on FPGA hardware.
 
-   * Compile and run on CPU hardware (not optimized) using: 
-     ```
-     ninja cpu_host
-     fpga_reg.cpu_host.exe
-     ```
 
 ## Building the `fpga_register` Design in Third-Party Integrated Development Environments (IDEs)
 

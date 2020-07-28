@@ -4,9 +4,11 @@
 // SPDX-License-Identifier: MIT
 // =============================================================
 
-#include <math.h>  //for ceil
+#include <cmath>  //for std::ceil
 #include <array>
+#include <atomic>
 #include <iostream>
+#include <thread>
 
 #include <CL/sycl.hpp>
 
@@ -21,14 +23,12 @@ constexpr cl::sycl::access::mode sycl_read = cl::sycl::access::mode::read;
 constexpr cl::sycl::access::mode sycl_write = cl::sycl::access::mode::write;
 constexpr cl::sycl::access::mode sycl_read_write = cl::sycl::access::mode::read_write;
 
+struct done_tag{};
 
-// exception handler
-/*
-The exception_list parameter is an iterable list of std::exception_ptr objects.
-But those pointers are not always directly readable.
-So, we rethrow the pointer, catch it,  and then we have the exception itself.
-Note: depending upon the operation there may be several exceptions.
-*/
+// The exception_list parameter is an iterable list of std::exception_ptr objects.
+// But those pointers are not always directly readable.
+// So, we rethrow the pointer, catch it,  and then we have the exception itself.
+// Note: depending upon the operation there may be several exceptions.
 auto exception_handler = [](exception_list exceptionList) {
   for (std::exception_ptr const& e : exceptionList) {
     try {
@@ -38,8 +38,6 @@ auto exception_handler = [](exception_list exceptionList) {
     }
   }
 };
-
-#define VERBOSE
 
 const float ratio = 0.5;  // CPU to GPU offload ratio
 const float alpha = 0.5;  // coeff for triad calculation
@@ -55,19 +53,23 @@ void PrintArr(const char* text, const std::array<float, array_size>& array) {
   std::cout << "\n";
 }
 
-using async_node_type = tbb::flow::async_node<float, double>;
+using async_node_type = tbb::flow::async_node<float, done_tag>;
 using gateway_type = async_node_type::gateway_type;
 
 class AsyncActivity {
-  tbb::task_arena a;
+  gateway_type* gateway_ptr;
+  float offload_ratio;
+  std::atomic<bool> submit_flag;
+  std::thread service_thread;
 
  public:
-  AsyncActivity() { a = tbb::task_arena{1, 0}; }
-  void run(float offload_ratio, gateway_type& gateway) {
-    gateway.reserve_wait();
-    a.enqueue([&, offload_ratio]() {
+  AsyncActivity() : gateway_ptr(nullptr), offload_ratio(0), submit_flag(false),
+    service_thread( [this] {
+      while( !submit_flag ) {
+        std::this_thread::yield();
+      }
       // Execute the kernel over a portion of the array range
-      size_t array_size_sycl = ceil(array_size * offload_ratio);
+      size_t array_size_sycl = std::ceil(array_size * offload_ratio);
       std::cout << "start index for GPU = 0; end index for GPU = "
                 << array_size_sycl << "\n";
       const float coeff = alpha;  // coeff is a local varaible
@@ -89,15 +91,23 @@ class AsyncActivity {
               h.parallel_for( n_items, [=](id<1> index) {
                     c_accessor[index] = a_accessor[index] + b_accessor[index] * coeff;
                   });  // end of the kernel -- parallel for
-            })
-        .wait_and_throw();  // end of the commands for the SYCL queue
-      }  // end of the scope for SYCL code; wait unti queued work completes
+            }).wait();
+      }  // end of the scope for SYCL code; wait unti queued work completes;
 
-      double sycl_result = 1.0;  // passing some numerical result/flag
-      gateway.try_put(sycl_result);
-      gateway.release_wait();
-    });  // a.enqueue
-  }      // run
+      gateway_ptr->try_put(done_tag{});
+      gateway_ptr->release_wait();
+    } ) {}
+
+  ~AsyncActivity() {
+    service_thread.join();
+  }
+
+  void submit(float ratio, gateway_type& gateway) {
+    gateway.reserve_wait();
+    offload_ratio = ratio;
+    gateway_ptr = &gateway;
+    submit_flag = true;
+  }
 };
 
 int main() {
@@ -107,28 +117,26 @@ int main() {
     b_array[i] = i;
   }
 
-  int nth = 4;  // number of threads
-                // tbb::task_scheduler_init init { nth };
+  int nth = 4; // number of threads
 
   auto mp = tbb::global_control::max_allowed_parallelism;
   tbb::global_control gc(mp, nth + 1);  // One more thread, but sleeping
   tbb::flow::graph g;
 
-  // Source node:
-  bool n = false;
-  tbb::flow::source_node<float> in_node{g,
-                                        [&](float& offload_ratio) {
-                                          if (n) return false;
-                                          offload_ratio = ratio;
-                                          n = true;
-                                          return true;
-                                        },
-                                        false};
+  // Input node:
+  tbb::flow::input_node<float> in_node{g,
+                                        [&](tbb::flow_control& fc) -> float {
+                                          static bool has_run = false;
+                                          if (has_run) fc.stop();
+                                          has_run = true;
+                                          return ratio;
+                                        }
+                                      };
 
   // CPU node
-  tbb::flow::function_node<float, double> cpu_node{
-      g, tbb::flow::unlimited, [&](float offload_ratio) -> double {
-        size_t i_start = static_cast<size_t>(ceil(array_size * offload_ratio));
+  tbb::flow::function_node<float, done_tag> cpu_node{
+      g, tbb::flow::unlimited, [&](float offload_ratio) {
+        size_t i_start = static_cast<size_t>(std::ceil(array_size * offload_ratio));
         size_t i_end = static_cast<size_t>(array_size);
         std::cout << "start index for CPU = " << i_start
                   << "; end index for CPU = " << i_end << "\n";
@@ -138,26 +146,25 @@ int main() {
                             for (size_t i = r.begin(); i < r.end(); ++i)
                               c_array[i] = a_array[i] + alpha * b_array[i];
                           });
-        double tbb_result = 1.0;  // passing some numerical result/flag
-        return (tbb_result);
+        return done_tag{};
       }};
 
-  // async node  -- GPU
+  // async node -- GPU
   AsyncActivity async_act;
   async_node_type a_node{
       g, tbb::flow::unlimited,
       [&async_act](const float& offload_ratio, gateway_type& gateway) {
-        async_act.run(offload_ratio, gateway);
+        async_act.submit(offload_ratio, gateway);
       }};
 
   // join node
   using join_t =
-      tbb::flow::join_node<std::tuple<double, double>, tbb::flow::queueing>;
+      tbb::flow::join_node<std::tuple<done_tag, done_tag>, tbb::flow::queueing>;
   join_t node_join{g};
 
   // out node
   tbb::flow::function_node<join_t::output_type> out_node{
-      g, tbb::flow::unlimited, [&](const join_t::output_type& times) {
+      g, tbb::flow::unlimited, [&](const join_t::output_type&) {
         // Serial execution
         std::array<float, array_size> c_gold;
         for (size_t i = 0; i < array_size; ++i)
@@ -170,10 +177,8 @@ int main() {
         else
           std::cout << "Heterogenous triad correct.\n";
 
-#ifdef VERBOSE
         PrintArr("c_array: ", c_array);
-        PrintArr("c_gold  : ", c_gold);
-#endif
+        PrintArr("c_gold : ", c_gold);
       }};  // end of out node
 
   // construct graph

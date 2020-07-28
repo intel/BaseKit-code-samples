@@ -4,7 +4,6 @@ set(HOST_SOURCE_FILE main.cpp)
 set(TARGET_NAME device_link)
 
 set(EMULATOR_TARGET ${TARGET_NAME}.fpga_emu)
-set(CPU_HOST_TARGET ${TARGET_NAME}.cpu_host)
 set(FPGA_TARGET ${TARGET_NAME}.fpga)
 
 # Intel supported FPGA Boards and their names
@@ -36,22 +35,6 @@ set(HARDWARE_LINK_FLAGS "-fintelfpga -Xshardware -Xsboard=${_FPGA_BOARD} ${USER_
 
 set(EMULATOR_COMPILE_FLAGS -fintelfpga -DFPGA_EMULATOR -c)
 set(EMULATOR_LINK_FLAGS -fintelfpga)
-
-set(CPU_HOST_COMPILE_FLAGS "-DCPU_HOST")
-
-# cpu host
-if(WIN32)
-    set(WIN_HOST_TARGET ${CPU_HOST_TARGET}.exe)
-    add_custom_target(cpu_host DEPENDS ${WIN_HOST_TARGET})
-    separate_arguments(WIN_HOST_COMPILE_FLAGS WINDOWS_COMMAND "${CPU_HOST_COMPILE_FLAGS}")
-    add_custom_command(OUTPUT ${WIN_HOST_TARGET} 
-             COMMAND ${CMAKE_CXX_COMPILER} /GX ${WIN_HOST_COMPILE_FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/${DEVICE_SOURCE_FILE} ${CMAKE_CURRENT_SOURCE_DIR}/${HOST_SOURCE_FILE} -o ${CMAKE_BINARY_DIR}/${WIN_HOST_TARGET}
-             DEPENDS ${SOURCE_FILE})
-else()
-    add_executable(${CPU_HOST_TARGET} ${HOST_SOURCE_FILE} ${DEVICE_SOURCE_FILE})
-    add_custom_target(cpu_host DEPENDS ${CPU_HOST_TARGET})
-    set_target_properties(${CPU_HOST_TARGET} PROPERTIES COMPILE_FLAGS ${CPU_HOST_COMPILE_FLAGS})
-endif()
 
 # fpga emulator
 if(WIN32)
@@ -130,5 +113,5 @@ endif()
 
 # run
 add_custom_target(run
-            COMMAND ../${TARGET_NAME}.cpu_host
-            DEPENDS ${TARGET_NAME}.cpu_host)
+            COMMAND ../${TARGET_NAME}.fpga_emu
+            DEPENDS ${TARGET_NAME}.fpga_emu)

@@ -35,12 +35,11 @@ void VecAdd(const std::vector<float>& summands1,
             int array_size) {
   auto prop_list = property_list{property::queue::enable_profiling()};
   event e;
+
   try {
 // Initialize queue with device selector and enabling profiling
 #if defined(FPGA_EMULATOR)
     intel::fpga_emulator_selector device_selector;
-#elif defined(CPU_HOST)
-    host_selector device_selector;
 #else
     intel::fpga_selector device_selector;
 #endif
@@ -56,8 +55,6 @@ void VecAdd(const std::vector<float>& summands1,
                    "is set up correctly.\n";
       std::cout << "If you are targeting the FPGA emulator, compile with "
                    "-DFPGA_EMULATOR.\n";
-      std::cout << "If you are targeting a CPU host device, compile with "
-                   "-DCPU_HOST.\n";
       return;
     }
 
@@ -70,8 +67,9 @@ void VecAdd(const std::vector<float>& summands1,
       auto acc_summands2 = buffer_summands2.get_access<sycl_read>(h);
       auto acc_sum = buffer_sum.get_access<sycl_write>(h);
       auto size = array_size;
-      h.single_task<SimpleVadd<UnrollFactor> >([=
-      ]() [[intel::kernel_args_restrict]] {
+
+      h.single_task<SimpleVadd<UnrollFactor>>(
+      [=]() [[intel::kernel_args_restrict]] {
 #pragma unroll UnrollFactor
         for (int k = 0; k < size; k++) {
           acc_sum[k] = acc_summands1[k] + acc_summands2[k];

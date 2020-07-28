@@ -12,6 +12,7 @@
 
 #include <CL/sycl.hpp>
 #include <iostream>
+#include "dpc_common.hpp"
 #include "selector.hpp"
 
 using namespace std;
@@ -31,28 +32,18 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < length; i++)
     input[i] = i + 100;
 
-  auto exception_handler = [](sycl::exception_list exceptionList) {
-    for (exception_ptr const& e : exceptionList) {
-      try {
-        rethrow_exception(e);
-      } catch (sycl::exception const& e) {
-        terminate();
-      }
-    }
-  };
-
   try {
     CustomSelector selector(GetDeviceType(argc, argv));
-    queue q(selector, exception_handler);
+    queue q(selector, dpc_common::exception_handler);
     cout << "[SYCL] Using device: ["
          << q.get_device().get_info<info::device::name>()
          << "] from ["
          << q.get_device().get_platform().get_info<info::platform::name>()
          << "]\n";
 
-    range<1> data_range{length};
-    buffer<int> buffer_in{input, data_range};
-    buffer<int> buffer_out{output, data_range};
+    range data_range{length};
+    buffer buffer_in{input, data_range};
+    buffer buffer_out{output, data_range};
 
     q.submit([&](handler& h) {
       auto in = buffer_in.get_access<access::mode::read>(h);
